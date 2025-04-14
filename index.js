@@ -16,21 +16,33 @@ app.use(express.static(path.join(__dirname, "public")));
 let currentPage = 0;
 let currentQuery = "";
 
+/**
+ * ヘルパー関数：タイムアウト付き fetch
+ * 各リクエストは timeout ミリ秒以内に応答がなければエラーとなる
+ */
+function fetchWithTimeout(url, options = {}, timeout = 4000) {
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+    )
+  ]);
+}
+
 /* =====================================================
    /api/search エンドポイント
-   クエリパラメータ q を使用して YouTube 動画検索を実行する
-   youtube-search-api の GetListByKeyword メソッドを利用
+   クエリパラメータ q を使用して YouTube 動画検索を実行
 ===================================================== */
 app.get("/api/search", async (req, res, next) => {
   const query = req.query.q;
-  const page = req.query.page || 0; // ページ番号（デフォルトは 0）
+  const page = req.query.page || 0;
   if (!query) {
     return res.status(400).json({ error: "検索クエリが必要です" });
   }
   try {
     const results = await yts.GetListByKeyword(query, false, 20, page);
-    currentPage = parseInt(page) + 1; // 現在のページ番号を更新
-    currentQuery = query; // 現在の検索クエリを保持
+    currentPage = parseInt(page) + 1;
+    currentQuery = query;
     res.json(results);
   } catch (err) {
     next(err);
@@ -39,7 +51,7 @@ app.get("/api/search", async (req, res, next) => {
 
 /* =====================================================
    /api/autocomplete エンドポイント
-   Google のオートコンプリートAPIを使って候補ワードを取得する
+   Google のオートコンプリート API を使用して候補を取得
 ===================================================== */
 app.get("/api/autocomplete", async (req, res, next) => {
   const keyword = req.query.q;
@@ -50,11 +62,9 @@ app.get("/api/autocomplete", async (req, res, next) => {
     const url =
       "http://www.google.com/complete/search?client=youtube&hl=ja&ds=yt&q=" +
       encodeURIComponent(keyword);
-    const response = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0" }
-    });
+    const response = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
     const text = await response.text();
-    // 余計な先頭部分（"window.google.ac.h("）を除去
+    // "window.google.ac.h(" を除去して JSON 部分だけ抽出
     const jsonStr = text.substring(19, text.length - 1);
     const suggestions = JSON.parse(jsonStr)[1];
     res.json({ suggestions });
@@ -65,9 +75,8 @@ app.get("/api/autocomplete", async (req, res, next) => {
 
 /* =====================================================
    /api/playlist エンドポイント
-   クエリパラメータ channelName を使用して youtube-search-api で
-   関連動画（プレイリスト）情報を取得し、必要な項目（動画ID, タイトル）だけ返す
------------------------------------------------------ */
+   クエリパラメータ channelName を使用して関連動画（プレイリスト）を取得
+===================================================== */
 app.get("/api/playlist", async (req, res, next) => {
   const channelName = req.query.channelName;
   if (!channelName) {
@@ -77,7 +86,7 @@ app.get("/api/playlist", async (req, res, next) => {
     const playlistResults = await yts.GetListByKeyword(channelName, false, 10, 0);
     const playlistItems = playlistResults.items || [];
     const playlist = playlistItems.map(item => ({
-      id: item.id, // 動画ID（環境によっては item.videoId などに変更を）
+      id: item.id, // ※環境により item.videoId になる可能性もあります
       title: item.title || "No title"
     }));
     res.json({ playlist });
@@ -88,12 +97,12 @@ app.get("/api/playlist", async (req, res, next) => {
 
 /* =====================================================
    /video/:id エンドポイント
-   指定された動画IDに対して
-    ① /check から health順に並んだAPIリストを取得
-    ② 各APIの /api/video/:id から動画詳細（stream_url, videoTitle, videoDes, channel情報、視聴回数、likeCount）を取得
-    ③ 同APIの /api/comments/:id によりコメント情報を取得
-    ④ 取得した情報を元にHTMLページを生成して返す
-        ※ プレイリストはページ読み込み後に非同期取得するため、空のコンテナを用意
+   指定された動画IDについて、外部APIから動画詳細およびコメント情報を取得
+   ・各 API 呼び出しは 4 秒以内のタイムアウト
+   ・全体の最大待機時間は 15 秒
+   ・15 秒以内に stream_url が取得できなかった場合、fallback として
+     https://www.youtube-nocookie.com/embed/動画ID?autoplay=1 を利用
+   ・ページ内では右側にプレイリスト表示、そして動画下部に「動画を再読み込み」「動画を再取得」ボタンを配置
 ===================================================== */
 app.get("/video/:id", async (req, res, next) => {
   const videoId = req.params.id;
@@ -102,7 +111,7 @@ app.get("/video/:id", async (req, res, next) => {
   }
 
   try {
-    // ① 外部APIの /check で、healthが高い順のAPIリストを取得
+    // ① /check API により、health 順の API リストを取得
     const checkResponse = await fetch(API_HEALTH_CHECKER);
     const apiList = await checkResponse.json();
     if (!Array.isArray(apiList) || apiList.length === 0) {
@@ -111,56 +120,82 @@ app.get("/video/:id", async (req, res, next) => {
 
     let videoData = null;
     let commentsData = null;
+    let successfulApi = null;
 
-    // ② APIリスト順に試し、動画詳細とコメント情報を取得する。
-    for (const apiBase of apiList) {
-      try {
-        const videoResponse = await fetch(`${apiBase}/api/video/${videoId}`);
-        if (videoResponse.ok) {
-          videoData = await videoResponse.json();
+    // 全体待機時間：15秒
+    const overallTimeout = 15000;
+    const startTime = Date.now();
+
+    // 15秒以内に stream_url を取得できるか試行
+    while (Date.now() - startTime < overallTimeout) {
+      for (const apiBase of apiList) {
+        if (Date.now() - startTime >= overallTimeout) break;
+        try {
+          const videoResponse = await fetchWithTimeout(
+            `${apiBase}/api/video/${videoId}`,
+            {},
+            4000 // 各 API ごとのタイムアウト：4秒
+          );
+          if (videoResponse.ok) {
+            const tempData = await videoResponse.json();
+            // stream_url が存在するなら取得成功とみなす
+            if (tempData.stream_url) {
+              videoData = tempData;
+              successfulApi = apiBase;
+              break;
+            }
+          }
+        } catch (err) {
+          console.warn(`${apiBase} での動画取得エラー: ${err.message}`);
+          continue;
         }
-        const commentsResponse = await fetch(`${apiBase}/api/comments/${videoId}`);
+      }
+      if (videoData && videoData.stream_url) break;
+    }
+
+    // 15秒以内に stream_url が取得できなかった場合、fallback として youtube-nocookie を設定
+    if (!videoData || !videoData.stream_url) {
+      videoData = videoData || {};
+      videoData.stream_url = "youtube-nocookie";
+    }
+
+    // 成功した API がある場合、その API からコメント情報をタイムアウト付きで取得
+    if (successfulApi) {
+      try {
+        const commentsResponse = await fetchWithTimeout(
+          `${successfulApi}/api/comments/${videoId}`,
+          {},
+          4000
+        );
         if (commentsResponse.ok) {
           commentsData = await commentsResponse.json();
         }
-        if (videoData) {
-          break; // 動画データが取得できたらループ終了
-        }
       } catch (err) {
-        console.warn(`${apiBase} でのデータ取得に失敗しました: ${err.message}`);
-        continue;
+        console.warn(`${successfulApi} でのコメント取得エラー: ${err.message}`);
       }
-    }
-
-    if (!videoData) {
-      return res.status(500).send("動画詳細の取得に失敗しました。");
     }
     if (!commentsData) {
       commentsData = { commentCount: 0, comments: [] };
     }
 
-    // 動画再生用のコンテンツ。stream_url が存在すれば <video> タグ、なければ YouTube 埋め込みを使用
-    const videoPlayerHTML = videoData.stream_url
+    // 動画再生用コンテンツ
+    // ・videoData.stream_url が "youtube-nocookie" の場合、iframe の src に autoplay=1 を付与
+    const videoPlayerHTML = videoData.stream_url !== "youtube-nocookie"
       ? `<video controls autoplay>
            <source src="${videoData.stream_url}" type="video/mp4">
            お使いのブラウザは video タグに対応していません。
          </video>`
-      : `<iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      : `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
 
-    // ③ コメントのHTML生成
+    // コメント部分の HTML 生成
     let commentsHTML = "";
-    if (
-      commentsData.comments &&
-      Array.isArray(commentsData.comments) &&
-      commentsData.comments.length > 0
-    ) {
-      commentsHTML = commentsData.comments
-        .map((comment) => {
-          const thumb =
-            comment.authorThumbnails && comment.authorThumbnails.length > 0
-              ? comment.authorThumbnails[0].url
-              : "";
-          return `
+    if (commentsData.comments && Array.isArray(commentsData.comments) && commentsData.comments.length > 0) {
+      commentsHTML = commentsData.comments.map((comment) => {
+        const thumb =
+          comment.authorThumbnails && comment.authorThumbnails.length > 0
+            ? comment.authorThumbnails[0].url
+            : "";
+        return `
             <div class="comment">
               <div class="comment-header">
                 ${thumb ? `<img class="avatar" src="${thumb}" alt="${comment.author}">` : ""}
@@ -170,36 +205,42 @@ app.get("/video/:id", async (req, res, next) => {
               <div class="comment-body">${comment.contentHtml || comment.content}</div>
               <div class="comment-stats">Likes: ${comment.likeCount || 0}</div>
             </div>
-          `;
-        })
-        .join("");
+        `;
+      }).join("");
     } else {
       commentsHTML = "<p>コメントがありません。</p>";
     }
 
-    // ④ HTMLページの生成
-    // レイアウトは flex コンテナで左側に動画・詳細・コメント、右側にプレイリスト（非同期取得）を配置
+    // HTML ページの生成
+    // ・左側（.video-section）に動画プレイヤー、詳細、コメント、そして動画再読み込み／再取得用のボタンを配置
+    // ・右側（.playlist-section）にプレイリスト表示エリアを配置（クライアントサイドで /api/playlist より取得）
     const html = `
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${videoData.videoTitle}</title>
+  <title>${videoData.videoTitle || "動画詳細"}</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      margin:0; padding:0; 
-      background-color: #121212; 
-      color: #e0e0e0; 
+    body {
+      font-family: Arial, sans-serif;
+      margin:0;
+      padding:0;
+      background-color: #121212;
+      color: #e0e0e0;
     }
-    header { 
-      padding: 20px; 
-      text-align: center; 
-      background-color: #1e1e1e; 
+    header {
+      padding: 20px;
+      text-align: center;
+      background-color: #1e1e1e;
     }
-    header h1 { margin:0; font-size: 24px; }
-    .container { padding: 20px; }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .container {
+      padding: 20px;
+    }
     .main-content {
       display: flex;
       gap: 20px;
@@ -208,72 +249,97 @@ app.get("/video/:id", async (req, res, next) => {
     .video-section {
       flex: 1;
     }
-    .video-player { 
-      width: 100%; 
-      max-width: 800px; 
-      margin: 0 auto; 
+    .video-player {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
     }
-    video, iframe { 
-      width: 100%; 
-      height: auto; 
-      background-color: black; 
+    video, iframe {
+      width: 100%;
+      height: auto;
+      background-color: black;
     }
-    .details { 
-      max-width: 800px; 
-      margin:20px auto; 
+    /* ボタン領域 */
+    .video-buttons {
+      text-align: center;
+      margin-top: 10px;
     }
-    .channel-info { 
-      display: flex; 
-      align-items: center; 
-      margin-bottom: 10px; 
+    .video-buttons button {
+      margin-right: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #333;
+      border: none;
+      color: #e0e0e0;
+      border-radius: 4px;
     }
-    .channel-avatar { 
-      width: 50px; 
-      height: 50px; 
-      border-radius: 50%; 
-      object-fit: cover; 
-      margin-right: 10px; 
+    .video-buttons button:hover {
+      background-color: #555;
     }
-    .comments { 
-      max-width: 800px; 
-      margin: 20px auto; 
+    .details {
+      max-width: 800px;
+      margin: 20px auto;
     }
-    .comment { 
-      border-bottom: 1px solid #333; 
-      padding: 10px 0; 
+    .channel-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
     }
-    .comment-header { 
-      display: flex; 
-      align-items: center; 
+    .channel-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 10px;
     }
-    .avatar { 
-      width: 40px; 
-      height: 40px; 
-      border-radius: 50%; 
-      object-fit: cover; 
-      margin-right: 10px; 
+    .comments {
+      max-width: 800px;
+      margin: 20px auto;
     }
-    .comment-author { 
-      font-weight: bold; 
+    .comment {
+      border-bottom: 1px solid #333;
+      padding: 10px 0;
     }
-    .comment-time { 
-      margin-left: auto; 
-      font-size: 12px; 
-      color: #aaa; 
+    .comment-header {
+      display: flex;
+      align-items: center;
     }
-    .comment-body { margin: 5px 0; }
-    .comment-stats { 
-      font-size: 12px; 
-      color: #aaa; 
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 10px;
     }
-    a { color: #bb86fc; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .back-link { 
-      margin-top: 20px; 
-      display: block; 
-      text-align: center; 
+    .comment-author {
+      font-weight: bold;
     }
-    /* プレイリスト領域 */
+    .comment-time {
+      margin-left: auto;
+      font-size: 12px;
+      color: #aaa;
+    }
+    .comment-body {
+      margin: 5px 0;
+    }
+    .comment-stats {
+      font-size: 12px;
+      color: #aaa;
+    }
+    a {
+      color: #bb86fc;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .back-link {
+      margin-top: 20px;
+      display: block;
+      text-align: center;
+    }
+    /* プレイリスト領域（右側） */
     .playlist-section {
       width: 300px;
       background-color: #1e1e1e;
@@ -309,7 +375,7 @@ app.get("/video/:id", async (req, res, next) => {
 </head>
 <body>
   <header>
-    <h1>${videoData.videoTitle}</h1>
+    <h1>${videoData.videoTitle || "動画詳細"}</h1>
   </header>
   <div class="container">
     <div class="main-content">
@@ -317,21 +383,24 @@ app.get("/video/:id", async (req, res, next) => {
         <div class="video-player">
           ${videoPlayerHTML}
         </div>
+        <!-- 動画再生エリア下にボタンを配置 -->
+        <div class="video-buttons">
+          <button id="reload-video">動画を再読み込み</button>
+          <button id="refetch-video">動画を再取得</button>
+        </div>
         <div class="details">
           <h2>動画詳細</h2>
           <div class="channel-info">
-            <img class="channel-avatar" src="${videoData.channelImage}" alt="${videoData.channelName}">
+            <img class="channel-avatar" src="${videoData.channelImage || ''}" alt="${videoData.channelName || 'チャンネル'}">
             <div>
-              <p>${videoData.channelName}</p>
-              <p>チャンネルID: ${videoData.channelId}</p>
+              <p>${videoData.channelName || 'チャンネル名未設定'}</p>
+              <p>チャンネルID: ${videoData.channelId || '不明'}</p>
             </div>
           </div>
           <p>${videoData.videoDes || "詳細情報はありません"}</p>
-          <p>視聴回数: ${videoData.videoViews.toLocaleString()}</p>
-          <p>いいね: ${videoData.likeCount.toLocaleString()}</p>
-          <p>
-            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">YouTubeで視聴する</a>
-          </p>
+          <p>視聴回数: ${videoData.videoViews ? videoData.videoViews.toLocaleString() : "0"}</p>
+          <p>いいね: ${videoData.likeCount ? videoData.likeCount.toLocaleString() : "0"}</p>
+          <p><a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">YouTubeで視聴する</a></p>
         </div>
         <div class="comments">
           <h2>コメント (${commentsData.commentCount || 0} 件)</h2>
@@ -340,42 +409,66 @@ app.get("/video/:id", async (req, res, next) => {
         <a class="back-link" href="/">検索に戻る</a>
       </div>
       <div class="playlist-section">
-        <h2>${videoData.channelName} のプレイリスト</h2>
+        <h2>${videoData.channelName || "プレイリスト"}</h2>
         <div id="playlist-container">
-          <!-- プレイリストはここに非同期で読み込まれます -->
           <p>読み込み中...</p>
         </div>
       </div>
     </div>
   </div>
-  <!-- クライアントサイドのスクリプトでプレイリストを取得 -->
+  <!-- クライアントサイドスクリプト -->
   <script>
+    // プレイリストの非同期取得
     window.addEventListener('DOMContentLoaded', () => {
-      const channelName = "${videoData.channelName}";
-      fetch('/api/playlist?channelName=' + encodeURIComponent(channelName))
-        .then(response => response.json())
-        .then(data => {
-          let html = "";
-          if (data.playlist && data.playlist.length > 0) {
-            data.playlist.forEach(item => {
-              html += \`
-                <div class="playlist-item">
-                  <a href="/video/\${item.id}">
-                    <img src="https://i3.ytimg.com/vi/\${item.id}/sddefault.jpg" alt="\${item.title}">
-                    <div class="playlist-item-title">\${item.title}</div>
-                  </a>
-                </div>
-              \`;
-            });
-          } else {
-            html = "<p>プレイリストがありません。</p>";
+      const channelName = "${videoData.channelName || ''}";
+      if (channelName) {
+        fetch('/api/playlist?channelName=' + encodeURIComponent(channelName))
+          .then(response => response.json())
+          .then(data => {
+            let html = "";
+            if (data.playlist && data.playlist.length > 0) {
+              data.playlist.forEach(item => {
+                html += \`
+                  <div class="playlist-item">
+                    <a href="/video/\${item.id}">
+                      <img src="https://i3.ytimg.com/vi/\${item.id}/sddefault.jpg" alt="\${item.title}">
+                      <div class="playlist-item-title">\${item.title}</div>
+                    </a>
+                  </div>
+                \`;
+              });
+            } else {
+              html = "<p>プレイリストがありません。</p>";
+            }
+            document.getElementById("playlist-container").innerHTML = html;
+          })
+          .catch(err => {
+            console.error(err);
+            document.getElementById("playlist-container").innerHTML = "<p>プレイリストの読み込みに失敗しました。</p>";
+          });
+      } else {
+        document.getElementById("playlist-container").innerHTML = "<p>チャネル情報がありません。</p>";
+      }
+
+      // 「動画を再読み込み」ボタンの処理
+      document.getElementById("reload-video").addEventListener("click", () => {
+        const videoElem = document.querySelector('.video-player video');
+        if (videoElem) {
+          videoElem.load();
+          videoElem.play();
+        } else {
+          const iframeElem = document.querySelector('.video-player iframe');
+          if (iframeElem) {
+            // src を再設定して iframe をリロード
+            iframeElem.src = iframeElem.src;
           }
-          document.getElementById("playlist-container").innerHTML = html;
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById("playlist-container").innerHTML = "<p>プレイリストの読み込みに失敗しました。</p>";
-        });
+        }
+      });
+
+      // 「動画を再取得」ボタンの処理 → ページ全体を再読み込み（サーバ側 API 呼び出しも再実行）
+      document.getElementById("refetch-video").addEventListener("click", () => {
+        window.location.reload();
+      });
     });
   </script>
 </body>
