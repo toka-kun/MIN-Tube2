@@ -323,11 +323,11 @@
                   // チャンネルの場合
                   const channelId = item.id;
                   const title = item.title;
-                  let thumbnailUrl = "";
+                  let thumbnailUrl = "https://i3.ytimg.com/vi/%22%20+%20videoId%20+%20%22/sddefault.jpg";
                   if (item.authorThumbnails && item.authorThumbnails.length > 0) {
                     thumbnailUrl = item.authorThumbnails[0].url;
                   } else {
-                    thumbnailUrl = "https://via.placeholder.com/280x158.png?text=Channel";
+                    thumbnailUrl = "";
                   }
                   const channelDiv = document.createElement("div");
                   channelDiv.className = "video";
