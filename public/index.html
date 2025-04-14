@@ -125,7 +125,7 @@
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 20px;
       }
-      /* 動画カードのスタイル */
+      /* 動画／チャンネルカードのスタイル */
       .video {
         background-color: #1e1e1e;
         border-radius: 4px;
@@ -316,26 +316,51 @@
           if (page > 0) hideInlineLoading();
           if (data && data.items && data.items.length > 0) {
             data.items.forEach((item) => {
-              // 重複防止のため、既に同じ動画が表示されていないか確認
-              if (!document.querySelector(`[data-video-id="${item.id}"]`)) {
-                const videoId = item.id;
-                const title = item.title;
-                const thumbnailUrl =
-                  "https://i3.ytimg.com/vi/" + videoId + "/sddefault.jpg";
-                const videoDiv = document.createElement("div");
-                videoDiv.className = "video";
-                videoDiv.setAttribute("data-video-id", videoId);
-                videoDiv.innerHTML = `
-                  <img src="${thumbnailUrl}" alt="${title}">
-                  <div class="video-info">
-                    <h3>${title}</h3>
-                  </div>
-                `;
-                // クリックで動画詳細ページへ遷移
-                videoDiv.addEventListener("click", function () {
-                  window.location.href = `/video/${videoId}`;
-                });
-                resultsDiv.appendChild(videoDiv);
+              // 重複防止のため、既に同じ item が表示されていないか確認（data-item-id 属性を利用）
+              if (!document.querySelector(`[data-item-id="${item.id}"]`)) {
+                // 判定：item.type が "channel" か、または item.id が "UC" から始まっていれば（ヘユーチューブチャンネルIDの特徴）チャンネル扱い
+                if ((item.type && item.type === "channel") || (item.id && item.id.startsWith("UC"))) {
+                  // チャンネルの場合
+                  const channelId = item.id;
+                  const title = item.title;
+                  let thumbnailUrl = "";
+                  if (item.authorThumbnails && item.authorThumbnails.length > 0) {
+                    thumbnailUrl = item.authorThumbnails[0].url;
+                  } else {
+                    thumbnailUrl = "https://via.placeholder.com/280x158.png?text=Channel";
+                  }
+                  const channelDiv = document.createElement("div");
+                  channelDiv.className = "video";
+                  channelDiv.setAttribute("data-item-id", item.id);
+                  channelDiv.innerHTML = `
+                    <img src="${thumbnailUrl}" alt="${title}">
+                    <div class="video-info">
+                      <h3>${title}</h3>
+                    </div>
+                  `;
+                  channelDiv.addEventListener("click", function () {
+                    window.location.href = `/channel/${channelId}`;
+                  });
+                  resultsDiv.appendChild(channelDiv);
+                } else {
+                  // 動画の場合
+                  const videoId = item.id;
+                  const title = item.title;
+                  const thumbnailUrl = "https://i3.ytimg.com/vi/" + videoId + "/sddefault.jpg";
+                  const videoDiv = document.createElement("div");
+                  videoDiv.className = "video";
+                  videoDiv.setAttribute("data-item-id", item.id);
+                  videoDiv.innerHTML = `
+                    <img src="${thumbnailUrl}" alt="${title}">
+                    <div class="video-info">
+                      <h3>${title}</h3>
+                    </div>
+                  `;
+                  videoDiv.addEventListener("click", function () {
+                    window.location.href = `/video/${videoId}`;
+                  });
+                  resultsDiv.appendChild(videoDiv);
+                }
               }
             });
           } else if (page === 0) {

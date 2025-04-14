@@ -6,15 +6,40 @@ const fetch = require("node-fetch");
 const app = express();
 const port = process.env.PORT || 3000;
 
+// EJS テンプレートエンジンの設定
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
+
 // 外部のhealth情報API（health順にAPIリストを返す）
 const API_HEALTH_CHECKER = "https://airy-gamy-exoplanet.glitch.me/check";
 
 // public フォルダ内の静的ファイル（index.html、error.html など）を提供
 app.use(express.static(path.join(__dirname, "public")));
 
-// 検索結果を保持するためのグローバル変数（任意）
+// 検索結果を保持するためのグローバル変数
 let currentPage = 0;
 let currentQuery = "";
+
+// 【追加】APIリストをキャッシュするためのグローバル変数
+let apiListCache = [];
+
+// 【追加】APIリストを取得し、グローバル変数に保存するヘルパー関数
+async function updateApiListCache() {
+  try {
+    const response = await fetch(API_HEALTH_CHECKER);
+    if (response.ok) {
+      apiListCache = await response.json();
+      console.log("APIリストキャッシュを更新しました:", apiListCache);
+    } else {
+      console.error("APIヘルスチェッカーでエラー発生:", response.status);
+    }
+  } catch (err) {
+    console.error("APIリストの更新に失敗しました:", err);
+  }
+}
+
+// サーバー起動時に一度だけAPIリストを取得してキャッシュする
+updateApiListCache();
 
 /**
  * ヘルパー関数：タイムアウト付き fetch
@@ -96,13 +121,39 @@ app.get("/api/playlist", async (req, res, next) => {
 });
 
 /* =====================================================
+   /api/playlist-ejs エンドポイント（チャンネル用プレイリスト）
+   クエリパラメータ channelID と authorName を使用して
+   「channelID + 投稿者の名前」の検索結果をプレイリストとして提供する
+===================================================== */
+app.get("/api/playlist-ejs", async (req, res, next) => {
+  const channelID = req.query.channelID;
+  const authorName = req.query.authorName;
+  if (!channelID || !authorName) {
+    return res.status(400).json({ error: "channelID および authorName パラメータが必要です" });
+  }
+  try {
+    // 検索キーワードとして channelID と authorName を連結
+    const searchQuery = channelID + " " + authorName;
+    const playlistResults = await yts.GetListByKeyword(searchQuery, false, 10, 0);
+    const playlistItems = playlistResults.items || [];
+    const playlist = playlistItems.map(item => ({
+      id: item.id, // 環境により item.videoId になる可能性もあります
+      title: item.title || "No title"
+    }));
+    res.json({ playlist });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* =====================================================
    /video/:id エンドポイント
    指定された動画IDについて、外部APIから動画詳細およびコメント情報を取得
    ・各 API 呼び出しは 4 秒以内のタイムアウト
    ・全体の最大待機時間は 15 秒
    ・15 秒以内に stream_url が取得できなかった場合、fallback として
      https://www.youtube-nocookie.com/embed/動画ID?autoplay=1 を利用
-   ・ページ内では右側にプレイリスト表示、そして動画下部に「動画を再読み込み」「動画を再取得」ボタンを配置
+   ・ページ内では右側にプレイリスト表示、そしてコントロールボタン（DL‑Yvideo／YouTube‑nocookie／動画を再読み込み／動画を再取得／ダウンロード）が配置されます。
 ===================================================== */
 app.get("/video/:id", async (req, res, next) => {
   const videoId = req.params.id;
@@ -111,12 +162,11 @@ app.get("/video/:id", async (req, res, next) => {
   }
 
   try {
-    // ① /check API により、health 順の API リストを取得
-    const checkResponse = await fetch(API_HEALTH_CHECKER);
-    const apiList = await checkResponse.json();
-    if (!Array.isArray(apiList) || apiList.length === 0) {
+    // 【変更】グローバル変数 apiListCache を利用する。
+    if (!Array.isArray(apiListCache) || apiListCache.length === 0) {
       return res.status(500).send("有効なAPIリストが取得できませんでした。");
     }
+    const apiList = apiListCache;
 
     let videoData = null;
     let commentsData = null;
@@ -178,24 +228,33 @@ app.get("/video/:id", async (req, res, next) => {
       commentsData = { commentCount: 0, comments: [] };
     }
 
-    // 動画再生用コンテンツ
-    // ・videoData.stream_url が "youtube-nocookie" の場合、iframe の src に autoplay=1 を付与
-    const videoPlayerHTML = videoData.stream_url !== "youtube-nocookie"
-      ? `<video controls autoplay>
-           <source src="${videoData.stream_url}" type="video/mp4">
-           お使いのブラウザは video タグに対応していません。
-         </video>`
-      : `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    // サーバー側で動画再生用HTMLを作成
+    // (1) DL‑Yvideo版（通常は video タグの埋め込み）
+    const streamEmbedHTML =
+      videoData.stream_url !== "youtube-nocookie"
+        ? `<video controls autoplay style="border-radius: 8px;">
+             <source src="${videoData.stream_url}" type="video/mp4">
+             お使いのブラウザは video タグに対応していません。
+           </video>`
+        : `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="border-radius: 8px;"></iframe>`;
+
+    // (2) YouTube‑nocookie 版（iframe：サイズを 932×524、border:none、角丸）
+    const youtubeEmbedHTML = `<iframe style="width: 932px; height:524px; border: none; border-radius: 8px;" src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
 
     // コメント部分の HTML 生成
     let commentsHTML = "";
-    if (commentsData.comments && Array.isArray(commentsData.comments) && commentsData.comments.length > 0) {
-      commentsHTML = commentsData.comments.map((comment) => {
-        const thumb =
-          comment.authorThumbnails && comment.authorThumbnails.length > 0
-            ? comment.authorThumbnails[0].url
-            : "";
-        return `
+    if (
+      commentsData.comments &&
+      Array.isArray(commentsData.comments) &&
+      commentsData.comments.length > 0
+    ) {
+      commentsHTML = commentsData.comments
+        .map((comment) => {
+          const thumb =
+            comment.authorThumbnails && comment.authorThumbnails.length > 0
+              ? comment.authorThumbnails[0].url
+              : "";
+          return `
             <div class="comment">
               <div class="comment-header">
                 ${thumb ? `<img class="avatar" src="${thumb}" alt="${comment.author}">` : ""}
@@ -206,14 +265,16 @@ app.get("/video/:id", async (req, res, next) => {
               <div class="comment-stats">Likes: ${comment.likeCount || 0}</div>
             </div>
         `;
-      }).join("");
+        })
+        .join("");
     } else {
       commentsHTML = "<p>コメントがありません。</p>";
     }
 
     // HTML ページの生成
-    // ・左側（.video-section）に動画プレイヤー、詳細、コメント、そして動画再読み込み／再取得用のボタンを配置
-    // ・右側（.playlist-section）にプレイリスト表示エリアを配置（クライアントサイドで /api/playlist より取得）
+    // ・プレイリストは即時表示、動画部分はまずローディングアニメーション（スピナー）表示し、
+    //   ページ読み込み完了後1秒で、コントロールボタンに対応した動画埋め込み用コンテナにデフォルト（DL‑Yvideo版＝Stream URL版）が挿入されます。
+    // ・コントロールボタン（DL‑Yvideo／YouTube‑nocookie／動画を再読み込み／動画を再取得／ダウンロード）はひとまとめに配置し、画面幅に合わせて横スクロール可能です。
     const html = `
 <!DOCTYPE html>
 <html lang="ja">
@@ -259,13 +320,16 @@ app.get("/video/:id", async (req, res, next) => {
       height: auto;
       background-color: black;
     }
-    /* ボタン領域 */
-    .video-buttons {
-      text-align: center;
-      margin-top: 10px;
+    /* 統合されたコントロールボタン */
+    #controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0;
     }
-    .video-buttons button {
-      margin-right: 10px;
+    #controls button {
+      flex: 0 0 auto;
       padding: 8px 12px;
       font-size: 14px;
       cursor: pointer;
@@ -274,8 +338,12 @@ app.get("/video/:id", async (req, res, next) => {
       color: #e0e0e0;
       border-radius: 4px;
     }
-    .video-buttons button:hover {
+    #controls button:hover {
       background-color: #555;
+    }
+    #controls button.active {
+      background-color: #bb86fc;
+      color: #121212;
     }
     .details {
       max-width: 800px;
@@ -365,11 +433,31 @@ app.get("/video/:id", async (req, res, next) => {
       width: 90px;
       height: auto;
       display: block;
+      border-radius: 8px;
     }
     .playlist-item-title {
       font-size: 14px;
       font-weight: bold;
       color: #e0e0e0;
+    }
+    /* ローディングアニメーション（スピナー） */
+    .loading-animation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 300px;
+    }
+    .spinner {
+      border: 8px solid rgba(255, 255, 255, 0.2);
+      border-top: 8px solid #bb86fc;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -380,13 +468,17 @@ app.get("/video/:id", async (req, res, next) => {
   <div class="container">
     <div class="main-content">
       <div class="video-section">
-        <div class="video-player">
-          ${videoPlayerHTML}
+        <!-- 動画プレイヤー部分：最初はスピナー（ローディングアニメーション）表示 -->
+        <div class="video-player" id="video-player-container">
+          <div class="loading-animation"><div class="spinner"></div></div>
         </div>
-        <!-- 動画再生エリア下にボタンを配置 -->
-        <div class="video-buttons">
+        <!-- 統合されたコントロールボタン -->
+        <div id="controls">
+          <button id="switch-stream-url" class="active">DL‑Yvideo</button>
+          <button id="switch-nocookie">YouTube‑nocookie</button>
           <button id="reload-video">動画を再読み込み</button>
           <button id="refetch-video">動画を再取得</button>
+          <button id="download-video">ダウンロード</button>
         </div>
         <div class="details">
           <h2>動画詳細</h2>
@@ -418,8 +510,8 @@ app.get("/video/:id", async (req, res, next) => {
   </div>
   <!-- クライアントサイドスクリプト -->
   <script>
-    // プレイリストの非同期取得
     window.addEventListener('DOMContentLoaded', () => {
+      // プレイリストの非同期取得（即時実行）
       const channelName = "${videoData.channelName || ''}";
       if (channelName) {
         fetch('/api/playlist?channelName=' + encodeURIComponent(channelName))
@@ -449,9 +541,37 @@ app.get("/video/:id", async (req, res, next) => {
       } else {
         document.getElementById("playlist-container").innerHTML = "<p>チャネル情報がありません。</p>";
       }
-
-      // 「動画を再読み込み」ボタンの処理
-      document.getElementById("reload-video").addEventListener("click", () => {
+      
+      // クライアントサイド用：2種類の動画埋め込み用HTMLを作成
+      const streamEmbedHTML = \`${streamEmbedHTML.replace(/`/g, '\\`')}\`;
+      const youtubeEmbedHTML = \`${youtubeEmbedHTML.replace(/`/g, '\\`')}\`;
+      
+      // ページが完全に読み込まれてから1秒後に、デフォルトの動画（DL‑Yvideo版＝Stream URL版）を埋め込む
+      setTimeout(() => {
+        const container = document.getElementById("video-player-container");
+        if (container) {
+          container.innerHTML = streamEmbedHTML;
+        }
+      }, 1000);
+      
+      // 各コントロールボタンの処理
+      const btnStream = document.getElementById("switch-stream-url");
+      const btnNocookie = document.getElementById("switch-nocookie");
+      const btnReload = document.getElementById("reload-video");
+      const btnRefetch = document.getElementById("refetch-video");
+      const btnDownload = document.getElementById("download-video");
+      
+      btnStream.addEventListener("click", () => {
+        document.getElementById("video-player-container").innerHTML = streamEmbedHTML;
+        btnStream.classList.add("active");
+        btnNocookie.classList.remove("active");
+      });
+      btnNocookie.addEventListener("click", () => {
+        document.getElementById("video-player-container").innerHTML = youtubeEmbedHTML;
+        btnNocookie.classList.add("active");
+        btnStream.classList.remove("active");
+      });
+      btnReload.addEventListener("click", () => {
         const videoElem = document.querySelector('.video-player video');
         if (videoElem) {
           videoElem.load();
@@ -459,15 +579,20 @@ app.get("/video/:id", async (req, res, next) => {
         } else {
           const iframeElem = document.querySelector('.video-player iframe');
           if (iframeElem) {
-            // src を再設定して iframe をリロード
             iframeElem.src = iframeElem.src;
           }
         }
       });
-
-      // 「動画を再取得」ボタンの処理 → ページ全体を再読み込み（サーバ側 API 呼び出しも再実行）
-      document.getElementById("refetch-video").addEventListener("click", () => {
+      btnRefetch.addEventListener("click", () => {
         window.location.reload();
+      });
+      btnDownload.addEventListener("click", () => {
+        // ダウンロード用リンク：もし DL‑Yvideo 用URL（videoData.stream_url）が "youtube-nocookie" でなければそのまま、
+        // そうでなければ YouTube公式ページを開く
+        const dlLink = ( "${videoData.stream_url}" !== "youtube-nocookie" )
+            ? "${videoData.stream_url}"
+            : "https://www.youtube.com/watch?v=${videoId}";
+        window.open(dlLink, '_blank');
       });
     });
   </script>
@@ -475,6 +600,37 @@ app.get("/video/:id", async (req, res, next) => {
 </html>
     `;
     res.send(html);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* =====================================================
+   /channel/:channelId エンドポイント (EJS 利用)
+   検索結果やプレイリストでチャンネルがタップされた際に、
+   外部API (/api/v1/channels/channelId) を利用してチャンネル情報を取得し、EJS テンプレートで表示する
+===================================================== */
+app.get("/channel/:channelId", async (req, res, next) => {
+  const channelId = req.params.channelId;
+  if (!channelId) {
+    return res.status(400).send("チャンネルIDが必要です");
+  }
+
+  try {
+    // キャッシュされているAPIリストのうち、1件目を利用（必要に応じて戦略を変更してください）
+    const apiBase = apiListCache[0];
+    if (!apiBase) {
+      return res.status(500).send("有効なAPIリストが取得できませんでした。");
+    }
+    const apiUrl = `${apiBase}/api/channels/${channelId}`;
+    const response = await fetchWithTimeout(apiUrl, {}, 4000);
+    if (!response.ok) {
+      return res.status(500).send("チャンネル情報の取得に失敗しました");
+    }
+    const channelData = await response.json();
+    
+    // EJS テンプレート "channel.ejs" をレンダリング
+    res.render("channel", { channel: channelData });
   } catch (err) {
     next(err);
   }
@@ -490,13 +646,12 @@ app.get("/nothing/*", (req, res) => {
 
 /* =====================================================
    エラーハンドリングおよび404ハンドリング
+   存在しないURLの場合は public/error.html を返す
+   内部エラーの場合はエラーログを出力し public/error.html を返す
 ===================================================== */
-// 存在しないURLの場合は public/error.html を返す
 app.use((req, res, next) => {
   res.status(404).sendFile(path.join(__dirname, "public", "error.html"));
 });
-
-// 内部エラーの場合はエラーログを出力し public/error.html を返す
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).sendFile(path.join(__dirname, "public", "error.html"));
