@@ -6,24 +6,17 @@ const fetch = require("node-fetch");
 const app = express();
 const port = process.env.PORT || 3000;
 
-// EJS テンプレートエンジンの設定
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
-// 外部のhealth情報API（health順にAPIリストを返す）
 const API_HEALTH_CHECKER = "https://airy-gamy-exoplanet.glitch.me/check";
 
-// public フォルダ内の静的ファイル（index.html、error.html など）を提供
 app.use(express.static(path.join(__dirname, "public")));
 
-// 検索結果を保持するためのグローバル変数
 let currentPage = 0;
 let currentQuery = "";
-
-// 【追加】APIリストをキャッシュするためのグローバル変数
 let apiListCache = [];
 
-// 【追加】APIリストを取得し、グローバル変数に保存するヘルパー関数
 async function updateApiListCache() {
   try {
     const response = await fetch(API_HEALTH_CHECKER);
@@ -38,13 +31,8 @@ async function updateApiListCache() {
   }
 }
 
-// サーバー起動時に一度だけAPIリストを取得してキャッシュする
 updateApiListCache();
 
-/**
- * ヘルパー関数：タイムアウト付き fetch
- * 各リクエストは timeout ミリ秒以内に応答がなければエラーとなる
- */
 function fetchWithTimeout(url, options = {}, timeout = 4000) {
   return Promise.race([
     fetch(url, options),
@@ -54,10 +42,6 @@ function fetchWithTimeout(url, options = {}, timeout = 4000) {
   ]);
 }
 
-/* =====================================================
-   /api/search エンドポイント
-   クエリパラメータ q を使用して YouTube 動画検索を実行
-===================================================== */
 app.get("/api/search", async (req, res, next) => {
   const query = req.query.q;
   const page = req.query.page || 0;
@@ -74,10 +58,6 @@ app.get("/api/search", async (req, res, next) => {
   }
 });
 
-/* =====================================================
-   /api/autocomplete エンドポイント
-   Google のオートコンプリート API を使用して候補を取得
-===================================================== */
 app.get("/api/autocomplete", async (req, res, next) => {
   const keyword = req.query.q;
   if (!keyword) {
@@ -89,7 +69,6 @@ app.get("/api/autocomplete", async (req, res, next) => {
       encodeURIComponent(keyword);
     const response = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
     const text = await response.text();
-    // "window.google.ac.h(" を除去して JSON 部分だけ抽出
     const jsonStr = text.substring(19, text.length - 1);
     const suggestions = JSON.parse(jsonStr)[1];
     res.json({ suggestions });
@@ -98,10 +77,6 @@ app.get("/api/autocomplete", async (req, res, next) => {
   }
 });
 
-/* =====================================================
-   /api/playlist エンドポイント
-   クエリパラメータ channelName を使用して関連動画（プレイリスト）を取得
-===================================================== */
 app.get("/api/playlist", async (req, res, next) => {
   const channelName = req.query.channelName;
   if (!channelName) {
@@ -111,7 +86,7 @@ app.get("/api/playlist", async (req, res, next) => {
     const playlistResults = await yts.GetListByKeyword(channelName, false, 10, 0);
     const playlistItems = playlistResults.items || [];
     const playlist = playlistItems.map(item => ({
-      id: item.id, // ※環境により item.videoId になる可能性もあります
+      id: item.id,
       title: item.title || "No title"
     }));
     res.json({ playlist });
@@ -120,11 +95,6 @@ app.get("/api/playlist", async (req, res, next) => {
   }
 });
 
-/* =====================================================
-   /api/playlist-ejs エンドポイント（チャンネル用プレイリスト）
-   クエリパラメータ channelID と authorName を使用して
-   「channelID + 投稿者の名前」の検索結果をプレイリストとして提供する
-===================================================== */
 app.get("/api/playlist-ejs", async (req, res, next) => {
   const channelID = req.query.channelID;
   const authorName = req.query.authorName;
@@ -132,12 +102,11 @@ app.get("/api/playlist-ejs", async (req, res, next) => {
     return res.status(400).json({ error: "channelID および authorName パラメータが必要です" });
   }
   try {
-    // 検索キーワードとして channelID と authorName を連結
     const searchQuery = channelID + " " + authorName;
     const playlistResults = await yts.GetListByKeyword(searchQuery, false, 10, 0);
     const playlistItems = playlistResults.items || [];
     const playlist = playlistItems.map(item => ({
-      id: item.id, // 環境により item.videoId になる可能性もあります
+      id: item.id,
       title: item.title || "No title"
     }));
     res.json({ playlist });
@@ -146,23 +115,13 @@ app.get("/api/playlist-ejs", async (req, res, next) => {
   }
 });
 
-/* =====================================================
-   /video/:id エンドポイント
-   指定された動画IDについて、外部APIから動画詳細およびコメント情報を取得
-   ・各 API 呼び出しは 4 秒以内のタイムアウト
-   ・全体の最大待機時間は 15 秒
-   ・15 秒以内に stream_url が取得できなかった場合、fallback として
-     https://www.youtube-nocookie.com/embed/動画ID?autoplay=1 を利用
-   ・ページ内では右側にプレイリスト表示、そしてコントロールボタン（DL‑Yvideo／YouTube‑nocookie／動画を再読み込み／動画を再取得／ダウンロード）が配置されます。
-===================================================== */
 app.get("/video/:id", async (req, res, next) => {
   const videoId = req.params.id;
   if (!videoId) {
     return res.status(400).send("動画IDが必要です");
   }
-
+  
   try {
-    // 【変更】グローバル変数 apiListCache を利用する。
     if (!Array.isArray(apiListCache) || apiListCache.length === 0) {
       return res.status(500).send("有効なAPIリストが取得できませんでした。");
     }
@@ -172,11 +131,9 @@ app.get("/video/:id", async (req, res, next) => {
     let commentsData = null;
     let successfulApi = null;
 
-    // 全体待機時間：15秒
     const overallTimeout = 15000;
     const startTime = Date.now();
 
-    // 15秒以内に stream_url を取得できるか試行
     while (Date.now() - startTime < overallTimeout) {
       for (const apiBase of apiList) {
         if (Date.now() - startTime >= overallTimeout) break;
@@ -184,11 +141,10 @@ app.get("/video/:id", async (req, res, next) => {
           const videoResponse = await fetchWithTimeout(
             `${apiBase}/api/video/${videoId}`,
             {},
-            4000 // 各 API ごとのタイムアウト：4秒
+            4000
           );
           if (videoResponse.ok) {
             const tempData = await videoResponse.json();
-            // stream_url が存在するなら取得成功とみなす
             if (tempData.stream_url) {
               videoData = tempData;
               successfulApi = apiBase;
@@ -203,13 +159,11 @@ app.get("/video/:id", async (req, res, next) => {
       if (videoData && videoData.stream_url) break;
     }
 
-    // 15秒以内に stream_url が取得できなかった場合、fallback として youtube-nocookie を設定
     if (!videoData || !videoData.stream_url) {
       videoData = videoData || {};
       videoData.stream_url = "youtube-nocookie";
     }
 
-    // 成功した API がある場合、その API からコメント情報をタイムアウト付きで取得
     if (successfulApi) {
       try {
         const commentsResponse = await fetchWithTimeout(
@@ -228,8 +182,6 @@ app.get("/video/:id", async (req, res, next) => {
       commentsData = { commentCount: 0, comments: [] };
     }
 
-    // サーバー側で動画再生用HTMLを作成
-    // (1) DL‑Yvideo版（通常は video タグの埋め込み）
     const streamEmbedHTML =
       videoData.stream_url !== "youtube-nocookie"
         ? `<video controls autoplay style="border-radius: 8px;">
@@ -238,16 +190,10 @@ app.get("/video/:id", async (req, res, next) => {
            </video>`
         : `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="border-radius: 8px;"></iframe>`;
 
-    // (2) YouTube‑nocookie 版（iframe：サイズを 932×524、border:none、角丸）
     const youtubeEmbedHTML = `<iframe style="width: 932px; height:524px; border: none; border-radius: 8px;" src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
 
-    // コメント部分の HTML 生成
     let commentsHTML = "";
-    if (
-      commentsData.comments &&
-      Array.isArray(commentsData.comments) &&
-      commentsData.comments.length > 0
-    ) {
+    if (commentsData.comments && Array.isArray(commentsData.comments) && commentsData.comments.length > 0) {
       commentsHTML = commentsData.comments
         .map((comment) => {
           const thumb =
@@ -271,10 +217,6 @@ app.get("/video/:id", async (req, res, next) => {
       commentsHTML = "<p>コメントがありません。</p>";
     }
 
-    // HTML ページの生成
-    // ・プレイリストは即時表示、動画部分はまずローディングアニメーション（スピナー）表示し、
-    //   ページ読み込み完了後1秒で、コントロールボタンに対応した動画埋め込み用コンテナにデフォルト（DL‑Yvideo版＝Stream URL版）が挿入されます。
-    // ・コントロールボタン（DL‑Yvideo／YouTube‑nocookie／動画を再読み込み／動画を再取得／ダウンロード）はひとまとめに配置し、画面幅に合わせて横スクロール可能です。
     const html = `
 <!DOCTYPE html>
 <html lang="ja">
@@ -468,7 +410,6 @@ app.get("/video/:id", async (req, res, next) => {
   <div class="container">
     <div class="main-content">
       <div class="video-section">
-       
         <div class="video-player" id="video-player-container">
           <div class="loading-animation"><div class="spinner"></div></div>
         </div>
@@ -508,10 +449,8 @@ app.get("/video/:id", async (req, res, next) => {
       </div>
     </div>
   </div>
-  <!-- クライアントサイドスクリプト -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      // プレイリストの非同期取得（即時実行）
       const channelName = "${videoData.channelName || ''}";
       if (channelName) {
         fetch('/api/playlist?channelName=' + encodeURIComponent(channelName))
@@ -542,10 +481,8 @@ app.get("/video/:id", async (req, res, next) => {
         document.getElementById("playlist-container").innerHTML = "<p>チャネル情報がありません。</p>";
       }
       
-     
       const streamEmbedHTML = \`${streamEmbedHTML.replace(/`/g, '\\`')}\`;
       const youtubeEmbedHTML = \`${youtubeEmbedHTML.replace(/`/g, '\\`')}\`;
-      
       
       setTimeout(() => {
         const container = document.getElementById("video-player-container");
@@ -554,7 +491,6 @@ app.get("/video/:id", async (req, res, next) => {
         }
       }, 1000);
       
-      // 各コントロールボタンの処理
       const btnStream = document.getElementById("switch-stream-url");
       const btnNocookie = document.getElementById("switch-nocookie");
       const btnReload = document.getElementById("reload-video");
@@ -587,8 +523,6 @@ app.get("/video/:id", async (req, res, next) => {
         window.location.reload();
       });
       btnDownload.addEventListener("click", () => {
-        // ダウンロード用リンク：もし DL‑Yvideo 用URL（videoData.stream_url）が "youtube-nocookie" でなければそのまま、
-        // そうでなければ YouTube公式ページを開く
         const dlLink = ( "${videoData.stream_url}" !== "youtube-nocookie" )
             ? "${videoData.stream_url}"
             : "https://www.youtube.com/watch?v=${videoId}";
@@ -605,11 +539,6 @@ app.get("/video/:id", async (req, res, next) => {
   }
 });
 
-/* =====================================================
-   /channel/:channelId エンドポイント (EJS 利用)
-   検索結果やプレイリストでチャンネルがタップされた際に、
-   外部API (/api/v1/channels/channelId) を利用してチャンネル情報を取得し、EJS テンプレートで表示する
-===================================================== */
 app.get("/channel/:channelId", async (req, res, next) => {
   const channelId = req.params.channelId;
   if (!channelId) {
@@ -617,7 +546,6 @@ app.get("/channel/:channelId", async (req, res, next) => {
   }
 
   try {
-    // キャッシュされているAPIリストのうち、1件目を利用（必要に応じて戦略を変更してください）
     const apiBase = apiListCache[0];
     if (!apiBase) {
       return res.status(500).send("有効なAPIリストが取得できませんでした。");
@@ -629,26 +557,16 @@ app.get("/channel/:channelId", async (req, res, next) => {
     }
     const channelData = await response.json();
     
-    // EJS テンプレート "channel.ejs" をレンダリング
     res.render("channel", { channel: channelData });
   } catch (err) {
     next(err);
   }
 });
 
-/* =====================================================
-   クライアントサイドのルーティング対応
-   /nothing/* へのリクエストは public/index.html を返す
-===================================================== */
 app.get("/nothing/*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/* =====================================================
-   エラーハンドリングおよび404ハンドリング
-   存在しないURLの場合は public/error.html を返す
-   内部エラーの場合はエラーログを出力し public/error.html を返す
-===================================================== */
 app.use((req, res, next) => {
   res.status(404).sendFile(path.join(__dirname, "public", "error.html"));
 });
@@ -657,7 +575,6 @@ app.use((err, req, res, next) => {
   res.status(500).sendFile(path.join(__dirname, "public", "error.html"));
 });
 
-// サーバー起動
 app.listen(port, () => {
   console.log(`サーバーがポート ${port} で起動しました。`);
 });
