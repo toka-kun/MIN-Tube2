@@ -10,7 +10,7 @@
       rel="stylesheet"
     />
     <style>
-      
+      /* 全体リセット */
       * {
         box-sizing: border-box;
         margin: 0;
@@ -22,6 +22,45 @@
         color: #e0e0e0;
       }
       
+      /* ローディング表示 */
+      #loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      .spinner {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #bb86fc;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .loading-text {
+        margin-top: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #fff;
+        animation: fadeInOut 1.5s infinite;
+      }
+      @keyframes fadeInOut {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      
+      /* ランディングページ（初回表示） */
       #landing {
         height: 100vh;
         display: flex;
@@ -68,6 +107,70 @@
         background-color: #a369e7;
       }
       
+      /* ツールコンテナ（ランディング画面内の検索フォームの下に配置） */
+      .tools-container {
+        background-color: #1e1e1e;
+        border-radius: 20px;
+        padding: 30px;
+        margin: 20px auto;
+        max-width: 1200px;
+        width: 90%;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      }
+      .tools-container h2 {
+        text-align: center;
+        font-size: 32px;
+        margin-bottom: 20px;
+        color: #bb86fc;
+      }
+      .cards {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .card {
+        background-color: #333;
+        border-radius: 15px;
+        padding: 20px;
+        width: 280px;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.9);
+      }
+      .card h3 {
+        font-size: 24px;
+        color: #fff;
+        margin-bottom: 10px;
+      }
+      .card p {
+        font-size: 16px;
+        color: #ccc;
+        line-height: 1.4;
+      }
+      .card a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+      @media (max-width: 600px) {
+        .cards {
+          flex-direction: column;
+          align-items: center;
+        }
+        .card {
+          width: 90%;
+        }
+        .tools-container {
+          padding: 20px;
+        }
+      }
+      
+      /* 検索結果表示用メインコンテンツ（初回は非表示） */
       #mainContent {
         display: none;
       }
@@ -119,13 +222,11 @@
         margin: 0 auto;
         padding: 0 20px 20px 20px;
       }
-      
       #results {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 20px;
       }
-     
       .video {
         background-color: #1e1e1e;
         border-radius: 4px;
@@ -149,7 +250,6 @@
         font-size: 18px;
         color: #e0e0e0;
       }
-      
       .autocomplete-suggestions {
         position: absolute;
         top: 100%;
@@ -182,43 +282,7 @@
         }
       }
       
-      #loading {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-      }
-      .spinner {
-        border: 8px solid #f3f3f3;
-        border-top: 8px solid #bb86fc;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      .loading-text {
-        margin-top: 20px;
-        font-size: 24px;
-        font-weight: bold;
-        color: #fff;
-        animation: fadeInOut 1.5s infinite;
-      }
-      @keyframes fadeInOut {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-      }
-      
+      /* インラインローディング */
       #inlineLoading {
         text-align: center;
         padding: 20px;
@@ -234,27 +298,47 @@
     </style>
   </head>
   <body>
-  
+    <!-- ローディング表示 -->
     <div id="loading">
       <div class="spinner"></div>
       <div class="loading-text">loading...</div>
     </div>
-
-    <!-- ランディングページ -->
+    
+    <!-- ランディングページ（初回表示） -->
     <div id="landing">
       <h1>MIN-Tube2</h1>
       <form id="landingSearchForm">
-        <input
-          type="text"
-          id="landingQuery"
-          placeholder="Enter keyword"
-        />
+        <input type="text" id="landingQuery" placeholder="Enter keyword" />
         <button type="submit">search</button>
       </form>
+      <!-- ツールコンテナ：ランディング画面内検索フォームの下に配置 -->
+      <div class="tools-container">
+        <h2>ツール</h2>
+        <div class="cards">
+          <div class="card">
+            <a href="api.html">
+              <h3>API</h3>
+              <p>システム連携用のRESTful APIをご提供。外部サービスとの連動が可能です。</p>
+            </a>
+          </div>
+          <div class="card">
+            <a href="tools.html">
+              <h3>ツール</h3>
+              <p>各種ユーティリティツールを取り揃え、業務効率化をサポートします。</p>
+            </a>
+          </div>
+          <div class="card">
+            <a href="setting.html">
+              <h3>設定</h3>
+              <p>ユーザー設定やシステム構成のカスタマイズが可能。お好みに合わせて調整してください。</p>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- 検索結果表示用のメインコンテンツ -->
-    <div id="mainContent">
+    
+    <!-- メインコンテンツ（検索結果表示用） -->
+    <div id="mainContent" style="display: none;">
       <header>
         <h1>MIN-Tube2</h1>
         <form id="searchForm">
@@ -266,21 +350,28 @@
         <div id="results"></div>
       </div>
     </div>
-
+    
     <script>
-      let currentPage = 0; 
-      let isFetching = false; 
-      const resultsDiv = document.getElementById("results");
-      const queryInput = document.getElementById("searchQuery");
-
+      // --- 生成用関数 ---
+      function generateRandomString() {
+        return Math.random().toString(36).substring(2, 10);
+      }
       
+      // --- グローバル変数 ---
+      let currentPage = 0;
+      let isFetching = false;
+      const resultsDiv = document.getElementById("results");
+      const searchQueryInput = document.getElementById("searchQuery");
+      const landingSearchForm = document.getElementById("landingSearchForm");
+      const landingQueryInput = document.getElementById("landingQuery");
+      
+      // --- ローディング関連 ---
       function showLoading() {
         document.getElementById("loading").style.display = "flex";
       }
       function hideLoading() {
         document.getElementById("loading").style.display = "none";
       }
-      
       function showInlineLoading() {
         const inline = document.createElement("div");
         inline.id = "inlineLoading";
@@ -294,10 +385,9 @@
         const inline = document.getElementById("inlineLoading");
         if (inline) inline.remove();
       }
-
       
+      // --- 検索処理 ---
       async function performSearch(query, page) {
-        
         if (page === 0) {
           showLoading();
         } else {
@@ -312,18 +402,19 @@
             return;
           }
           const data = await response.json();
-         
           if (page > 0) hideInlineLoading();
           if (data && data.items && data.items.length > 0) {
             data.items.forEach((item) => {
-              
               if (!document.querySelector(`[data-item-id="${item.id}"]`)) {
-               
-                if ((item.type && item.type === "channel") || (item.id && item.id.startsWith("UC"))) {
+                if (
+                  (item.type && item.type === "channel") ||
+                  (item.id && item.id.startsWith("UC"))
+                ) {
                   // チャンネルの場合
                   const channelId = item.id;
                   const title = item.title;
-                  let thumbnailUrl = "https://cdn.glitch.global/5a42a645-7145-41c3-98d3-e3ea8d09e90a/thumbnails%2Fkkrn_icon_user_1.png?1744708409009";
+                  let thumbnailUrl =
+                    "https://cdn.glitch.global/5a42a645-7145-41c3-98d3-e3ea8d09e90a/thumbnails%2Fkkrn_icon_user_1.png?1744708409009";
                   if (item.authorThumbnails && item.authorThumbnails.length > 0) {
                     thumbnailUrl = item.authorThumbnails[0].url;
                   } else {
@@ -373,23 +464,21 @@
           if (page === 0) hideLoading();
         }
       }
-
       
+      // --- オートコンプリート ---
       function setupAutocomplete(inputElement) {
         const parent = inputElement.parentElement;
         inputElement.setAttribute("autocomplete", "off");
         const suggestionContainer = document.createElement("div");
         suggestionContainer.className = "autocomplete-suggestions";
         parent.appendChild(suggestionContainer);
-
+        
         inputElement.addEventListener("input", async function () {
           const query = inputElement.value;
           suggestionContainer.innerHTML = "";
           if (!query) return;
           try {
-            const response = await fetch(
-              "/api/autocomplete?q=" + encodeURIComponent(query)
-            );
+            const response = await fetch("/api/autocomplete?q=" + encodeURIComponent(query));
             if (!response.ok) return;
             const data = await response.json();
             const suggestions = data.suggestions || [];
@@ -407,70 +496,66 @@
             console.error(err);
           }
         });
-
+        
         document.addEventListener("click", function (event) {
           if (!parent.contains(event.target)) {
             suggestionContainer.innerHTML = "";
           }
         });
       }
-
-   
-      function generateRandomString() {
-        return Math.random().toString(36).substring(2, 10);
-      }
-
       
-      document
-        .getElementById("landingSearchForm")
-        .addEventListener("submit", function (e) {
-          e.preventDefault();
-          const landingQueryInput = document.getElementById("landingQuery");
-          const query = landingQueryInput.value.trim();
-          if (!query) {
-            alert("キーワードを入力してください。");
-            return;
-          }
-          resultsDiv.innerHTML = "";
-          currentPage = 0;
-          queryInput.value = query;
-
-          
-          const randomStr = generateRandomString();
-          history.pushState({}, "", "/nothing/" + randomStr);
-
-          document.getElementById("landing").style.display = "none";
-          document.getElementById("mainContent").style.display = "block";
-          performSearch(query, currentPage);
-          currentPage++;
-        });
-
+      setupAutocomplete(landingQueryInput);
+      setupAutocomplete(searchQueryInput);
       
-      document.getElementById("searchForm").addEventListener("submit", function (e) {
+      // --- ランディング画面の検索送信 ---
+      landingSearchForm.addEventListener("submit", function (e) {
         e.preventDefault();
-        const query = queryInput.value.trim();
+        const query = landingQueryInput.value.trim();
         if (!query) {
           alert("キーワードを入力してください。");
           return;
         }
         resultsDiv.innerHTML = "";
         currentPage = 0;
-
-      
+        // ヘッダーの検索欄にも値を引き継ぐ
+        searchQueryInput.value = query;
+        // URL を /nothing/ ランダムな文字列 に更新
         const randomStr = generateRandomString();
         history.pushState({}, "", "/nothing/" + randomStr);
-
+  
+        // 検索結果表示時はランディング画面（およびツールコンテナ）を非表示
+        document.getElementById("landing").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+  
         performSearch(query, currentPage);
         currentPage++;
       });
-
       
+      // --- ヘッダーの検索送信 ---
+      document.getElementById("searchForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const query = searchQueryInput.value.trim();
+        if (!query) {
+          alert("キーワードを入力してください。");
+          return;
+        }
+        resultsDiv.innerHTML = "";
+        currentPage = 0;
+        // ヘッダー検索時も URL 更新
+        const randomStr = generateRandomString();
+        history.pushState({}, "", "/nothing/" + randomStr);
+  
+        performSearch(query, currentPage);
+        currentPage++;
+      });
+      
+      // --- 無限スクロール ---
       window.addEventListener("scroll", async function () {
         if (
           window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
           !isFetching
         ) {
-          const query = queryInput.value.trim();
+          const query = searchQueryInput.value.trim();
           if (query) {
             isFetching = true;
             await performSearch(query, currentPage);
@@ -479,10 +564,26 @@
           }
         }
       });
-
       
-      setupAutocomplete(document.getElementById("landingQuery"));
-      setupAutocomplete(queryInput);
+      // --- URLによる自動検索処理 ---
+      window.addEventListener("load", function () {
+        const path = window.location.pathname;
+        if (path.startsWith("/nothing/search")) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const queryParam = urlParams.get("q");
+          if (queryParam && queryParam.trim() !== "") {
+            searchQueryInput.value = queryParam;
+            resultsDiv.innerHTML = "";
+            currentPage = 0;
+            // 自動検索実行時はランディングおよびツールコンテナを非表示
+            document.getElementById("landing").style.display = "none";
+            document.getElementById("mainContent").style.display = "block";
+            
+            performSearch(queryParam, currentPage);
+            currentPage++;
+          }
+        }
+      });
     </script>
   </body>
 </html>
