@@ -320,7 +320,7 @@ app.get("/video/:id", async (req, res, next) => {
       height: auto;
       background-color: black;
     }
-    /* 統合されたコントロールボタン */
+    
     #controls {
       display: flex;
       justify-content: center;
@@ -407,7 +407,7 @@ app.get("/video/:id", async (req, res, next) => {
       display: block;
       text-align: center;
     }
-    /* プレイリスト領域（右側） */
+    
     .playlist-section {
       width: 300px;
       background-color: #1e1e1e;
@@ -440,7 +440,7 @@ app.get("/video/:id", async (req, res, next) => {
       font-weight: bold;
       color: #e0e0e0;
     }
-    /* ローディングアニメーション（スピナー） */
+    
     .loading-animation {
       display: flex;
       justify-content: center;
@@ -468,11 +468,11 @@ app.get("/video/:id", async (req, res, next) => {
   <div class="container">
     <div class="main-content">
       <div class="video-section">
-        <!-- 動画プレイヤー部分：最初はスピナー（ローディングアニメーション）表示 -->
+       
         <div class="video-player" id="video-player-container">
           <div class="loading-animation"><div class="spinner"></div></div>
         </div>
-        <!-- 統合されたコントロールボタン -->
+        
         <div id="controls">
           <button id="switch-stream-url" class="active">DL‑Yvideo</button>
           <button id="switch-nocookie">YouTube‑nocookie</button>
@@ -542,11 +542,11 @@ app.get("/video/:id", async (req, res, next) => {
         document.getElementById("playlist-container").innerHTML = "<p>チャネル情報がありません。</p>";
       }
       
-      // クライアントサイド用：2種類の動画埋め込み用HTMLを作成
+     
       const streamEmbedHTML = \`${streamEmbedHTML.replace(/`/g, '\\`')}\`;
       const youtubeEmbedHTML = \`${youtubeEmbedHTML.replace(/`/g, '\\`')}\`;
       
-      // ページが完全に読み込まれてから1秒後に、デフォルトの動画（DL‑Yvideo版＝Stream URL版）を埋め込む
+      
       setTimeout(() => {
         const container = document.getElementById("video-player-container");
         if (container) {

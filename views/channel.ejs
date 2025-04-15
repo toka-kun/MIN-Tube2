@@ -109,7 +109,7 @@
     </div>
     <p><%= channel.description || "説明はありません。" %></p>
 
-    <!-- 動画プレイリスト -->
+    
     <div class="playlist">
       <h2>動画プレイリスト</h2>
       <div id="playlistContainer">
@@ -122,7 +122,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const playlistContainer = document.getElementById('playlistContainer');
       try {
-        // channel.authorId と channel.author をクエリ文字列に含めて検索
+        
         const url = '/api/playlist-ejs?channelID=' + encodeURIComponent('<%= channel.authorId %>') +
                     '&authorName=' + encodeURIComponent('<%= channel.author %>');
         const response = await fetch(url);

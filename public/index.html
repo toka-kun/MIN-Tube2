@@ -10,7 +10,7 @@
       rel="stylesheet"
     />
     <style>
-      /* リセット */
+      
       * {
         box-sizing: border-box;
         margin: 0;
@@ -21,7 +21,7 @@
         background-color: #121212;
         color: #e0e0e0;
       }
-      /* ランディングページ（初回表示）のスタイル */
+      
       #landing {
         height: 100vh;
         display: flex;
@@ -67,7 +67,7 @@
       #landing button:hover {
         background-color: #a369e7;
       }
-      /* 検索結果表示（メインコンテンツ）のスタイル */
+      
       #mainContent {
         display: none;
       }
@@ -119,13 +119,13 @@
         margin: 0 auto;
         padding: 0 20px 20px 20px;
       }
-      /* 検索結果表示エリアのグリッドレイアウト */
+      
       #results {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 20px;
       }
-      /* 動画／チャンネルカードのスタイル */
+     
       .video {
         background-color: #1e1e1e;
         border-radius: 4px;
@@ -149,7 +149,7 @@
         font-size: 18px;
         color: #e0e0e0;
       }
-      /* Autocomplete 用のスタイル */
+      
       .autocomplete-suggestions {
         position: absolute;
         top: 100%;
@@ -181,7 +181,7 @@
           width: 100%;
         }
       }
-      /* ローディング（初回検索用）全画面オーバーレイ */
+      
       #loading {
         position: fixed;
         top: 0;
@@ -218,7 +218,7 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
       }
-      /* インラインローディング（無限スクロール用） */
+      
       #inlineLoading {
         text-align: center;
         padding: 20px;
@@ -234,7 +234,7 @@
     </style>
   </head>
   <body>
-    <!-- 初回検索用のローディングオーバーレイ -->
+  
     <div id="loading">
       <div class="spinner"></div>
       <div class="loading-text">loading...</div>
@@ -268,19 +268,19 @@
     </div>
 
     <script>
-      let currentPage = 0; // 現在のページ番号（初回は 0）
-      let isFetching = false; // API 呼び出し中の状態管理
+      let currentPage = 0; 
+      let isFetching = false; 
       const resultsDiv = document.getElementById("results");
       const queryInput = document.getElementById("searchQuery");
 
-      // 初回検索用は全画面ローディング
+      
       function showLoading() {
         document.getElementById("loading").style.display = "flex";
       }
       function hideLoading() {
         document.getElementById("loading").style.display = "none";
       }
-      // 無限スクロール用は結果エリア下部にインラインローディング表示
+      
       function showInlineLoading() {
         const inline = document.createElement("div");
         inline.id = "inlineLoading";
@@ -295,9 +295,9 @@
         if (inline) inline.remove();
       }
 
-      // 共通の検索処理（ローディング表示付き）
+      
       async function performSearch(query, page) {
-        // ページ番号が 0 の場合は全画面、以降はインラインでローディング表示
+        
         if (page === 0) {
           showLoading();
         } else {
@@ -312,13 +312,13 @@
             return;
           }
           const data = await response.json();
-          // インラインローディングの場合は削除
+         
           if (page > 0) hideInlineLoading();
           if (data && data.items && data.items.length > 0) {
             data.items.forEach((item) => {
-              // 重複防止のため、既に同じ item が表示されていないか確認（data-item-id 属性を利用）
+              
               if (!document.querySelector(`[data-item-id="${item.id}"]`)) {
-                // 判定：item.type が "channel" か、または item.id が "UC" から始まっていれば（ヘユーチューブチャンネルIDの特徴）チャンネル扱い
+               
                 if ((item.type && item.type === "channel") || (item.id && item.id.startsWith("UC"))) {
                   // チャンネルの場合
                   const channelId = item.id;
@@ -374,7 +374,7 @@
         }
       }
 
-      // Autocomplete 機能
+      
       function setupAutocomplete(inputElement) {
         const parent = inputElement.parentElement;
         inputElement.setAttribute("autocomplete", "off");
@@ -415,12 +415,12 @@
         });
       }
 
-      // ランダムな文字列生成関数（8文字程度のランダムな英数字）
+   
       function generateRandomString() {
         return Math.random().toString(36).substring(2, 10);
       }
 
-      // ランディングページの検索フォーム送信イベント
+      
       document
         .getElementById("landingSearchForm")
         .addEventListener("submit", function (e) {
@@ -435,7 +435,7 @@
           currentPage = 0;
           queryInput.value = query;
 
-          // URL を /nothing/＋ランダム文字列 に更新して履歴に追加
+          
           const randomStr = generateRandomString();
           history.pushState({}, "", "/nothing/" + randomStr);
 
@@ -445,7 +445,7 @@
           currentPage++;
         });
 
-      // ヘッダーの検索フォーム送信イベント（新たな検索）
+      
       document.getElementById("searchForm").addEventListener("submit", function (e) {
         e.preventDefault();
         const query = queryInput.value.trim();
@@ -456,7 +456,7 @@
         resultsDiv.innerHTML = "";
         currentPage = 0;
 
-        // URL を更新して履歴に追加
+      
         const randomStr = generateRandomString();
         history.pushState({}, "", "/nothing/" + randomStr);
 
@@ -464,7 +464,7 @@
         currentPage++;
       });
 
-      // 無限スクロールの実装
+      
       window.addEventListener("scroll", async function () {
         if (
           window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
@@ -480,7 +480,7 @@
         }
       });
 
-      // 各検索欄へオートコンプリート機能を初期化
+      
       setupAutocomplete(document.getElementById("landingQuery"));
       setupAutocomplete(queryInput);
     </script>
