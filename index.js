@@ -567,6 +567,18 @@ app.get("/nothing/*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+app.get("/api", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "tools/api.html"));
+});
+
+app.get("/apps", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "tools/apps.html"));
+});
+
+app.get("/setting", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "tools/setting.html"));
+});
+
 app.use((req, res, next) => {
   res.status(404).sendFile(path.join(__dirname, "public", "error.html"));
 });
