@@ -10,6 +10,7 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
 const API_HEALTH_CHECKER = "https://airy-gamy-exoplanet.glitch.me/check";
+const TEMP_API_LIST = "https://raw.githubusercontent.com/Minotaur-ZAOU/test/refs/heads/main/min-tube-api.json";
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -18,6 +19,22 @@ let currentQuery = "";
 let apiListCache = [];
 
 async function updateApiListCache() {
+  let tempApiList = [];
+  
+  // 一時的にAPIリストを取得
+  try {
+    const tempResponse = await fetch(TEMP_API_LIST);
+    if (tempResponse.ok) {
+      tempApiList = await tempResponse.json();
+      console.log("一時的なAPIリストを取得しました:", tempApiList);
+    } else {
+      console.error("一時的なAPIリスト取得でエラー発生:", tempResponse.status);
+    }
+  } catch (err) {
+    console.error("一時的なAPIリストの取得に失敗しました:", err);
+  }
+
+  // メインのAPIリストを取得
   try {
     const response = await fetch(API_HEALTH_CHECKER);
     if (response.ok) {
@@ -25,9 +42,19 @@ async function updateApiListCache() {
       console.log("APIリストキャッシュを更新しました:", apiListCache);
     } else {
       console.error("APIヘルスチェッカーでエラー発生:", response.status);
+      // メインAPIリストが取得できなかった場合、一時的なリストを使用
+      if (tempApiList.length > 0) {
+        apiListCache = tempApiList;
+        console.log("一時的なAPIリストを使用します:", apiListCache);
+      }
     }
   } catch (err) {
     console.error("APIリストの更新に失敗しました:", err);
+    // メインAPIリストが取得できなかった場合、一時的なリストを使用
+    if (tempApiList.length > 0) {
+      apiListCache = tempApiList;
+      console.log("一時的なAPIリストを使用します:", apiListCache);
+    }
   }
 }
 
@@ -41,6 +68,11 @@ function fetchWithTimeout(url, options = {}, timeout = 4000) {
     )
   ]);
 }
+
+app.get("/", async (req, res) => {
+  await updateApiListCache(); // エンドポイントに接続したときにキャッシュを更新
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 app.get("/api/search", async (req, res, next) => {
   const query = req.query.q;
@@ -575,9 +607,27 @@ app.get("/apps", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/apps.html"));
 });
 
-app.get("/setting", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "tools/setting.html"));
+app.get("/about", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "tools/about.html"));
 });
+
+app.get('/all-api', async (req, res) => {
+    const url = 'https://raw.githubusercontent.com/Minotaur-ZAOU/test/refs/heads/main/min-tube2-all-api.json';
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).send('Error fetching data');
+    }
+});
+
 
 app.use((req, res, next) => {
   res.status(404).sendFile(path.join(__dirname, "public", "error.html"));
