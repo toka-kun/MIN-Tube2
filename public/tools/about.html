@@ -2,197 +2,203 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>設定ページ</title>
+  <title>About MIN-Tube2</title>
   <style>
-    /* ベーススタイル */
-    * {
-      box-sizing: border-box;
-    }
+    /* グローバルスタイル（ダークテーマ） */
     body {
       margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #1e1e1e;
-      color: #f0f0f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #e0e0e0;
     }
-    .container {
-      background: #2b2b2b;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      max-width: 500px;
-      width: 90%;
+    
+    /* キャンバスコンテナ：初めは全画面固定、背景は黒 */
+    #canvasContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      transition: transform 1s ease-in-out;
+      z-index: 10;
+    }
+    /* slide-up クラスが付与されると、上方向にスライドして画面外へ */
+    #canvasContainer.slide-up {
+      transform: translateY(-100%);
+    }
+    /* canvas全体にフィット */
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* About コンテンツ：初期は下方向にずれ、透明な状態。後でフェード＆スライド */
+    #aboutContent {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+      padding: 80px 20px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    #aboutContent.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+ 
+    .animate-section {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: sectionFadeIn 1s forwards;
+    }
+    @keyframes sectionFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+ 
+    section {
+      margin-bottom: 40px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 20px;
     }
     h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.5em;
       text-align: center;
-      margin-bottom: 1.5rem;
-    }
-    .form-group {
-      margin-bottom: 1.3rem;
-      display: flex;
-      flex-direction: column;
-    }
-    label {
-      margin-bottom: 0.5rem;
-      font-weight: bold;
-    }
-    input[type="text"],
-    input[type="file"] {
-      padding: 0.5rem;
-      border-radius: 4px;
-      border: none;
-      outline: none;
-      background-color: #3a3a3a;
       color: #fff;
     }
-    input[type="text"]::placeholder {
-      color: #bbb;
+    h2 {
+      font-size: 2em;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+      color: #ccc;
     }
-    button {
-      cursor: pointer;
-      padding: 0.7rem 1.2rem;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      font-weight: bold;
-      transition: background 0.3s;
-      margin-top: 0.5rem;
-    }
-    /* ボタンごとのスタイル */
-    #changeSettings {
-      background-color: #4caf50;
-      color: #fff;
-      width: 100%;
-    }
-    #changeSettings:hover {
-      background-color: #45a045;
-    }
-    #redirectAPI {
-      background-color: #2196F3;
-      color: #fff;
-      width: 100%;
-      margin-top: 1rem;
-    }
-    #redirectAPI:hover {
-      background-color: #1e88e5;
-    }
-    #openPopup {
-      background-color: #f44336;
-      color: #fff;
-      width: 100%;
-      margin-top: 1rem;
-    }
-    #openPopup:hover {
-      background-color: #e53935;
+    p {
+      font-size: 1em;
+      line-height: 1.6;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>設定ページ</h1>
-    <!-- タイトル・アイコン変更フォーム -->
-    <form id="settingsForm">
-      <div class="form-group">
-        <label for="titleInput">サイトタイトル</label>
-        <input type="text" id="titleInput" placeholder="新しいタイトルを入力してください">
-      </div>
-      <div class="form-group">
-        <label for="iconInput">サイトアイコン</label>
-        <input type="file" id="iconInput" accept="image/*">
-      </div>
-      <button type="button" id="changeSettings">変更を適用</button>
-    </form>
-
-    <!-- APIリダイレクト（最新 / に遷移） -->
-    <button type="button" id="redirectAPI">最新 API にリダイレクト</button>
-
-    <!-- about:blank を開くボタン -->
-    <button type="button" id="openPopup">about:blank を開く</button>
+ 
+  <div id="canvasContainer">
+    <canvas id="canvas"></canvas>
   </div>
+  
 
+  <div id="aboutContent">
+    <section>
+      <h1>MIN-Tube2</h1>
+      <div class="developer-info animate-section">
+        <h2>開発者</h2>
+        <p>
+          minoです。<br>
+        
+            アカウントホーム一覧<br>
+        
+  Github<a href="おk">https</a>
+      <br>
+          Discord<a href="https">https</a>
+          <br>
+          X<a href="x.com">https</a>
+
+        </p>
+      </div>
+      <div class="technology animate-section">
+        <h2>MIN-Tube2</h2>
+        <p>
+          
+        </p>
+      </div>
+      <div class="future-plan animate-section">
+        <h2>今後の方針</h2>
+        <p>
+          
+        </p>
+      </div>
+    </section>
+  </div>
+  
   <script>
-    // タイトルとアイコンを変更する
-    document.getElementById('changeSettings').addEventListener('click', function() {
-      // タイトル変更
-      const newTitle = document.getElementById('titleInput').value;
-      if (newTitle.trim() !== "") {
-        document.title = newTitle;
-        alert("タイトルを '" + newTitle + "' に変更しました");
-      }
+    // DOM要素の取得
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const aboutContent = document.getElementById('aboutContent');
+    
+    /* ======== MIN-Tube2 アニメーションの設定 ======== */
+    let fontSize = 0, textWidth = 0, textX = 0, textY = 0;
+    const minTubeText = "Hello MIN-Tube2";
+    // 画面サイズに合わせたフォントサイズとテキスト配置を更新
+    function updateTextMetrics() {
+      fontSize = Math.min(canvas.width, canvas.height) / 10;
+      ctx.font = `bold ${fontSize}px "Brush Script MT", cursive, Arial`;
+      const metrics = ctx.measureText(minTubeText);
+      textWidth = metrics.width;
+      textX = (canvas.width - textWidth) / 2;
+      textY = canvas.height / 2;
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      updateTextMetrics();
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    /* ======== アニメーションフェーズ ======== */
+    // 今回は「MIN-Tube2」の筆アニメーションのみを実行する
+    const minTubeDuration = 1300;
+    let minTubeStart = null;
+    
+    // MIN-Tube2 を筆で書くアニメーション（グラデーション紫）
+    function drawMinTube(progress) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = `bold ${fontSize}px "Brush Script MT", cursive, Arial`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
       
-      // アイコン変更
-      const iconFile = document.getElementById('iconInput').files[0];
-      if (iconFile) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          let favicon = document.querySelector("link[rel='icon']");
-          if (!favicon) {
-            favicon = document.createElement("link");
-            favicon.rel = "icon";
-            document.head.appendChild(favicon);
-          }
-          favicon.href = e.target.result;
-          alert("アイコンを更新しました");
-        };
-        reader.readAsDataURL(iconFile);
-      }
-    });
-
-    // 最新 API(/) へのリダイレクト
-    document.getElementById('redirectAPI').addEventListener('click', function() {
-      // ここでは最新の API エンドポイントがルート（/）と仮定しています
-      window.location.href = "/";
-    });
-
-    // about:blank でポップアップを開き、現在の URL を埋め込む
-    document.getElementById('openPopup').addEventListener('click', function() {
-      const currentUrl = window.location.href;
-      // ウィンドウサイズは幅600px、高さ400px に設定
-      const popup = window.open("about:blank", "popupWindow", "width=600,height=400");
-      if (popup) {
-        popup.document.write(`
-          <!DOCTYPE html>
-          <html lang="ja">
-          <head>
-            <meta charset="UTF-8">
-            <title>現在の URL</title>
-            <style>
-              body {
-                font-family: 'Segoe UI', sans-serif;
-                background-color: #111;
-                color: #f0f0f0;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                margin: 0;
-              }
-              h2 {
-                margin-bottom: 20px;
-              }
-              p {
-                word-break: break-all;
-                text-align: center;
-              }
-            </style>
-          </head>
-          <body>
-            <h2>現在のサイト URL</h2>
-            <p>${currentUrl}</p>
-          </body>
-          </html>
-        `);
-        popup.document.close();
+      const gradient = ctx.createLinearGradient(textX, 0, textX + textWidth, 0);
+      gradient.addColorStop(0, "#a4508b");
+      gradient.addColorStop(1, "#5f0a87");
+      ctx.fillStyle = gradient;
+      
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(textX, textY - fontSize / 2, textWidth * progress, fontSize);
+      ctx.clip();
+      ctx.fillText(minTubeText, textX, textY);
+      ctx.restore();
+    }
+    
+    // メインアニメーションループ
+    function animate(timestamp) {
+      if (!minTubeStart) minTubeStart = timestamp;
+      const elapsed = timestamp - minTubeStart;
+      const progress = Math.min(elapsed / minTubeDuration, 1);
+      drawMinTube(progress);
+      if (progress < 1) {
+        requestAnimationFrame(animate);
       } else {
-        alert("ポップアップがブロックされています。");
+        // MIN-Tube2 アニメーション終了後、500ms後にAbout画面へフェーズイン
+        setTimeout(() => {
+          canvasContainer.classList.add('slide-up');
+          aboutContent.classList.add('visible');
+          document.querySelectorAll("#aboutContent section").forEach((section, i) => {
+            section.style.animationDelay = (i * 0.3) + "s";
+            section.classList.add('animate-section');
+          });
+        }, 500);
       }
-    });
+    }
+    
+    requestAnimationFrame(animate);
   </script>
 </body>
 </html>

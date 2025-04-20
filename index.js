@@ -286,11 +286,11 @@ app.get("/video/:id", async (req, res, next) => {
     }
     .video-player {
       width: 100%;
-      max-width: 800px;
+      max-width: auto;
       margin: 0 auto;
     }
     video, iframe {
-      width: 100%;
+      width:  100%;
       height: auto;
       background-color: black;
     }
@@ -459,7 +459,6 @@ app.get("/video/:id", async (req, res, next) => {
             <img class="channel-avatar" src="${videoData.channelImage || ''}" alt="${videoData.channelName || 'チャンネル'}">
             <div>
               <p>${videoData.channelName || 'チャンネル名未設定'}</p>
-              <p>チャンネルID: ${videoData.channelId || '不明'}</p>
             </div>
           </div>
           <p>${videoData.videoDes || "詳細情報はありません"}</p>
