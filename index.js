@@ -20,41 +20,42 @@ let apiListCache = [];
 
 async function updateApiListCache() {
   let tempApiList = [];
+  let mainApiList = [];
   
-  // 一時的にAPIリストを取得
+  // 1. GitHubのAPIリストを最初に取得
   try {
     const tempResponse = await fetch(TEMP_API_LIST);
     if (tempResponse.ok) {
       tempApiList = await tempResponse.json();
-      console.log("一時的なAPIリストを取得しました:", tempApiList);
+      console.log("GitHubのAPIリストを取得しました:", tempApiList);
     } else {
-      console.error("一時的なAPIリスト取得でエラー発生:", tempResponse.status);
+      console.error("GitHub APIリスト取得エラー:", tempResponse.status);
     }
   } catch (err) {
-    console.error("一時的なAPIリストの取得に失敗しました:", err);
+    console.error("GitHub APIリストの取得に失敗:", err);
   }
 
-  // メインのAPIリストを取得
+  // 2. まずはGitHubのリストを`apiListCache`にセット
+  if (tempApiList.length > 0) {
+    apiListCache = tempApiList;
+  }
+
+  // 3. GlitchのAPIリストを取得（成功したら`apiListCache`を更新）
   try {
     const response = await fetch(API_HEALTH_CHECKER);
     if (response.ok) {
-      apiListCache = await response.json();
-      console.log("APIリストキャッシュを更新しました:", apiListCache);
-    } else {
-      console.error("APIヘルスチェッカーでエラー発生:", response.status);
-      // メインAPIリストが取得できなかった場合、一時的なリストを使用
-      if (tempApiList.length > 0) {
-        apiListCache = tempApiList;
-        console.log("一時的なAPIリストを使用します:", apiListCache);
+      mainApiList = await response.json();
+      console.log("GlitchのAPIリストを取得しました:", mainApiList);
+      // 4. Glitchのリストが最新なら更新
+      if (Array.isArray(mainApiList) && mainApiList.length > 0) {
+        apiListCache = mainApiList;
+        console.log("APIリストを最新のGlitchのリストに更新しました");
       }
+    } else {
+      console.error("APIヘルスチェッカーのエラー:", response.status);
     }
   } catch (err) {
-    console.error("APIリストの更新に失敗しました:", err);
-    // メインAPIリストが取得できなかった場合、一時的なリストを使用
-    if (tempApiList.length > 0) {
-      apiListCache = tempApiList;
-      console.log("一時的なAPIリストを使用します:", apiListCache);
-    }
+    console.error("Glitch APIリストの取得に失敗:", err);
   }
 }
 
