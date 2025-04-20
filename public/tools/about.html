@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>About MIN-Tube2</title>
   <style>
-    /* グローバルスタイル（ダークテーマ） */
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #121212;
       color: #e0e0e0;
     }
-    
-    /* キャンバスコンテナ：初めは全画面固定、背景は黒 */
     #canvasContainer {
       position: fixed;
       top: 0;
@@ -24,18 +21,14 @@
       transition: transform 1s ease-in-out;
       z-index: 10;
     }
-    /* slide-up クラスが付与されると、上方向にスライドして画面外へ */
     #canvasContainer.slide-up {
       transform: translateY(-100%);
     }
-    /* canvas全体にフィット */
     canvas {
       display: block;
       width: 100%;
       height: 100%;
     }
-    
-    /* About コンテンツ：初期は下方向にずれ、透明な状態。後でフェード＆スライド */
     #aboutContent {
       opacity: 0;
       transform: translateY(30px);
@@ -43,13 +36,13 @@
       padding: 80px 20px;
       max-width: 960px;
       margin: 0 auto;
+      position: relative;
+      z-index: 20;
     }
     #aboutContent.visible {
       opacity: 1;
       transform: translateY(0);
     }
-    
- 
     .animate-section {
       opacity: 0;
       transform: translateY(20px);
@@ -59,82 +52,102 @@
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    
- 
-    section {
-      margin-bottom: 40px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      padding-bottom: 20px;
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 40px;
+    }
+    .card {
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+      animation: fadeInUp 0.8s ease forwards;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #fff;
+    }
+    .card p {
+      line-height: 1.6;
+    }
+    .card a {
+      color: #a4508b;
+      text-decoration: none;
+    }
+    .card a:hover {
+      text-decoration: underline;
+    }
+    .card .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .card .card-header img.icon {
+      border-radius: 50%;
+      width: 64px;
+      height: 64px;
     }
     h1 {
       font-size: 2.5em;
-      margin-bottom: 0.5em;
+      margin-bottom: 20px;
       text-align: center;
       color: #fff;
-    }
-    h2 {
-      font-size: 2em;
-      margin-top: 1.5em;
-      margin-bottom: 0.5em;
-      color: #ccc;
-    }
-    p {
-      font-size: 1em;
-      line-height: 1.6;
     }
   </style>
 </head>
 <body>
- 
   <div id="canvasContainer">
     <canvas id="canvas"></canvas>
   </div>
-  
-
   <div id="aboutContent">
     <section>
       <h1>MIN-Tube2</h1>
-      <div class="developer-info animate-section">
-        <h2>開発者</h2>
-        <p>
-          minoです。<br>
-        
-            アカウントホーム一覧<br>
-        
-  Github<a href="おk">https</a>
-      <br>
-          Discord<a href="https">https</a>
-          <br>
-          X<a href="x.com">https</a>
-
-        </p>
-      </div>
-      <div class="technology animate-section">
-        <h2>MIN-Tube2</h2>
-        <p>
-          
-        </p>
-      </div>
-      <div class="future-plan animate-section">
-        <h2>今後の方針</h2>
-        <p>
-          
-        </p>
+      <div class="cards">
+        <div class="card animate-section">
+          <div class="card-header">
+            <img src="https://cdn.glitch.global/5a42a645-7145-41c3-98d3-e3ea8d09e90a/186587561.jpg?1745156978347" alt="mino icon" class="icon" />
+            <h2>自己紹介</h2>
+          </div>
+          <p>中学生。楽しいことならいろいろやってます。映画が好きです。邦画や洋画など、さまざまなジャンルの作品を楽しんでいます。</p>
+        </div>
+        <div class="card animate-section">
+          <h2>MIN-Tube2</h2>
+          <p>最速のYoutube代替で、クライアントのみのデプロイが可能です。完全にMIN-Tube2用のAPIが利用されており、最高のサービスが楽しめます。</p>
+        </div>
+        <div class="card animate-section">
+          <h2>プロジェクト詳細</h2>
+          <p>
+            APIはMIN-Tube2以外のプロジェクトで使うことはできません。<br />
+            MIN-Tube2は日本国憲法の範囲内で一部オープンソースとして提供されています。<br />
+            「MIN-Tube2」という名前を利用してプロジェクトに貢献してください！
+          </p>
+        </div>
+        <div class="card animate-section">
+          <h2>今後の方針</h2>
+          <p>
+            2026までアップデートは行われません。<br />
+            詳しくは <a href="https://scratch.mit.edu/users/proxy_minotaur_sab/" target="_blank">こちら</a> からご確認ください。
+          </p>
+        </div>
       </div>
     </section>
   </div>
-  
   <script>
-    // DOM要素の取得
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     const canvasContainer = document.getElementById('canvasContainer');
     const aboutContent = document.getElementById('aboutContent');
-    
-    /* ======== MIN-Tube2 アニメーションの設定 ======== */
+
     let fontSize = 0, textWidth = 0, textX = 0, textY = 0;
     const minTubeText = "Hello MIN-Tube2";
-    // 画面サイズに合わせたフォントサイズとテキスト配置を更新
+
     function updateTextMetrics() {
       fontSize = Math.min(canvas.width, canvas.height) / 10;
       ctx.font = `bold ${fontSize}px "Brush Script MT", cursive, Arial`;
@@ -151,24 +164,21 @@
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-    
-    /* ======== アニメーションフェーズ ======== */
-    // 今回は「MIN-Tube2」の筆アニメーションのみを実行する
+
     const minTubeDuration = 1300;
     let minTubeStart = null;
-    
-    // MIN-Tube2 を筆で書くアニメーション（グラデーション紫）
+
     function drawMinTube(progress) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.font = `bold ${fontSize}px "Brush Script MT", cursive, Arial`;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-      
+
       const gradient = ctx.createLinearGradient(textX, 0, textX + textWidth, 0);
       gradient.addColorStop(0, "#a4508b");
       gradient.addColorStop(1, "#5f0a87");
       ctx.fillStyle = gradient;
-      
+
       ctx.save();
       ctx.beginPath();
       ctx.rect(textX, textY - fontSize / 2, textWidth * progress, fontSize);
@@ -176,8 +186,7 @@
       ctx.fillText(minTubeText, textX, textY);
       ctx.restore();
     }
-    
-    // メインアニメーションループ
+
     function animate(timestamp) {
       if (!minTubeStart) minTubeStart = timestamp;
       const elapsed = timestamp - minTubeStart;
@@ -186,18 +195,16 @@
       if (progress < 1) {
         requestAnimationFrame(animate);
       } else {
-        // MIN-Tube2 アニメーション終了後、500ms後にAbout画面へフェーズイン
         setTimeout(() => {
           canvasContainer.classList.add('slide-up');
           aboutContent.classList.add('visible');
-          document.querySelectorAll("#aboutContent section").forEach((section, i) => {
-            section.style.animationDelay = (i * 0.3) + "s";
-            section.classList.add('animate-section');
+          document.querySelectorAll("#aboutContent .animate-section").forEach((el, i) => {
+            el.style.animationDelay = (i * 0.3) + "s";
           });
         }, 500);
       }
     }
-    
+
     requestAnimationFrame(animate);
   </script>
 </body>
