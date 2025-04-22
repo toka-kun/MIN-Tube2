@@ -416,6 +416,68 @@ app.get("/video/:id", async (req, res, next) => {
       color: #e0e0e0;
     }
     
+    .search-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #1b1b1b; 
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+
+.logo a {
+  color: #a64ac9; 
+  font-size: 24px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.logo a:hover {
+  color: #d891ef; 
+}
+
+
+#search-form {
+  display: flex;
+  max-width: 600px;
+  width: 100%;
+}
+
+
+#search-input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 2px 0 0 2px;
+  background-color: #333333; 
+  color: #ffffff;
+  font-size: 16px;
+  outline: none;
+}
+
+
+#search-form button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #6200ea; 
+  color: #ffffff;
+  font-size: 16px;
+  border-radius: 0 2px 2px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#search-form button:hover {
+  background-color: #4500b5; /* ホバー時の濃い紫 */
+}
+    
     .loading-animation {
       display: flex;
       justify-content: center;
@@ -437,8 +499,18 @@ app.get("/video/:id", async (req, res, next) => {
   </style>
 </head>
 <body>
+<header class="search-header">
+    <div class="logo">
+      <a href="/">MIN-Tube2</a>
+    </div>
+    <form id="search-form">
+      <input type="text" id="search-input" name="q" placeholder="検索..." autocomplete="off">
+      <button type="submit">検索</button>
+    </form>
+  </header>
+  </header>
   <header>
-    <h1>${videoData.videoTitle || "動画詳細"}</h1>
+    <h1>status:OK</h1>
   </header>
   <div class="container">
     <div class="main-content">
@@ -454,6 +526,9 @@ app.get("/video/:id", async (req, res, next) => {
           <button id="refetch-video">動画を再取得</button>
           <button id="download-video">ダウンロード</button>
         </div>
+  <header>
+    <h1>${videoData.videoTitle || "動画詳細"}</h1>
+  </header>
         <div class="details">
           <h2>動画詳細</h2>
           <div class="channel-info">
@@ -471,7 +546,7 @@ app.get("/video/:id", async (req, res, next) => {
           <h2>コメント (${commentsData.commentCount || 0} 件)</h2>
           ${commentsHTML}
         </div>
-        <a class="back-link" href="/">検索に戻る</a>
+        <a class="back-link" href="/">home</a>
       </div>
       <div class="playlist-section">
         <h2>${videoData.channelName || "プレイリスト"}</h2>
@@ -561,6 +636,18 @@ app.get("/video/:id", async (req, res, next) => {
         window.open(dlLink, '_blank');
       });
     });
+    document.addEventListener("DOMContentLoaded", function() {
+  const form = document.getElementById("search-form");
+  
+  form.addEventListener("submit", function(event) {
+    event.preventDefault(); 
+    const query = document.getElementById("search-input").value.trim();
+    
+    if (query) {
+      window.location.href = "/nothing/search?q=" + encodeURIComponent(query);
+    }
+  });
+});
   </script>
 </body>
 </html>
