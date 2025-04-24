@@ -164,7 +164,7 @@ app.get("/video/:id", async (req, res, next) => {
     let commentsData = null;
     let successfulApi = null;
 
-    const overallTimeout = 15000;
+    const overallTimeout = 20000;
     const startTime = Date.now();
 
     while (Date.now() - startTime < overallTimeout) {
@@ -174,7 +174,7 @@ app.get("/video/:id", async (req, res, next) => {
           const videoResponse = await fetchWithTimeout(
             `${apiBase}/api/video/${videoId}`,
             {},
-            4000
+            9000
           );
           if (videoResponse.ok) {
             const tempData = await videoResponse.json();
@@ -714,6 +714,44 @@ app.get('/all-api', async (req, res) => {
         res.status(500).send('Error fetching data');
     }
 });
+
+app.get('/proxy/*', async (req, res) => {
+  const targetUrl = req.params[0];
+
+  if (!targetUrl) {
+    res.status(400).send('URLパラメータが必要です');
+    return;
+  }
+
+  console.log(`Proxying request for: ${targetUrl}`);
+
+  try {
+    const response = await fetch(targetUrl);
+    if (!response.ok) {
+      res.status(response.status).send(`リクエストエラー: ${response.statusText}`);
+      return;
+    }
+
+    // Content-Typeを取得
+    const contentType = response.headers.get('content-type') || '';
+
+    // HTMLやテキスト系コンテンツの場合はテキストで返す
+    if (contentType.startsWith('text/') || contentType.includes('application/json')) {
+      const text = await response.text();
+      res.set('Content-Type', contentType);
+      res.send(text);
+    } else {
+      // 画像や動画などのバイナリコンテンツの場合
+      const buffer = await response.buffer();
+      res.set('Content-Type', contentType);
+      res.send(buffer);
+    }
+  } catch (error) {
+    console.error('Error fetching URL:', error);
+    res.status(500).send('サーバ内部エラー');
+  }
+});
+
 
 
 app.use((req, res, next) => {
