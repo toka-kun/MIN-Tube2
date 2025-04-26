@@ -2,6 +2,8 @@ const express = require("express");
 const path = require("path");
 const yts = require("youtube-search-api");
 const fetch = require("node-fetch");
+const cookieParser = require("cookie-parser");
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -13,6 +15,8 @@ const API_HEALTH_CHECKER = "https://airy-gamy-exoplanet.glitch.me/check";
 const TEMP_API_LIST = "https://raw.githubusercontent.com/Minotaur-ZAOU/test/refs/heads/main/min-tube-api.json";
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use(cookieParser());
+
 
 let currentPage = 0;
 let currentQuery = "";
@@ -70,10 +74,20 @@ function fetchWithTimeout(url, options = {}, timeout = 4000) {
   ]);
 }
 
-app.get("/", async (req, res) => {
-  await updateApiListCache(); // エンドポイントに接続したときにキャッシュを更新
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+app.use(async (req, res, next) => {
+  await updateApiListCache();
+
+  if (!req.cookies || req.cookies.humanVerified !== "true") {
+    return res.sendFile(path.join(__dirname, "public", "robots.html"));
+  }
+  next();
 });
+
+// ルートハンドラー
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "home.html"));
+});
+
 
 app.get("/api/search", async (req, res, next) => {
   const query = req.query.q;
@@ -683,7 +697,7 @@ app.get("/channel/:channelId", async (req, res, next) => {
 });
 
 app.get("/nothing/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "home.html"));
 });
 
 app.get("/api", (req, res) => {

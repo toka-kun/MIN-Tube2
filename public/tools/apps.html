@@ -271,7 +271,7 @@
     function fetchThumbnail() {
       var videoId = document.getElementById('videoIdInput').value.trim();
       if(videoId) {
-        var imgUrl = "https://i3.ytimg.com/vi/" + videoId + "/sddefault.jpg";
+        var imgUrl = "/proxy/https://i3.ytimg.com/vi/" + videoId + "/sddefault.jpg";
         document.getElementById('thumbnailOutput').innerHTML = '<img src="' + imgUrl + '" alt="サムネイル">';
       } else {
         document.getElementById('thumbnailOutput').innerHTML = "動画IDを入力してください。";
