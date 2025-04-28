@@ -766,6 +766,37 @@ app.get('/proxy/*', async (req, res) => {
   }
 });
 
+app.get('/img/:videoId', async (req, res) => {
+  const videoId = req.params.videoId;
+
+  if (!videoId) {
+    res.status(400).send('ちょっとしたちょっとしたエラー。。。');
+    return;
+  }
+
+  const imageUrl = `https://i3.ytimg.com/vi/${videoId}/sddefault.jpg`;
+
+  console.log(`Proxying YouTube thumbnail for video ID: ${videoId}`);
+
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      res.status(response.status).send(`画像取得エラー: ${response.statusText}`);
+      return;
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+
+
+    const buffer = await response.buffer();
+    res.set('Content-Type', contentType);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error fetching thumbnail:', error);
+    res.status(500).send('サーバ内部エラー');
+  }
+});
+
 
 
 app.use((req, res, next) => {
