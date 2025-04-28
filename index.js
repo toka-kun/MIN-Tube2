@@ -268,8 +268,8 @@ app.get("/video/:id", async (req, res, next) => {
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${videoData.videoTitle || "動画詳細"}</title>
   <style>
     body {
@@ -518,7 +518,7 @@ app.get("/video/:id", async (req, res, next) => {
       <a href="/">MIN-Tube2</a>
     </div>
     <form id="search-form">
-      <input type="text" id="search-input" name="q" placeholder="検索..." autocomplete="off">
+      <input type="text" id="search-input" name="q" placeholder="検索..." autocomplete="off" />
       <button type="submit">検索</button>
     </form>
   </header>
@@ -532,21 +532,22 @@ app.get("/video/:id", async (req, res, next) => {
         <div class="video-player" id="video-player-container">
           <div class="loading-animation"><div class="spinner"></div></div>
         </div>
-        
         <div id="controls">
           <button id="switch-stream-url" class="active">DL‑Yvideo</button>
           <button id="switch-nocookie">YouTube‑nocookie</button>
           <button id="reload-video">動画を再読み込み</button>
           <button id="refetch-video">動画を再取得</button>
           <button id="download-video">ダウンロード</button>
+          <!-- 高画質化ボタンを追加 -->
+          <button id="high-quality-btn">高画質化</button>
         </div>
-  <header>
-    <h1>${videoData.videoTitle || "動画詳細"}</h1>
-  </header>
+        <header>
+          <h1>${videoData.videoTitle || "動画詳細"}</h1>
+        </header>
         <div class="details">
           <h2>動画詳細</h2>
           <div class="channel-info">
-            <img class="channel-avatar" src="${videoData.channelImage || ''}" alt="${videoData.channelName || 'チャンネル'}">
+            <img class="channel-avatar" src="${videoData.channelImage || ''}" alt="${videoData.channelName || 'チャンネル'}" />
             <div>
               <p>${videoData.channelName || 'チャンネル名未設定'}</p>
             </div>
@@ -617,6 +618,7 @@ app.get("/video/:id", async (req, res, next) => {
       const btnReload = document.getElementById("reload-video");
       const btnRefetch = document.getElementById("refetch-video");
       const btnDownload = document.getElementById("download-video");
+      const highQualityBtn = document.getElementById("high-quality-btn");
       
       btnStream.addEventListener("click", () => {
         document.getElementById("video-player-container").innerHTML = streamEmbedHTML;
@@ -649,19 +651,32 @@ app.get("/video/:id", async (req, res, next) => {
             : "https://www.youtube.com/watch?v=${videoId}";
         window.open(dlLink, '_blank');
       });
+      
+      // 高画質化ボタンの動作
+      highQualityBtn.addEventListener("click", () => {
+        // 高画質化用のURLを設定
+        const highStreamUrl = "/highstream/${videoId}";
+        // iframeの中身を高画質化のiframeに置き換える
+        const container = document.getElementById("video-player-container");
+        if (container) {
+          container.innerHTML = \`
+            <iframe src="\${highStreamUrl}" frameborder="0" allowfullscreen style="width:100%; height:100vh;"></iframe>
+          \`;
+        }
+      });
     });
     document.addEventListener("DOMContentLoaded", function() {
-  const form = document.getElementById("search-form");
-  
-  form.addEventListener("submit", function(event) {
-    event.preventDefault(); 
-    const query = document.getElementById("search-input").value.trim();
-    
-    if (query) {
-      window.location.href = "/nothing/search?q=" + encodeURIComponent(query);
-    }
-  });
-});
+      const form = document.getElementById("search-form");
+      
+      form.addEventListener("submit", function(event) {
+        event.preventDefault(); 
+        const query = document.getElementById("search-input").value.trim();
+        
+        if (query) {
+          window.location.href = "/nothing/search?q=" + encodeURIComponent(query);
+        }
+      });
+    });
   </script>
 </body>
 </html>
