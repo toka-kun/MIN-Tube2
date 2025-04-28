@@ -770,7 +770,7 @@ app.get('/img/:videoId', async (req, res) => {
   const videoId = req.params.videoId;
 
   if (!videoId) {
-    res.status(400).send('ちょっとしたちょっとしたエラー。。。');
+    res.status(400).send('ちょっとしたエラー。。。');
     return;
   }
 
@@ -797,6 +797,65 @@ app.get('/img/:videoId', async (req, res) => {
   }
 });
 
+app.get("/highstream/:id", async (req, res, next) => {
+  const videoId = req.params.id;
+  if (!videoId) {
+    return res.status(400).send("動画IDが必要です");
+  }
+
+  try {
+    if (!Array.isArray(apiListCache) || apiListCache.length === 0) {
+      return res.status(500).send("有効なAPIリストが取得できませんでした。");
+    }
+    const apiList = apiListCache;
+
+    let streamData = null;
+    let successfulApi = null;
+
+    const overallTimeout = 20000;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < overallTimeout) {
+      for (const apiBase of apiList) {
+        if (Date.now() - startTime >= overallTimeout) break;
+        try {
+
+          const response = await fetchWithTimeout(
+            `${apiBase}/api/video/${videoId}`,
+            {},
+            9000
+          );
+          if (response.ok) {
+            const tempData = await response.json();
+            // highstreamUrl と audioUrl の両方を確認する
+            if (tempData.highstreamUrl && tempData.audioUrl) {
+              streamData = tempData;
+              successfulApi = apiBase;
+              break;
+            }
+          }
+        } catch (err) {
+          console.warn(`${apiBase} でのハイストリーム取得エラー: ${err.message}`);
+          continue;
+        }
+      }
+      if (streamData && streamData.highstreamUrl && streamData.audioUrl) break;
+    }
+
+    if (!streamData || !streamData.highstreamUrl || !streamData.audioUrl) {
+      // 有効なデータが取得できなかった場合のフォールバック処理
+      streamData = streamData || {};
+      streamData.highstreamUrl = "youtube-nocookie";
+      // audioUrl が取得できなければ、空文字または適切なデフォルト値に設定
+      streamData.audioUrl = "";
+    }
+
+    // highstream.ejs テンプレートへ、取得した highstreamUrl と audioUrl を渡してレンダリング
+    return res.render("highstream", streamData);
+  } catch (err) {
+    next(err);
+  }
+});
 
 
 app.use((req, res, next) => {
@@ -808,5 +867,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(port, () => {
-  console.log(`サーバーがポート ${port} で起動しました。`);
+  console.log(`サーバーがポート ${port} で起動。`);
 });
