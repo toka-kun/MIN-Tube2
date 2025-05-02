@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MIN-Tube2</title>
-    <!-- Who else just randomly remembered this site 😊 -->
     <link
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
       rel="stylesheet"
@@ -62,7 +61,8 @@
       
       /* ランディングページ（初回表示） */
       #landing {
-        height: 100vh;
+        min-height: 195vh;
+        padding-bottom: 200px; 
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -107,12 +107,12 @@
         background-color: #a369e7;
       }
       
-      /* ツールコンテナ（ランディング画面内の検索フォームの下に配置） */
+      /* ツールコンテナ */
       .tools-container {
         background-color: #1e1e1e;
         border-radius: 20px;
         padding: 30px;
-        margin: 20px auto;
+        margin: 5px auto;
         max-width: 1200px;
         width: 90%;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
@@ -157,20 +157,33 @@
         color: inherit;
         display: block;
       }
-      @media (max-width: 600px) {
-        .cards {
-          flex-direction: column;
-          align-items: center;
-        }
-        .card {
-          width: 90%;
-        }
-        .tools-container {
-          padding: 20px;
-        }
+      
+      /* 急上昇セクションのスタイル */
+      .trending-container {
+        background-color: #1e1e1e;
+        border-radius: 20px;
+        padding: 30px;
+        margin:   5px auto;
+        max-width: 1200px;
+        width: 90%;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      }
+      .trending-container h2 {
+        text-align: center;
+        font-size: 32px;
+        margin-bottom: 20px;
+        color: #bb86fc;
+      }
+      .trending-container iframe {
+        width: 100%;
+        height: 500px;
+        border: none;
+        border-radius: 15px;
+        background-color: #333;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.7);
       }
       
-      /* 検索結果表示用メインコンテンツ（初回は非表示） */
+      /* メインコンテンツ（検索結果表示用） */
       #mainContent {
         display: none;
       }
@@ -182,6 +195,7 @@
         padding: 10px 20px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         margin-bottom: 20px;
+        width: 100%;
       }
       header h1 {
         font-size: 24px;
@@ -250,6 +264,8 @@
         font-size: 18px;
         color: #e0e0e0;
       }
+      
+      /* オートコンプリート */
       .autocomplete-suggestions {
         position: absolute;
         top: 100%;
@@ -261,7 +277,6 @@
         z-index: 1000;
         max-height: 200px;
         overflow-y: auto;
-        border-radius: 0 0 4px 4px;
       }
       .autocomplete-item {
         padding: 8px 10px;
@@ -270,16 +285,6 @@
       }
       .autocomplete-item:hover {
         background-color: #444;
-      }
-      @media (max-width: 600px) {
-        header {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-        header form {
-          margin-top: 10px;
-          width: 100%;
-        }
       }
       
       /* インラインローディング */
@@ -301,24 +306,25 @@
     <!-- ローディング表示 -->
     <div id="loading">
       <div class="spinner"></div>
-      <div class="loading-text">loading...</div>
+      <div class="loading-text">Loading...</div>
     </div>
     
-    <!-- ランディングページ（初回表示） -->
+    <!-- ランディングページ -->
     <div id="landing">
       <h1>MIN-Tube2</h1>
       <form id="landingSearchForm">
         <input type="text" id="landingQuery" placeholder="Enter keyword" />
-        <button type="submit">search</button>
+        <button type="submit">Search</button>
       </form>
-      <!-- ツールコンテナ：ランディング画面内検索フォームの下に配置 -->
+      
+      <!-- ツールコンテナ -->
       <div class="tools-container">
-        <h2>tools</h2>
+        <h2>Tools</h2>
         <div class="cards">
           <div class="card">
-            <a href="/api">
-              <h3>API</h3>
-              <p>MIN-Tube2のAPIのhealthを算出し、MIN-Tube2全体の状態を示します。</p>
+            <a href="/set">
+              <h3>Setting⚙</h3>
+              <p>MIN-Tube2の設定を行ってください！</p>
             </a>
           </div>
           <div class="card">
@@ -335,6 +341,11 @@
           </div>
         </div>
       </div>
+      
+      <!-- 急上昇動画コンテナ -->
+      <div class="trending-container">
+        <iframe src="/trend"></iframe>
+      </div>
     </div>
     
     <!-- メインコンテンツ（検索結果表示用） -->
@@ -343,7 +354,7 @@
         <h1>MIN-Tube2</h1>
         <form id="searchForm">
           <input type="text" id="searchQuery" placeholder="キーワードを入力" />
-          <button type="submit">search</button>
+          <button type="submit">Search</button>
         </form>
       </header>
       <div class="container">
@@ -471,17 +482,26 @@
         inputElement.setAttribute("autocomplete", "off");
         const suggestionContainer = document.createElement("div");
         suggestionContainer.className = "autocomplete-suggestions";
+        suggestionContainer.style.display = "none"; // 初期状態非表示
         parent.appendChild(suggestionContainer);
         
         inputElement.addEventListener("input", async function () {
           const query = inputElement.value;
           suggestionContainer.innerHTML = "";
-          if (!query) return;
+          if (!query) {
+            suggestionContainer.style.display = "none";
+            return;
+          }
           try {
             const response = await fetch("/api/autocomplete?q=" + encodeURIComponent(query));
             if (!response.ok) return;
             const data = await response.json();
             const suggestions = data.suggestions || [];
+            if (suggestions.length > 0) {
+              suggestionContainer.style.display = "block";
+            } else {
+              suggestionContainer.style.display = "none";
+            }
             suggestions.forEach((suggestion) => {
               const suggestionItem = document.createElement("div");
               suggestionItem.className = "autocomplete-item";
@@ -489,6 +509,7 @@
               suggestionItem.addEventListener("click", function () {
                 inputElement.value = suggestion;
                 suggestionContainer.innerHTML = "";
+                suggestionContainer.style.display = "none";
               });
               suggestionContainer.appendChild(suggestionItem);
             });
@@ -500,10 +521,10 @@
         document.addEventListener("click", function (event) {
           if (!parent.contains(event.target)) {
             suggestionContainer.innerHTML = "";
+            suggestionContainer.style.display = "none";
           }
         });
       }
-      
       setupAutocomplete(landingQueryInput);
       setupAutocomplete(searchQueryInput);
       
@@ -519,14 +540,14 @@
         currentPage = 0;
         // ヘッダーの検索欄にも値を引き継ぐ
         searchQueryInput.value = query;
-        // URL を /nothing/ ランダムな文字列 に更新
+        // URL を /nothing/ + ランダムな文字列 に更新
         const randomStr = generateRandomString();
         history.pushState({}, "", "/nothing/" + randomStr);
-  
-        // 検索結果表示時はランディング画面（およびツールコンテナ）を非表示
+        
+        // 検索結果表示時はランディング画面（およびツールコンテナ、急上昇コンテナ）を非表示
         document.getElementById("landing").style.display = "none";
         document.getElementById("mainContent").style.display = "block";
-  
+        
         performSearch(query, currentPage);
         currentPage++;
       });
@@ -544,17 +565,14 @@
         // ヘッダー検索時も URL 更新
         const randomStr = generateRandomString();
         history.pushState({}, "", "/nothing/" + randomStr);
-  
+        
         performSearch(query, currentPage);
         currentPage++;
       });
       
       // --- 無限スクロール ---
       window.addEventListener("scroll", async function () {
-        if (
-          window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 &&
-          !isFetching
-        ) {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && !isFetching) {
           const query = searchQueryInput.value.trim();
           if (query) {
             isFetching = true;
@@ -582,6 +600,13 @@
             performSearch(queryParam, currentPage);
             currentPage++;
           }
+        }
+      });
+      
+      // --- 親ページ（index.html）でのメッセージ受信処理 ---
+      window.addEventListener("message", function(event) {
+        if (event.data && event.data.videoId) {
+          window.location.href = "/video/" + event.data.videoId;
         }
       });
     </script>

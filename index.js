@@ -718,13 +718,18 @@ app.get("/nothing/*", (req, res) => {
 app.get("/api", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/api.html"));
 });
-
+app.get("/set", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "tools/set.html"));
+});
 app.get("/apps", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/apps.html"));
 });
 
 app.get("/about", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/about.html"));
+});
+app.get("/trend", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "trending.html"));
 });
 
 app.get('/all-api', async (req, res) => {
@@ -743,7 +748,22 @@ app.get('/all-api', async (req, res) => {
         res.status(500).send('Error fetching data');
     }
 });
+app.get('/home-ch', async (req, res) => {
+    const url = 'https://raw.githubusercontent.com/Minotaur-ZAOU/test/refs/heads/main/home-ch.txt';
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
+        const data = await response.json();
+        res.json(data);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).send('Error fetching data');
+    }
+});
 app.get('/proxy/*', async (req, res) => {
   const targetUrl = req.params[0];
 

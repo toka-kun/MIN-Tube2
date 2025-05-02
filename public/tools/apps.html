@@ -2,291 +2,287 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App</title>
-  <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apps Page</title>
   <style>
-    /* リセット */
-    * {
+    /* 全体のスタイル */
+    body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #121212, #1f1f1f);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      color: #f1f1f1;
+      background-color: #1e1e1e;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      color: #ffffff;
     }
     .container {
+      max-width: 1200px;
+      margin: 60px auto 0;  /* header分のマージン調整 */
+      padding: 40px 20px;
+    }
+    
+    /* ヘッダー */
+    .search-header {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      max-width: 600px;
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
-      margin: 10px 0;
-    }
-    h1 {
-      text-align: center;
-      color: #f1f1f1;
-      margin-bottom: 20px;
-    }
-    /* 初期表示時にアプリ画面は非表示 */
-    .app {
-      display: none;
-    }
-    .card {
-      background: #2a2a2a;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
-      padding: 15px;
-      margin-bottom: 15px;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.2s;
+      background-color: #1b1b1b;
+      padding: 10px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+    .logo a {
+      color: #a64ac9;
+      font-size: 24px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .logo a:hover {
+      color: #d891ef;
+    }
+    #search-form {
+      display: flex;
+      max-width: 600px;
+      width: 100%;
+    }
+    #search-input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 2px 0 0 2px;
+      background-color: #333333;
+      color: #ffffff;
+      font-size: 16px;
+      outline: none;
+    }
+    #search-form button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #6200ea;
+      color: #ffffff;
+      font-size: 16px;
+      border-radius: 0 2px 2px 0;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #search-form button:hover {
+      background-color: #4500b5;
+    }
+    
+    /* タイトル */
+    h1 {
+      text-align: center;
+      margin-top: 120px;
+      color: #ffffff;
+    }
+    
+    /* 検索バー（内部用） */
+    .search-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+    .search-container input {
+      width: 50%;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 25px;
+      background-color: #2e2e2e;
+      color: #ffffff;
+      font-size: 16px;
+      transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+    }
+    .search-container input:focus {
+      outline: none;
+      width: 55%;
+      background-color: #3a3a3a;
+    }
+    
+    /* カードコンテナ: グリッドレイアウトで3列並びにする */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      justify-items: center;
+    }
+    
+    /* カードのスタイル */
+    .card {
+      background-color: #2e2e2e;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      width: 100%; /* gridの列幅に合わせる */
+      max-width: 300px;
+      padding: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
     .card:hover {
-      transform: translateY(-4px);
-      background: #383838;
+      transform: translateY(-5px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
     }
-    .card-title {
-      font-size: 1.2em;
-      font-weight: bold;
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 1.4em;
     }
-    .card-description {
-      font-size: 0.9em;
-      opacity: 0.8;
-      margin-left: 10px;
+    .card p {
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
     }
-    button {
-      cursor: pointer;
+    .card button {
+      background-color: #4CAF50;
       border: none;
-      background: #007BFF;
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: 5px;
-      font-size: 1em;
-      transition: background 0.2s;
-      margin: 5px 0;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    input[type="text"] {
-      width: calc(100% - 20px);
-      padding: 10px;
-      font-size: 1em;
-      margin: 10px 0;
-      border: 1px solid #444;
-      border-radius: 5px;
-      background: #333;
-      color: #f1f1f1;
-    }
-    #calcDisplay {
+      border-radius: 25px;
+      padding: 10px 15px;
+      color: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
       width: 100%;
-      font-size: 1.2em;
-      margin-bottom: 10px;
-      padding: 10px;
-      border: 1px solid #444;
-      border-radius: 5px;
-      background: #333;
-      color: #f1f1f1;
     }
-    #calcButtons button {
-      width: 22%;
-      margin: 3px 1%;
-      font-size: 1em;
+    .card button:hover {
+      background-color: #45a049;
     }
-    #clockDisplay {
-      font-size: 2em;
-      text-align: center;
-      padding: 20px 0;
+    
+    /* レスポンシブ対応 */
+    @media only screen and (max-width: 1024px) {
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
-    #thumbnailOutput img {
-      max-width: 100%;
-      border-radius: 5px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+    @media only screen and (max-width: 768px) {
+      .search-container input {
+        width: 80%;
+      }
+      .cards {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- ホーム：各アプリ一覧 -->
-  <div id="home" class="container">
-    <h1>App List</h1>
-    <div class="card" onclick="openApp('clock')">
-      <div class="card-title">時計</div>
-      <div class="card-description">リアルタイムに現在時刻を表示</div>
+  <header class="search-header">
+    <div class="logo">
+      <a href="/">MIN-Tube2</a>
     </div>
-    <div class="card" onclick="openApp('calculator')">
-      <div class="card-title">電卓</div>
-      <div class="card-description">シンプルな計算を実行</div>
+    <form id="search-form">
+      <input type="text" id="search-input" name="q" placeholder="検索..." autocomplete="off">
+      <button type="submit">検索</button>
+    </form>
+  </header>
+  
+  <h1>👜　App　💼</h1>
+  
+  <div class="container">
+    <!-- 内部の検索バー -->
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="アプリを検索...">
     </div>
-    <div class="card" onclick="openApp('youtube')">
-      <div class="card-title">YouTubeサムネ取得</div>
-      <div class="card-description">動画IDでサムネイル取得</div>
-    </div>
-    <div class="card" onclick="openApp('proxy')">
-      <div class="card-title">プロキシ</div>
-      <div class="card-description">外部サイトへリダイレクト</div>
-    </div>
-    <div class="card" onclick="openApp('minTube')">
-      <div class="card-title">MIN-Tube1</div>
-      <div class="card-description">シンプルな動画視聴体験</div>
-    </div>
-    <div class="card" onclick="openApp('privateSearch')">
-      <div class="card-title">PrivateOff検索</div>
-      <div class="card-description">キーワードが閲覧可能な検索</div>
+    
+    <!-- カード表示エリア -->
+    <div class="cards">
+      <!-- gamesカード -->
+      <div class="card">
+        <h3>games</h3>
+        <p>いろいろなゲームがプレイできる</p>
+        <button onclick="location.href='/games'">プレイする</button>
+      </div>
+      
+      <!-- 電卓カード -->
+      <div class="card">
+        <h3>電卓</h3>
+        <p>ただの電卓</p>
+        <button onclick="location.href='/math-gr'">利用する</button>
+      </div>
+      
+      <!-- プロキシカード -->
+      <div class="card">
+        <h3>プロキシ</h3>
+        <p>高度なWebUnblockerを提供</p>
+        <button onclick="location.href='/unblocker'">利用する</button>
+      </div>
+      
+      <!-- MIN-Tube2プロキシカード -->
+      <div class="card">
+        <h3>MIN-Tube2プロキシ</h3>
+        <p>MIN-Tube2に備え付けられたプロキシを提供</p>
+        <button onclick="location.href='/proxy'">利用する</button>
+      </div>
+      
+      <!-- BBSカード -->
+      <div class="card">
+        <h3>BBS</h3>
+        <p>MIN-Tube2-BBSの提供</p>
+        <button onclick="location.href='/BBS'">アクセスする</button>
+      </div>
+      
+      <!-- AIカード -->
+      <div class="card">
+        <h3>AI</h3>
+        <p>AIの提供</p>
+        <button onclick="location.href='/ai'">利用する</button>
+      </div>
+      
+      <!-- アプリダウンロードカード -->
+      <div class="card">
+        <h3>アプリダウンロード</h3>
+        <p>オンラインでアプリをダウンロード</p>
+        <button onclick="location.href='/app-dl'">ダウンロードする</button>
+      </div>
+      
+      <!-- サムネダウンロードカード -->
+      <div class="card">
+        <h3>サムネダウンロード</h3>
+        <p>Youtubeのサムネを取得</p>
+        <button onclick="location.href='/thumb-dl'">取得する</button>
+      </div>
+      
+      <!-- PrivateOff検索カード -->
+      <div class="card">
+        <h3>PrivateOff検索</h3>
+        <p>キーワードが閲覧可能な検索</p>
+        <button onclick="location.href='/privateoff'">検索する</button>
+      </div>
+      
+      <!-- 監視カード -->
+      <div class="card">
+        <h3>監視</h3>
+        <p>無題</p>
+        <button onclick="location.href='/spectator'">入手</button>
+      </div>
     </div>
   </div>
-
-  <!-- 時計アプリ -->
-  <div id="clockApp" class="container app">
-    <button onclick="goHome()">ホームへ戻る</button>
-    <h1>時計</h1>
-    <div id="clockDisplay"></div>
-  </div>
-
-  <!-- 電卓アプリ -->
-  <div id="calculatorApp" class="container app">
-    <button onclick="goHome()">ホームへ戻る</button>
-    <h1>電卓</h1>
-    <input type="text" id="calcDisplay" readonly />
-    <div id="calcButtons">
-      <button onclick="appendCalc('7')">7</button>
-      <button onclick="appendCalc('8')">8</button>
-      <button onclick="appendCalc('9')">9</button>
-      <button onclick="appendCalc('/')">/</button><br>
-      <button onclick="appendCalc('4')">4</button>
-      <button onclick="appendCalc('5')">5</button>
-      <button onclick="appendCalc('6')">6</button>
-      <button onclick="appendCalc('*')">*</button><br>
-      <button onclick="appendCalc('1')">1</button>
-      <button onclick="appendCalc('2')">2</button>
-      <button onclick="appendCalc('3')">3</button>
-      <button onclick="appendCalc('-')">-</button><br>
-      <button onclick="appendCalc('0')">0</button>
-      <button onclick="appendCalc('.')">.</button>
-      <button onclick="calculateResult()">=</button>
-      <button onclick="appendCalc('+')">+</button><br>
-      <button onclick="clearCalc()" style="width:100%;">クリア</button>
-    </div>
-  </div>
-
-  <!-- YouTubeサムネ取得アプリ -->
-  <div id="youtubeApp" class="container app">
-    <button onclick="goHome()">ホームへ戻る</button>
-    <h1>YouTubeサムネ取得</h1>
-    <input type="text" id="videoIdInput" placeholder="動画IDを入力" />
-    <button onclick="fetchThumbnail()">サムネ表示</button>
-    <div id="thumbnailOutput"></div>
-  </div>
-
-  <!-- Private検索アプリ -->
-  <div id="privateSearchApp" class="container app">
-    <button onclick="goHome()">ホームへ戻る</button>
-    <h1>Private off検索</h1>
-    <p>
-      検索ワードをURLに暗号化せずに表示させることで後から検索ワードを見直せるようにします。
-    </p>
-    <input type="text" id="privateSearchInput" placeholder="検索キーワードを入力" />
-    <button onclick="performPrivateSearch()">検索</button>
-  </div>
-
+  
   <script>
-    // アプリ切り替え処理
-    function openApp(app) {
-      document.getElementById("home").style.display = "none";
-      hideAllApps();
-      stopClock(); // 時計アプリの場合、前回のタイマーを停止
-      if (app === 'clock') {
-        document.getElementById("clockApp").style.display = "block";
-        startClock();
-      } else if (app === 'calculator') {
-        document.getElementById("calculatorApp").style.display = "block";
-      } else if (app === 'youtube') {
-        document.getElementById("youtubeApp").style.display = "block";
-      } else if (app === 'proxy') {
-        window.location.href = "https://www.rateavon.je/error.php";
-      } else if (app === 'minTube') {
-        window.location.href = "https://min-tube.glitch.me/";
-      } else if (app === 'privateSearch') {
-        document.getElementById("privateSearchApp").style.display = "block";
-      }
-    }
-
-    // ホーム画面に戻る
-    function goHome() {
-      document.getElementById("home").style.display = "block";
-      hideAllApps();
-      stopClock();
-    }
-
-    // すべてのアプリ画面を非表示
-    function hideAllApps() {
-      var apps = document.querySelectorAll(".app");
-      apps.forEach(function(app){ app.style.display = "none"; });
-    }
-
-    // 時計機能
-    var clockInterval;
-    function startClock() {
-      updateClock();
-      clockInterval = setInterval(updateClock, 1000);
-    }
-    function updateClock() {
-      var now = new Date();
-      var hours = now.getHours().toString().padStart(2, '0');
-      var minutes = now.getMinutes().toString().padStart(2, '0');
-      var seconds = now.getSeconds().toString().padStart(2, '0');
-      document.getElementById('clockDisplay').textContent = hours + ":" + minutes + ":" + seconds;
-    }
-    function stopClock() {
-      clearInterval(clockInterval);
-    }
-
-    // 電卓機能
-    function appendCalc(val) {
-      document.getElementById('calcDisplay').value += val;
-    }
-    function calculateResult() {
-      try {
-        var result = eval(document.getElementById('calcDisplay').value);
-        document.getElementById('calcDisplay').value = result;
-      } catch (e) {
-        document.getElementById('calcDisplay').value = "Error";
-      }
-    }
-    function clearCalc() {
-      document.getElementById('calcDisplay').value = "";
-    }
-
-    // YouTubeサムネ取得機能
-    function fetchThumbnail() {
-      var videoId = document.getElementById('videoIdInput').value.trim();
-      if(videoId) {
-        var imgUrl = "/img/" + videoId + "/";
-        document.getElementById('thumbnailOutput').innerHTML = '<img src="' + imgUrl + '" alt="サムネイル">';
-      } else {
-        document.getElementById('thumbnailOutput').innerHTML = "動画IDを入力してください。";
-      }
-    }
-
-    // Private Off検索機能
-    function performPrivateSearch() {
-      var query = document.getElementById('privateSearchInput').value.trim();
-      if(query) {
-        window.location.href = "/nothing/search?q=" + encodeURIComponent(query);
-      } else {
-        alert("検索キーワードを入力してください。");
-      }
-    }
+    // 内部検索バーによるカードフィルタリング
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function() {
+      const filter = this.value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.card');
+      
+      cards.forEach(card => {
+        const title = card.querySelector('h3').textContent.toLowerCase();
+        card.style.display = title.indexOf(filter) !== -1 ? 'block' : 'none';
+      });
+    });
+  </script>
+  
+  <script>
+    // ヘッダーの検索機能：submit時に別URLへリダイレクト
+    document.addEventListener("DOMContentLoaded", function() {
+      const form = document.getElementById("search-form");
+      form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        const query = document.getElementById("search-input").value.trim();
+        if (query) {
+          window.location.href = "/nothing/search?q=" + encodeURIComponent(query);
+        }
+      });
+    });
   </script>
 </body>
 </html>
