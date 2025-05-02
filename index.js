@@ -301,7 +301,7 @@ app.get("/video/:id", async (req, res, next) => {
     }
     .video-player {
       width: 100%;
-      max-width: auto;
+      max-width: 800px;
       margin: 0 auto;
     }
     video, iframe {
@@ -431,66 +431,62 @@ app.get("/video/:id", async (req, res, next) => {
     }
     
     .search-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: #1b1b1b; 
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between; 
-  align-items: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-}
-
-
-.logo a {
-  color: #a64ac9; 
-  font-size: 24px;
-  font-weight: bold;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.logo a:hover {
-  color: #d891ef; 
-}
-
-
-#search-form {
-  display: flex;
-  max-width: 600px;
-  width: 100%;
-}
-
-
-#search-input {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 2px 0 0 2px;
-  background-color: #333333; 
-  color: #ffffff;
-  font-size: 16px;
-  outline: none;
-}
-
-
-#search-form button {
-  padding: 10px 20px;
-  border: none;
-  background-color: #6200ea; 
-  color: #ffffff;
-  font-size: 16px;
-  border-radius: 0 2px 2px 0;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-#search-form button:hover {
-  background-color: #4500b5; /* ホバー時の濃い紫 */
-}
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: #1b1b1b; 
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between; 
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+    }
+    
+    .logo a {
+      color: #a64ac9; 
+      font-size: 24px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    .logo a:hover {
+      color: #d891ef; 
+    }
+    
+    #search-form {
+      display: flex;
+      max-width: 600px;
+      width: 100%;
+    }
+    
+    #search-input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 2px 0 0 2px;
+      background-color: #333333; 
+      color: #ffffff;
+      font-size: 16px;
+      outline: none;
+    }
+    
+    #search-form button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #6200ea; 
+      color: #ffffff;
+      font-size: 16px;
+      border-radius: 0 2px 2px 0;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    #search-form button:hover {
+      background-color: #4500b5; /* ホバー時の濃い紫 */
+    }
     
     .loading-animation {
       display: flex;
@@ -510,10 +506,21 @@ app.get("/video/:id", async (req, res, next) => {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    
+    /* 高画質化アニメーション */
+    .high-quality-animation {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 300px;
+      color: #e0e0e0;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
-<header class="search-header">
+  <header class="search-header">
     <div class="logo">
       <a href="/">MIN-Tube2</a>
     </div>
@@ -538,7 +545,7 @@ app.get("/video/:id", async (req, res, next) => {
           <button id="reload-video">動画を再読み込み</button>
           <button id="refetch-video">動画を再取得</button>
           <button id="download-video">ダウンロード</button>
-          <!-- 高画質化ボタンを追加 -->
+          <!-- 高画質化ボタン -->
           <button id="high-quality-btn">高画質化</button>
         </div>
         <header>
@@ -581,6 +588,8 @@ app.get("/video/:id", async (req, res, next) => {
             let html = "";
             if (data.playlist && data.playlist.length > 0) {
               data.playlist.forEach(item => {
+                // チャンネル情報（IDがUCで始まる）は除外する
+                if (item.id.startsWith("UC")) return;
                 html += \`
                   <div class="playlist-item">
                     <a href="/video/\${item.id}">
@@ -652,26 +661,29 @@ app.get("/video/:id", async (req, res, next) => {
         window.open(dlLink, '_blank');
       });
       
-      // 高画質化ボタンの動作
+      // 高画質化ボタンの動作：3秒間の高画質化アニメーション後、iframeに切り替え
       highQualityBtn.addEventListener("click", () => {
-        // 高画質化用のURLを設定
-        const highStreamUrl = "/highstream/${videoId}";
-        // iframeの中身を高画質化のiframeに置き換える
         const container = document.getElementById("video-player-container");
         if (container) {
           container.innerHTML = \`
-            <iframe src="\${highStreamUrl}" frameborder="0" allowfullscreen style="width:100%; height:100vh;"></iframe>
+            <div class="high-quality-animation">
+              <div class="spinner"></div>
+              <p>高画質化中...</p>
+            </div>
           \`;
+          setTimeout(() => {
+            container.innerHTML = \`
+              <iframe src="/highstream/${videoId}" frameborder="0" allowfullscreen style="width:100%; height:60vh;"></iframe>
+            \`;
+          }, 3000);
         }
       });
     });
     document.addEventListener("DOMContentLoaded", function() {
       const form = document.getElementById("search-form");
-      
       form.addEventListener("submit", function(event) {
         event.preventDefault(); 
         const query = document.getElementById("search-input").value.trim();
-        
         if (query) {
           window.location.href = "/nothing/search?q=" + encodeURIComponent(query);
         }
