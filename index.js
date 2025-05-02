@@ -747,6 +747,9 @@ app.get("/about", (req, res) => {
 app.get("/trend", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "trending.html"));
 });
+app.get("/proxy/client/unblocker-client.js", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "js/node-un-server.js"));
+});
 
 app.get('/all-api', async (req, res) => {
     const url = 'https://raw.githubusercontent.com/Minotaur-ZAOU/test/refs/heads/main/min-tube2-all-api.json';
