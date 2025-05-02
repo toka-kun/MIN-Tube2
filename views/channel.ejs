@@ -56,13 +56,13 @@
           font-size: 20px;
           margin-bottom: 20px;
       }
-      /* カード形式のギャラリー表示 */
+  
       #playlistContainer {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
           gap: 20px;
       }
-      /* カードのスタイル */
+
       .card {
           background-color: #1e1e1e;
           border-radius: 8px;
@@ -136,7 +136,7 @@
               if (data.playlist && data.playlist.length > 0) {
                   let html = "";
                   data.playlist.forEach(item => {
-                      // channelの検索結果（channelIDが"UC"で始まる）を除外
+
                       if (item.id.startsWith("UC")) return;
                       html += `
                       <div class="card">

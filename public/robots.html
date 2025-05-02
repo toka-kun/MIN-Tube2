@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Making sure you're not a bot!</title>
   <style>
-    /* 全体のスタイル */
+  
     body {
       background: linear-gradient(135deg, #1e1e1e, #2c2c2c);
       color: #fff;
@@ -16,10 +16,10 @@
       height: 100vh;
       margin: 0;
       overflow: hidden;
-      position: relative; /* フッターリンクを絶対配置するため */
+      position: relative; 
     }
 
-    /* 見出し */
+
     h1 {
       margin-bottom: 20px;
       font-size: 54px;
@@ -27,7 +27,7 @@
       animation: fadeInDown 1s ease-out;
     }
 
-    /* プログレスコンテナ */
+  
     #progress-container {
       width: 80%;
       max-width: 600px;
@@ -100,7 +100,7 @@
       100% { left: 100%; }
     }
 
-    /* トグルセクションのスタイル */
+  
     #toggle-container {
       margin-top: 20px;
       width: 80%;
@@ -133,7 +133,7 @@
       display: none;
     }
 
-    /* フッターリンク（テキスト）のスタイル */
+   
     #footer-links {
       position: absolute;
       bottom: 20px;
@@ -163,7 +163,7 @@
   </div>
   <p>起動しています。しばらくお待ちください。</p>
 
-  <!-- トグルコンテンツ -->
+
   <div id="toggle-container">
     <h2 id="toggle-header">なぜこのページが表示されますか▶</h2>
     <div id="toggle-content">
@@ -172,14 +172,14 @@
     </div>
   </div>
 
-  <!-- フッターリンク（テキスト） -->
+ 
   <div id="footer-links">
     <a href="https://github.com/mino-hobby-pro/MIN-Tube2" target="_blank">GitHub</a>
     <a href="https://discord.com/invite/8nedA5ZYy8" target="_blank">Discord</a>
   </div>
 
   <script>
-    // Cookieを設定する関数
+
     function setCookie(name, value, days) {
       let expires = "";
       if (days) {
@@ -209,7 +209,7 @@
       }
     }, 30);
 
-    // トグル機能の実装
+
     const toggleHeader = document.getElementById('toggle-header');
     const toggleContent = document.getElementById('toggle-content');
 
