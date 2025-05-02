@@ -554,11 +554,15 @@ app.get("/video/:id", async (req, res, next) => {
         <div class="details">
           <h2>動画詳細</h2>
           <div class="channel-info">
+           <a href="/channel/${videoData.channelId || ''}">
             <img class="channel-avatar" src="${videoData.channelImage || ''}" alt="${videoData.channelName || 'チャンネル'}" />
-            <div>
-              <p>${videoData.channelName || 'チャンネル名未設定'}</p>
-            </div>
-          </div>
+           </a>
+          <div>
+           <a href="/channel/${videoData.channelId || ''}">
+            <p>${videoData.channelName || 'チャンネル名未設定'}</p>
+             </a>
+         </div>
+        </div>
           <p>${videoData.videoDes || "詳細情報はありません"}</p>
           <p>視聴回数: ${videoData.videoViews ? videoData.videoViews.toLocaleString() : "0"}</p>
           <p>いいね: ${videoData.likeCount ? videoData.likeCount.toLocaleString() : "0"}</p>
@@ -852,7 +856,7 @@ app.get("/highstream/:id", async (req, res, next) => {
 
   try {
     if (!Array.isArray(apiListCache) || apiListCache.length === 0) {
-      return res.status(500).send("有効なAPIリストが取得できませんでした。");
+      return res.status(500).send("リロードしてください");
     }
     const apiList = apiListCache;
 
