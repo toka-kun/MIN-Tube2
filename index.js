@@ -946,6 +946,26 @@ app.get("/highstream/:id", async (req, res, next) => {
   }
 });
 
+app.get("/login.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+app.get("/sign-in.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "signin.html"));
+});
+app.get("/rireki.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "rireki.html"));
+});
+
+
+app.post("/api/save-history", express.json(), async (req, res) => {
+  const { videoId } = req.body;
+
+  if (!videoId) {
+    return res.status(400).json({ error: "videoId必要" });
+  }
+
+  res.json({ success: true });
+});
 
 app.use((req, res, next) => {
   res.status(404).sendFile(path.join(__dirname, "public", "error.html"));

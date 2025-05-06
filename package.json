@@ -1,7 +1,7 @@
 {
   "name": "min-tube-2",
   "version": "1.0.0",
-  "description": "invidiousのようなフロントエンドのプレイヤー",
+  "description": "MIN-Tube2 is smart youtube watcher",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
