@@ -955,6 +955,85 @@ app.get("/sign-in.html", (req, res) => {
 app.get("/rireki.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "rireki.html"));
 });
+app.get('/status', (req, res) => {
+  const startHR = process.hrtime();
+  const currentTime = new Date();
+  const uptime = process.uptime();
+
+  const initialDiff = process.hrtime(startHR);
+  const responseTimeMs = initialDiff[0] * 1e3 + initialDiff[1] / 1e6;
+
+  const memoryUsage = process.memoryUsage();
+  const heapUsedMB = memoryUsage.heapUsed / (1024 * 1024);
+
+  const cpuUsage = process.cpuUsage();
+  const totalCpuMicro = cpuUsage.user + cpuUsage.system;
+
+  let responseScore;
+  if (responseTimeMs < 5) {
+    responseScore = 100;
+  } else if (responseTimeMs < 20) {
+    responseScore = 80;
+  } else if (responseTimeMs < 50) {
+    responseScore = 60;
+  } else {
+    responseScore = 40;
+  }
+
+  let memoryScore;
+  if (heapUsedMB < 100) {
+    memoryScore = 100;
+  } else if (heapUsedMB < 200) {
+    memoryScore = 80;
+  } else if (heapUsedMB < 300) {
+    memoryScore = 60;
+  } else {
+    memoryScore = 40;
+  }
+
+  let cpuScore;
+  if (totalCpuMicro < 100000) {
+    cpuScore = 100;
+  } else if (totalCpuMicro < 300000) {
+    cpuScore = 80;
+  } else if (totalCpuMicro < 500000) {
+    cpuScore = 60;
+  } else {
+    cpuScore = 40;
+  }
+
+  const overallScore = Math.round((responseScore + memoryScore + cpuScore) / 3);
+  let healthStatus;
+  if (overallScore >= 90) {
+    healthStatus = `Excellent (${overallScore}%)`;
+  } else if (overallScore >= 70) {
+    healthStatus = `Good (${overallScore}%)`;
+  } else if (overallScore >= 50) {
+    healthStatus = `Fair (${overallScore}%)`;
+  } else {
+    healthStatus = `Poor (${overallScore}%)`;
+  }
+
+
+  const finalDiff = process.hrtime(startHR);
+  const finalResponseTimeMs = finalDiff[0] * 1e3 + finalDiff[1] / 1e6;
+
+  res.json({
+    status: "OK",
+    serverTime: currentTime,
+    uptime: uptime,
+    responseTime: finalResponseTimeMs,
+    memoryUsage: {
+      rss: memoryUsage.rss,
+      heapTotal: memoryUsage.heapTotal,
+      heapUsed: memoryUsage.heapUsed,
+      external: memoryUsage.external,
+    },
+    cpuUsage: cpuUsage,
+    health: healthStatus
+  });
+});
+
 
 
 app.post("/api/save-history", express.json(), async (req, res) => {
