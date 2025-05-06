@@ -784,40 +784,38 @@ app.get('/home-ch', async (req, res) => {
     }
 });
 app.get('/proxy/*', async (req, res) => {
-  const targetUrl = req.params[0];
-
-  if (!targetUrl) {
-    res.status(400).send('URLパラメータが必要です');
-    return;
-  }
-
-  console.log(`Proxying request for: ${targetUrl}`);
-
-  try {
-    const response = await fetch(targetUrl);
-    if (!response.ok) {
-      res.status(response.status).send(`リクエストエラー: ${response.statusText}`);
-      return;
+    const targetUrl = req.params[0];
+    if (!targetUrl) {
+        res.status(400).send('URLパラメータが必要です');
+        return;
     }
 
-    // Content-Typeを取得
-    const contentType = response.headers.get('content-type') || '';
+    const proxyUrl = `https://min-tube2-node-unblocker-server.vercel.app/proxy/${targetUrl}`;
 
-    // HTMLやテキスト系コンテンツの場合はテキストで返す
-    if (contentType.startsWith('text/') || contentType.includes('application/json')) {
-      const text = await response.text();
-      res.set('Content-Type', contentType);
-      res.send(text);
-    } else {
-      // 画像や動画などのバイナリコンテンツの場合
-      const buffer = await response.buffer();
-      res.set('Content-Type', contentType);
-      res.send(buffer);
+    console.log(`Proxying request for: ${targetUrl}`);
+
+    try {
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+            res.status(response.status).send(`リクエストエラー: ${response.statusText}`);
+            return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+
+        if (contentType.startsWith('text/') || contentType.includes('application/json')) {
+            const text = await response.text();
+            res.set('Content-Type', contentType);
+            res.send(text);
+        } else {
+            const buffer = await response.buffer();
+            res.set('Content-Type', contentType);
+            res.send(buffer);
+        }
+    } catch (error) {
+        console.error('Error fetching URL:', error);
+        res.status(500).send('サーバ内部エラー');
     }
-  } catch (error) {
-    console.error('Error fetching URL:', error);
-    res.status(500).send('サーバ内部エラー');
-  }
 });
 
 app.get('/img/:videoId', async (req, res) => {
@@ -847,6 +845,43 @@ app.get('/img/:videoId', async (req, res) => {
     res.send(buffer);
   } catch (error) {
     console.error('Error fetching thumbnail:', error);
+    res.status(500).send('サーバ内部エラー');
+  }
+});
+
+app.get('/htmlproxy/*', async (req, res) => {
+  const targetUrl = req.params[0];
+
+  if (!targetUrl) {
+    res.status(400).send('URLパラメータが必要です');
+    return;
+  }
+
+  console.log(`Proxying request for: ${targetUrl}`);
+
+  try {
+    const response = await fetch(targetUrl);
+    if (!response.ok) {
+      res.status(response.status).send(`リクエストエラー: ${response.statusText}`);
+      return;
+    }
+
+
+    const contentType = response.headers.get('content-type') || '';
+
+ 
+    if (contentType.startsWith('text/') || contentType.includes('application/json')) {
+      const text = await response.text();
+      res.set('Content-Type', contentType);
+      res.send(text);
+    } else {
+     
+      const buffer = await response.buffer();
+      res.set('Content-Type', contentType);
+      res.send(buffer);
+    }
+  } catch (error) {
+    console.error('Error fetching URL:', error);
     res.status(500).send('サーバ内部エラー');
   }
 });
