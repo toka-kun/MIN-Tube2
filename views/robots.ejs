@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title></title>
+</head>
+<body>
+  <div>
+    <%- content %>
+  </div>
+
+  <script>
+    setTimeout(function() {
+      document.cookie = "humanVerified=true; path=/";
+      window.location.reload();
+    }, 5000);
+  </script>
+</body>
+</html>

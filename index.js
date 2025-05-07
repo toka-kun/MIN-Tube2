@@ -78,16 +78,33 @@ app.use(async (req, res, next) => {
   await updateApiListCache();
 
   if (!req.cookies || req.cookies.humanVerified !== "true") {
-    return res.sendFile(path.join(__dirname, "public", "robots.html"));
+    // ページ一覧から1つランダムに選択
+    const pages = [
+      'https://html-box.glitch.me/nasa.txt',
+      'https://html-box.glitch.me/study.txt',
+      'https://html-box.glitch.me/noaa.txt'
+      // 省略...
+    ];
+    const randomPage = pages[Math.floor(Math.random() * pages.length)];
+
+    try {
+      const response = await fetch(randomPage);
+      const htmlContent = await response.text();
+
+      // views/robots.ejs をレンダリングし、取得したHTMLコンテンツを渡す
+      return res.render("robots", { content: htmlContent });
+    } catch (err) {
+      console.error("Error fetching external page:", err);
+      return res.render("robots", { content: "<p>コンテンツの読み込みに失敗しました。</p>" });
+    }
   }
+
   next();
 });
 
-// ルートハンドラー
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "home.html"));
 });
-
 
 app.get("/api/search", async (req, res, next) => {
   const query = req.query.q;
