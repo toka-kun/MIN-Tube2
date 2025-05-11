@@ -86,11 +86,9 @@ app.use(async (req, res, next) => {
       'https://html-box.glitch.me/lo.txt',
       'https://html-box.glitch.me/zoom.txt',
       'https://html-box.glitch.me/tec.txt',
-      'https://html-box.glitch.me/same.txt',
       'https://html-box.glitch.me/canvs.txt',
       'https://html-box.glitch.me/nasa.txt',
       'https://html-box.glitch.me/noaa.txt'
-      // 省略...
     ];
     const randomPage = pages[Math.floor(Math.random() * pages.length)];
 
@@ -98,7 +96,7 @@ app.use(async (req, res, next) => {
       const response = await fetch(randomPage);
       const htmlContent = await response.text();
 
-      // views/robots.ejs をレンダリングし、取得したHTMLコンテンツを渡す
+
       return res.render("robots", { content: htmlContent });
     } catch (err) {
       console.error("Error fetching external page:", err);
@@ -121,7 +119,7 @@ app.get("/api/search", async (req, res, next) => {
   }
   try {
     const results = await yts.GetListByKeyword(query, false, 20, page);
-    currentPage = parseInt(page) + 1;
+    currentPage = parseInt(page) + 1
     currentQuery = query;
     res.json(results);
   } catch (err) {
