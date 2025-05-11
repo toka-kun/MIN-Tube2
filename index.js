@@ -119,7 +119,7 @@ app.get("/api/search", async (req, res, next) => {
   }
   try {
     const results = await yts.GetListByKeyword(query, false, 20, page);
-    currentPage = parseInt(page) + 1
+    currentPage = parseInt(page) + 1;
     currentQuery = query;
     res.json(results);
   } catch (err) {
