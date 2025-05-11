@@ -72,6 +72,9 @@
       #landing h1 {
         font-size: 48px;
         color: #bb86fc;
+        margin-bottom: 20px;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
       }
       #landing form {
         margin-top: 30px;
@@ -80,6 +83,9 @@
         max-width: 600px;
         gap: 10px;
         align-items: center;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 0.5s;
       }
       #landing input#landingQuery {
         flex: 1;
@@ -102,26 +108,83 @@
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s ease;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1s;
       }
       #landing button:hover {
         background-color: #a369e7;
       }
       
+      /* ナビゲーションバースタイル */
+      nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        height: 60px;
+        background-color: #2f2f2f; /* 色変更：濃い灰色 */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        z-index: 10000;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 0.2s;
+      }
+      /* ナビゲーションリスト */
+      nav ul {
+        display: flex;
+        list-style: none;
+        gap: 20px;
+        font-size: 18px;
+      }
+      /* 各リンク */
+      nav ul li a {
+        display: inline-block;
+        padding: 10px 15px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #e0e0e0;
+        background-color: transparent;
+        transition: background-color 0.3s, color 0.3s;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+      }
+      /* 各リンクフェードイン遅延 */
+      nav ul li a:nth-child(1) { animation-delay: 0.3s; }
+      nav ul li a:nth-child(2) { animation-delay: 0.4s; }
+      nav ul li a:nth-child(3) { animation-delay: 0.5s; }
+      nav ul li a:nth-child(4) { animation-delay: 0.6s; }
+      nav ul li a:nth-child(5) { animation-delay: 0.7s; }
+      nav ul li a:nth-child(6) { animation-delay: 0.8s; }
+      /* ホバーで色変化 */
+      nav ul li a:hover {
+        background-color: #444; /* 色変更：やや濃い灰色 */
+        color: #bb86fc;
+      }
+      
       /* ツールコンテナ */
       .tools-container {
-        background-color: #1e1e1e;
+        background-color: #2a2a2a; /* 色変更：濃い灰色 */
         border-radius: 20px;
         padding: 30px;
         margin: 5px auto;
         max-width: 1200px;
         width: 90%;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 0.9s;
       }
       .tools-container h2 {
         text-align: center;
         font-size: 32px;
         margin-bottom: 20px;
-        color: #bb86fc;
+        color: #888; /* 色変更：やや薄めの灰色 */
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1s;
       }
       .cards {
         display: flex;
@@ -130,13 +193,16 @@
         gap: 20px;
       }
       .card {
-        background-color: #333;
+        background-color: #3a3a3a; /* 色変更：やや明るめの灰色 */
         border-radius: 15px;
         padding: 20px;
         width: 280px;
         text-align: center;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
         transition: transform 0.2s, box-shadow 0.2s;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1.1s;
       }
       .card:hover {
         transform: translateY(-5px);
@@ -144,12 +210,12 @@
       }
       .card h3 {
         font-size: 24px;
-        color: #fff;
+        color: #ccc; /* 色変更：薄い灰色 */
         margin-bottom: 10px;
       }
       .card p {
         font-size: 16px;
-        color: #ccc;
+        color: #999; /* 色変更：やや薄めの灰色 */
         line-height: 1.4;
       }
       .card a {
@@ -160,27 +226,36 @@
       
       /* 急上昇セクションのスタイル */
       .trending-container {
-        background-color: #1e1e1e;
+        background-color: #2f2f2f; /* 色変更：濃い灰色 */
         border-radius: 20px;
         padding: 30px;
         margin:   5px auto;
         max-width: 1200px;
         width: 90%;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1.2s;
       }
       .trending-container h2 {
         text-align: center;
         font-size: 32px;
         margin-bottom: 20px;
-        color: #bb86fc;
+        color: #888; /* 色変更：やや薄めの灰色 */
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1.3s;
       }
       .trending-container iframe {
         width: 100%;
         height: 500px;
         border: none;
         border-radius: 15px;
-        background-color: #333;
+        background-color: #3a3a3a; /* 色変更：やや明るめの灰色 */
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.7);
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1.4s;
       }
       
       /* メインコンテンツ（検索結果表示用） */
@@ -191,7 +266,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background-color: #1e1e1e;
+        background-color: #2f2f2f; /* 色変更：濃い灰色 */
         padding: 10px 20px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         margin-bottom: 20px;
@@ -242,12 +317,15 @@
         gap: 20px;
       }
       .video {
-        background-color: #1e1e1e;
+        background-color: #2f2f2f; /* 色変更：濃い灰色 */
         border-radius: 4px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
         overflow: hidden;
         transition: transform 0.2s, box-shadow 0.2s;
         cursor: pointer;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1.5s;
       }
       .video:hover {
         transform: scale(1.02);
@@ -262,7 +340,7 @@
       }
       .video-info h3 {
         font-size: 18px;
-        color: #e0e0e0;
+        color: #ccc; /* 色変更：薄い灰色 */
       }
       
       /* オートコンプリート */
@@ -271,7 +349,7 @@
         top: 100%;
         left: 0;
         right: 0;
-        background-color: #333;
+        background-color: #2f2f2f; /* 色変更：濃い灰色 */
         border: 1px solid #444;
         border-top: none;
         z-index: 1000;
@@ -284,13 +362,16 @@
         color: #e0e0e0;
       }
       .autocomplete-item:hover {
-        background-color: #444;
+        background-color: #444; /* 色変更：濃い灰色 */
       }
       
       /* インラインローディング */
       #inlineLoading {
         text-align: center;
         padding: 20px;
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+        animation-delay: 1.6s;
       }
       #inlineLoading .spinner {
         width: 40px;
@@ -300,6 +381,12 @@
       #inlineLoading .loading-text {
         font-size: 18px;
       }
+      
+      /* フェードインアニメーションキー */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
     </style>
   </head>
   <body>
@@ -308,6 +395,18 @@
       <div class="spinner"></div>
       <div class="loading-text">Loading...</div>
     </div>
+    
+    <!-- ナビゲーションバー -->
+    <!-- ここに条件付きで表示制御を仕込むため、最初はCSSで制御しない -->
+    <nav id="mainNav">
+      <ul>
+        <li><a href="/games.html">Games</a></li>
+        <li><a href="/app.html">App</a></li>
+        <li><a href="/bbs.html">BBS</a></li>
+        <li><a href="/ai.html">AI</a></li>
+        <li><a href="/set.html">Setting</a></li>
+      </ul>
+    </nav>
     
     <!-- ランディングページ -->
     <div id="landing">
@@ -328,13 +427,13 @@
             </a>
           </div>
           <div class="card">
-            <a href="/apps">
+            <a href="/apps.html">
               <h3>アプリ</h3>
               <p>ユーザーフレンドリーなアプリを提供します。</p>
             </a>
           </div>
           <div class="card">
-            <a href="/about">
+            <a href="/about.html">
               <h3>About</h3>
               <p>MIN-Tube2がどうやって動作するのか。開発者の紹介を行います。</p>
             </a>
@@ -391,10 +490,16 @@
           <div class="loading-text">Now loading...</div>
         `;
         resultsDiv.appendChild(inline);
+        // アニメーション用にopacity設定
+        setTimeout(() => { inline.style.opacity = 1; }, 10);
       }
       function hideInlineLoading() {
         const inline = document.getElementById("inlineLoading");
-        if (inline) inline.remove();
+        if (inline) {
+          //フェードアウト
+          inline.style.opacity = 0;
+          setTimeout(() => { inline.remove(); }, 300);
+        }
       }
       
       // --- 検索処理 ---
@@ -547,6 +652,8 @@
         // 検索結果表示時はランディング画面（およびツールコンテナ、急上昇コンテナ）を非表示
         document.getElementById("landing").style.display = "none";
         document.getElementById("mainContent").style.display = "block";
+        // 追加：ナビゲーションバーを非表示に
+        document.getElementById("mainNav").style.display = "none";
         
         performSearch(query, currentPage);
         currentPage++;
@@ -565,7 +672,8 @@
         // ヘッダー検索時も URL 更新
         const randomStr = generateRandomString();
         history.pushState({}, "", "/nothing/" + randomStr);
-        
+        // 追加：ナビゲーションバーを非表示に
+        document.getElementById("mainNav").style.display = "none";
         performSearch(query, currentPage);
         currentPage++;
       });
@@ -596,7 +704,8 @@
             // 自動検索実行時はランディングおよびツールコンテナを非表示
             document.getElementById("landing").style.display = "none";
             document.getElementById("mainContent").style.display = "block";
-            
+            // 追加：ナビゲーションバーも非表示
+            document.getElementById("mainNav").style.display = "none";
             performSearch(queryParam, currentPage);
             currentPage++;
           }
