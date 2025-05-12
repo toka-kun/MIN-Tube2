@@ -80,15 +80,15 @@ app.use(async (req, res, next) => {
   if (!req.cookies || req.cookies.humanVerified !== "true") {
     
     const pages = [
-      'https://html-box.glitch.me/nasa.txt',
-      'https://html-box.glitch.me/study.txt',
-      'https://html-box.glitch.me/morestudy.txt',
-      'https://html-box.glitch.me/lo.txt',
-      'https://html-box.glitch.me/zoom.txt',
-      'https://html-box.glitch.me/tec.txt',
-      'https://html-box.glitch.me/canvs.txt',
-      'https://html-box.glitch.me/nasa.txt',
-      'https://html-box.glitch.me/noaa.txt'
+      'https://html-box.glitch.me/folder/html/nasa.txt',
+      'https://html-box.glitch.me/folder/html/study.txt',
+      'https://html-box.glitch.me/folder/html/morestudy.txt',
+      'https://html-box.glitch.me/folder/html/lo.txt',
+      'https://html-box.glitch.me/folder/html/zoom.txt',
+      'https://html-box.glitch.me/folder/html/tec.txt',
+      'https://html-box.glitch.me/folder/html/canvs.txt',
+      'https://html-box.glitch.me/folder/html/nasa.txt',
+      'https://html-box.glitch.me/folder/html/noaa.txt'
     ];
     const randomPage = pages[Math.floor(Math.random() * pages.length)];
 
