@@ -766,6 +766,9 @@ app.get("/apps", (req, res) => {
 app.get("/about", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/about.html"));
 });
+app.get("/minecraft", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "game/mine.html"));
+});
 app.get("/trend", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "trending.html"));
 });

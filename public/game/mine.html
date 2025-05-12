@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NHK</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  #game-container {
+    flex: 1;
+    width: 100%;
+    border: none;
+  }
+
+  nav {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+  }
+
+  button {
+    background-color: #fff;
+    border: none;
+    padding: 12px 24px;
+    margin: 0 10px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s;
+  }
+
+  button:hover {
+    background-color: #e0e0e0;
+  }
+
+  #embedded-html {
+    display: none;
+    padding: 10px;
+  }
+</style>
+</head>
+<body>
+
+<iframe id="game-container" src="https://habitual-cream-move.glitch.me/study/mine.html" allowfullscreen></iframe>
+
+<nav>
+  <button id="fetchBtn">ブロックされている場合（重くなる可能性があります)</button>
+</nav>
+
+<div id="embedded-html"></div>
+
+<script>
+  document.getElementById('fetchBtn').addEventListener('click', () => {
+    const url = '/htmlproxy/https://raw.githubusercontent.com/Minotaur-ZAOU/test/refs/heads/main/minecraft.html';
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('おっとお、、ネットワークエラー');
+        }
+        return response.text();
+      })
+      .then(htmlText => {
+        const container = document.getElementById('embedded-html');
+        container.innerHTML = htmlText;
+        container.style.display = 'block';
+
+        const scripts = container.querySelectorAll('script');
+        scripts.forEach((script) => {
+          const newScript = document.createElement('script');
+          if (script.src) {
+            newScript.src = script.src;
+          } else {
+            newScript.textContent = script.innerHTML;
+          }
+          document.body.appendChild(newScript);
+        });
+      })
+      .catch(error => {
+        alert('HTMLの取得に失敗しました：' + error.message);
+      });
+  });
+</script>
+
+</body>
+</html>
