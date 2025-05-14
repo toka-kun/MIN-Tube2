@@ -756,6 +756,12 @@ app.get("/nothing/*", (req, res) => {
 app.get("/api", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/api.html"));
 });
+app.get("/min-sp", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "staticproxy/min2-p.html"));
+});
+app.get("/helios", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "staticproxy/helios.html"));
+});
 app.get("/set", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/set.html"));
 });

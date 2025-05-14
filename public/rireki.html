@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>再生履歴</title>
   <style>
-    /* 全体リセットと基本設定 */
     * {
       box-sizing: border-box;
     }
@@ -23,7 +22,6 @@
       margin-bottom: 1.5rem;
       font-weight: 500;
     }
-    /* 再生履歴表示領域 */
     #history-list {
       width: 100%;
       max-width: 600px;
@@ -32,7 +30,6 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
-    /* 各履歴のカード */
     #history-list p {
       margin: 0.75rem 0;
       padding: 0.75rem;
@@ -59,7 +56,6 @@
   </div>
 
   <script src="/js/firebase-init.js"></script>
-  <!-- ESモジュールとしてインポート -->
   <script type="module">
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js";
