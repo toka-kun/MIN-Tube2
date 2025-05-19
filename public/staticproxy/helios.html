@@ -6,7 +6,7 @@
   <script>
 
     window.onload = () => {
-      fetch('/proxy/https://raw.githubusercontent.com/Minotaur-ZAOU/test/refs/heads/main/helios.html')
+      fetch('/htmlproxy/https://raw.githubusercontent.com/Minotaur-ZAOU/test/refs/heads/main/helios.html')
         .then(response => {
           if (!response.ok) {
             throw new Error('ネットワークエラー: ' + response.status);

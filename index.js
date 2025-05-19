@@ -768,6 +768,10 @@ app.get("/set", (req, res) => {
 app.get("/apps", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/apps.html"));
 });
+app.get("/bbs", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat/chat.html"));
+});
+
 
 app.get("/about", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/about.html"));
