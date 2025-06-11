@@ -762,6 +762,9 @@ app.get("/min-sp", (req, res) => {
 app.get("/helios", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "staticproxy/helios.html"));
 });
+app.get("/highimg", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "oasobi/night.html"));
+});
 app.get("/set", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/set.html"));
 });
