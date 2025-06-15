@@ -352,6 +352,22 @@
         color: #ccc; /* 色変更：薄い灰色 */
       }
       
+      /* 追加：チャンネル名表示とスタイル */
+      .channel-name {
+        display: block;
+        margin-top: 8px;
+        font-size: 14px;
+        color: #aaa;
+        cursor: pointer;
+        transition: color 0.3s, text-decoration 0.3s;
+        text-align: right;
+        font-weight: normal;
+      }
+      .channel-name:hover {
+        color: #fff;
+        text-decoration: underline;
+      }
+      
       /* オートコンプリート */
       .autocomplete-suggestions {
         position: absolute;
@@ -541,8 +557,8 @@
                   const title = item.title;
                   let thumbnailUrl =
                     "https://yt3.ggpht.com/ytc/${item.id}=s900-c-k-c0xffffffff-no-rj-mo";
-                  if (item.authorThumbnails && item.authorThumbnails.length > 0) {
-                    thumbnailUrl = item.authorThumbnails[0].url;
+                  if (item.thumbnail && item.thumbnail.thumbnails && item.thumbnail.thumbnails.length > 0) {
+                    thumbnailUrl = item.thumbnail.thumbnails[0].url;
                   } else {
                     thumbnailUrl = "";
                   }
@@ -553,6 +569,7 @@
                     <img src="${thumbnailUrl}" alt="${title}">
                     <div class="video-info">
                       <h3>${title}</h3>
+                      <div class="channel-name" data-channel-id="${channelId}">${item.title}</div>
                     </div>
                   `;
                   channelDiv.addEventListener("click", function () {
@@ -567,12 +584,30 @@
                   const videoDiv = document.createElement("div");
                   videoDiv.className = "video";
                   videoDiv.setAttribute("data-item-id", item.id);
-                  videoDiv.innerHTML = `
+                  // 追加：channelNameも設定
+                  const channelName = item.channelTitle || item.shortBylineText?.runs?.[0]?.text || "";
+                  const channelLink = item.channelTitle ? `/channel/${item.channelTitle}` : `#`;
+                  
+                  // もしチャンネル名がある場合は表示
+                  const channelHtml = channelName ? `<div class="channel-name" data-channel-url="${channelLink}">${channelName}</div>` : "";
+                  
+                  // カードの中にチャンネル名を入れる
+                  // 既存の構造に追加
+                  // ただし、カード内のスタイル性を崩さないために、channel名はvideo-infoの中に配置
+                  // 既存のh3の下に追加
+                  // ただし、インナーのdiv.innerHTMLはテンプレートリテラル内に書き込み
+                  // すでにh3とpがあるので、その下に追加
+                  // まず、innerHTMLをリセットして構造を組み立てる
+                  // 例：
+                  const htmlContent = `
                     <img src="${thumbnailUrl}" alt="${title}">
                     <div class="video-info">
                       <h3>${title}</h3>
+                      ${channelHtml}
                     </div>
                   `;
+                  videoDiv.innerHTML = htmlContent;
+                  // クリックイベントで動画ページへ
                   videoDiv.addEventListener("click", function () {
                     window.location.href = `/video/${videoId}`;
                   });
