@@ -18,6 +18,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser());
 
 
+
 let currentPage = 0;
 let currentQuery = "";
 let apiListCache = [];
@@ -764,6 +765,9 @@ app.get("/helios", (req, res) => {
 });
 app.get("/highimg", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "oasobi/night.html"));
+});
+app.get("/dl-thumbnail", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app/samunedl.html"));
 });
 app.get("/set", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/set.html"));

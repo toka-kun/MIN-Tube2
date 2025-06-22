@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <title>画像補正ツール ～暗み除去・高画質化・最高品質～</title>
   <style>
-    /* 全体レイアウト */
-    body {
+  body {
       background: #f0f2f5;
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       margin: 0;
@@ -78,7 +78,6 @@
       border-radius: 4px;
       background: #000;
     }
-    /* プログレスオーバーレイ */
     #progressOverlay {
       position: fixed;
       top: 0;
@@ -119,58 +118,49 @@
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>画像補正ツール</h1>
-    <p>画像処理モードを選択し、画像ファイルをアップロードしてください。  
-      （モード：暗み除去 / 高画質化 / 最高品質）</p>
+    <p>画像処理モードを選択し、画像ファイルをアップロードしてください。 （モード：暗み除去 / 高画質化 / 最高品質）</p>
     <div class="controls">
       <input type="file" id="upload" accept="image/*">
       <div>
         <label>
-          <input type="radio" name="mode" value="dark" checked>
-          暗み除去
-        </label>
+          <input type="radio" name="mode" value="dark" checked>暗み除去</label>
         <label>
-          <input type="radio" name="mode" value="hq">
-          高画質化
-        </label>
+          <input type="radio" name="mode" value="hq">高画質化</label>
         <label>
-          <input type="radio" name="mode" value="ultimate">
-          最高品質
-        </label>
+          <input type="radio" name="mode" value="ultimate">最高品質</label>
       </div>
       <button id="processBtn">画像処理を開始</button>
     </div>
     <div class="canvases">
       <div class="canvas-wrapper">
         <h2>元の画像</h2>
-        <canvas id="originalCanvas"></canvas>
+        <canvas id="originalCanvas">
+        </canvas>
       </div>
       <div class="canvas-wrapper">
         <h2>処理後の画像</h2>
-        <canvas id="enhancedCanvas"></canvas>
+        <canvas id="enhancedCanvas">
+        </canvas>
       </div>
     </div>
   </div>
-
-  <!-- プログレスオーバーレイ -->
   <div id="progressOverlay">
     <div class="progressContainer">
       <div class="progressText">処理中...</div>
       <div class="progressBar">
-        <div class="progressFill" id="progressFill" style="width: 0%;"></div>
+        <div class="progressFill" id="progressFill" style="width: 0%;">
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- 外部ライブラリ読み込み -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
   <script src="glfx.js"></script>
-  
   <script>
-    // グローバル変数：アップロード画像のオブジェクト
-    let uploadedImage = new Image();
+  let uploadedImage = new Image();
     const uploadInput = document.getElementById("upload");
     const processBtn = document.getElementById("processBtn");
     const originalCanvas = document.getElementById("originalCanvas");
@@ -181,26 +171,20 @@
     const progressFill = document.getElementById("progressFill");
     
     let progressInterval;
-
-    // プログレスバーの更新処理
     function updateProgress(value) {
       progressFill.style.width = value + "%";
     }
-
-    // プログレスバー表示開始
     function showProgress() {
       progressOverlay.style.display = "flex";
       updateProgress(0);
       let progress = 0;
       progressInterval = setInterval(() => {
-        if (progress < 90) { // 90%まで自動更新
+        if (progress < 90) {
           progress += 5;
           updateProgress(progress);
         }
       }, 300);
     }
-
-    // プログレスバー非表示
     function hideProgress() {
       clearInterval(progressInterval);
       updateProgress(100);
@@ -209,8 +193,6 @@
         updateProgress(0);
       }, 500);
     }
-
-    // 画像アップロード時の処理（前回画像を完全にクリアしてから描画）
     uploadInput.addEventListener("change", function() {
       const file = this.files[0];
       if (!file) return;
@@ -218,12 +200,10 @@
       reader.onload = function(e) {
         uploadedImage = new Image();
         uploadedImage.onload = function() {
-          // キャンバスのサイズをアップロード画像に合わせ再設定＆クリア
           originalCanvas.width = enhancedCanvas.width = uploadedImage.width;
           originalCanvas.height = enhancedCanvas.height = uploadedImage.height;
           origCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
           enhCtx.clearRect(0, 0, enhancedCanvas.width, enhancedCanvas.height);
-          // 両キャンバスへ画像を描画
           origCtx.drawImage(uploadedImage, 0, 0);
           enhCtx.drawImage(uploadedImage, 0, 0);
         }
@@ -231,26 +211,16 @@
       }
       reader.readAsDataURL(file);
     });
-
-    // 画像処理開始ボタン押下時の処理
-    processBtn.addEventListener("click", function() {
+    document.getElementById("processBtn").addEventListener("click", function() {
       if (!uploadedImage.src) {
         alert("画像ファイルを選択してください。");
         return;
       }
-      
-      // 選択されたモードを取得（"dark", "hq", "ultimate"）
       const mode = document.querySelector('input[name="mode"]:checked').value;
-      
-      // キャンバスを初期状態（前の画像が重ならないように）にクリア＆元画像を再描画
       enhCtx.clearRect(0, 0, enhancedCanvas.width, enhancedCanvas.height);
       enhCtx.drawImage(uploadedImage, 0, 0);
-      
-      // プログレス表示開始
       showProgress();
-      
       if (mode === "dark") {
-        // 【暗み除去モード】
         Caman(enhancedCanvas, function() {
           this.revert(false);
           this.brightness(15);
@@ -261,7 +231,6 @@
           });
         });
       } else if (mode === "hq") {
-        // 【高画質化モード】
         Caman(enhancedCanvas, function() {
           this.revert(false);
           this.brightness(10);
@@ -276,7 +245,6 @@
                 .brightnessContrast(0.1, 0.15)
                 .hueSaturation(0, 0.2)
                 .update();
-              // glfx.js の結果をキャンバスに転写（残像が残らないように毎回上書き）
               enhCtx.clearRect(0, 0, enhancedCanvas.width, enhancedCanvas.height);
               enhCtx.drawImage(fxCanvas, 0, 0, enhancedCanvas.width, enhancedCanvas.height);
             } catch (e) {
@@ -286,17 +254,12 @@
           });
         });
       } else if (mode === "ultimate") {
-        // 【最高品質モード】
-        // CamanJS による初期補正＋ glfx.js によるエフェクトで
-        // ・ピクセル境界を最小単位でぼかしドット効果を軽減
-        // ・ブレや逆光、ノイズを調整して完璧な仕上がりに
         Caman(enhancedCanvas, function() {
           this.revert(false);
           this.brightness(12);
           this.contrast(12);
           this.saturation(18);
           this.sharpen(8);
-          // ※ CamanJS に直接のノイズ除去フィルタはないため、補正の一環として調整
           this.render(function() {
             try {
               const fxCanvas = fx.canvas();
@@ -304,12 +267,9 @@
               fxCanvas.draw(texture)
                 .brightnessContrast(0.15, 0.2)
                 .hueSaturation(0, 0.3)
-                // triangleBlur でピクセル境界をぼかし、ドット感を軽減
                 .triangleBlur(1.5)
-                // gamma 調整で逆光・まぶしさも軽減（パラメータは調整可能）
                 .gamma(0.95)
                 .update();
-              // 結果を描画（前回の処理結果を残さないようにキャンバスをクリア）
               enhCtx.clearRect(0, 0, enhancedCanvas.width, enhancedCanvas.height);
               enhCtx.drawImage(fxCanvas, 0, 0, enhancedCanvas.width, enhancedCanvas.height);
             } catch (e) {
@@ -322,4 +282,5 @@
     });
   </script>
 </body>
+
 </html>
