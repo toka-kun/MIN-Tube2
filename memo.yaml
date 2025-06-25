@@ -1,0 +1,82 @@
+# memo.yaml - 
+
+title: "YouTube Search API Notes"  
+date: 2025-10-24                 
+tags:
+  - API
+  - YouTube
+  - Search
+  - Video
+  - Programming
+author: "Your Name"
+
+description: |
+  A collection of notes, tips, and references for implementing and understanding
+  the YouTube Search API. Useful for quick reference during development.
+
+sections:
+  - overview:
+      description: |
+        General overview of the YouTube Data API v3, focusing on search capabilities.
+      notes: |
+        - The API allows searching for videos, channels, and playlists.
+        - Requires API key for authentication.
+        - Quota limits apply (e.g., 10000 units/day by default).
+
+  - endpoints:
+      search:
+        method: GET
+        url: "https://www.googleapis.com/youtube/v3/search"
+        parameters:
+          part: "snippet" 
+          q: "search query"           # Search term
+          type: "video"               # or channel, playlist
+          maxResults: 5               # Number of results to return
+          key: "API_KEY"              # API key
+        notes: |
+          - Use 'part' to specify which parts of the resource to retrieve.
+          - Use 'type' to filter results.
+          - Pagination via 'pageToken'.
+
+  - authentication:
+      api_key:
+        description: "API key obtained from Google Cloud Console."
+        notes: |
+          - Secure.
+          - Use environment variables or config files for safety.
+      oauth2:
+        description: "OAuth 2.0 for user-specific data access."
+        notes: |
+          - Necessary for accessing private data or managing channels.
+
+  - request_examples:
+      - curl: |
+          curl "https://www.googleapis.com/youtube/v3/search?part=snippet&q=programming&type=video&key=API_KEY"
+        description: "Basic search request example using curl."
+
+  - response_structure:
+      notes: |
+        - The response contains an array of items.
+        - Each item includes id and snippet objects.
+        - Important fields: videoId, title, description, thumbnails, publishTime.
+
+  - error_handling:
+      common_errors:
+        - 400: Bad Request
+        - 403: Quota Exceeded or Forbidden
+        - 401: Unauthorized
+      notes: |
+        - Check API quota limits.
+        - Ensure correct parameters.
+        - Handle errors gracefully in code.
+
+  - tips & best_practices:
+      - Use 'q' parameter effectively for relevant search.
+      - Implement pagination for large result sets.
+      - Cache responses where possible to reduce quota usage.
+      - Respect API terms of service.
+
+  - references:
+      - Google Developers Documentation: https://developers.google.com/youtube/v3/docs/search
+      - OAuth 2.0 Guide: https://developers.google.com/identity/protocols/oauth2
+#  NOTUSEAPIKEYYET
