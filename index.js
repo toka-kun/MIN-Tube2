@@ -82,14 +82,14 @@ app.use(async (req, res, next) => {
     
     const pages = [
       'https://html-box.glitch.me/folder/html/nasa.txt',
-      'https://html-box.glitch.me/folder/html/study.txt',
-      'https://html-box.glitch.me/folder/html/morestudy.txt',
-      'https://html-box.glitch.me/folder/html/lo.txt',
-      'https://html-box.glitch.me/folder/html/zoom.txt',
-      'https://html-box.glitch.me/folder/html/tec.txt',
-      'https://html-box.glitch.me/folder/html/canvs.txt',
-      'https://html-box.glitch.me/folder/html/nasa.txt',
-      'https://html-box.glitch.me/folder/html/noaa.txt'
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/3d.txt',
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/check.txt',
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/fx.txt',
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/nasa.txt',
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/nasa.txt',
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/study.txt',
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/math.txt',
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/modul.txt'
     ];
     const randomPage = pages[Math.floor(Math.random() * pages.length)];
 
