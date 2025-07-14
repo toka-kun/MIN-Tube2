@@ -81,7 +81,7 @@ app.use(async (req, res, next) => {
   if (!req.cookies || req.cookies.humanVerified !== "true") {
     
     const pages = [
-      'https://html-box.glitch.me/folder/html/nasa.txt',
+      'https://html-box.glitch.me/',
       'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/3d.txt',
       'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/check.txt',
       'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/fx.txt',
@@ -89,7 +89,8 @@ app.use(async (req, res, next) => {
       'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/nasa.txt',
       'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/study.txt',
       'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/math.txt',
-      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/modul.txt'
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/modul.txt',
+      'https://raw.githubusercontent.com/mino-hobby-pro/gisou-min2/refs/heads/main/check.txt'
     ];
     const randomPage = pages[Math.floor(Math.random() * pages.length)];
 
