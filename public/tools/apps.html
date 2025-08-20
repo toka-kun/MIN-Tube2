@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Apps Page</title>
   <style>
-    /* 全体のスタイル */
+
     body {
       margin: 0;
       padding: 0;
@@ -15,11 +15,10 @@
     }
     .container {
       max-width: 1200px;
-      margin: 60px auto 0;  /* header分のマージン調整 */
+      margin: 60px auto 0;  
       padding: 40px 20px;
     }
-    
-    /* ヘッダー */
+
     .search-header {
       position: fixed;
       top: 0;
@@ -72,14 +71,12 @@
       background-color: #4500b5;
     }
     
-    /* タイトル */
     h1 {
       text-align: center;
       margin-top: 120px;
       color: #ffffff;
     }
     
-    /* 検索バー（内部用） */
     .search-container {
       display: flex;
       justify-content: center;
@@ -101,7 +98,6 @@
       background-color: #3a3a3a;
     }
     
-    /* カードコンテナ: グリッドレイアウトで3列並びにする */
     .cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -109,12 +105,11 @@
       justify-items: center;
     }
     
-    /* カードのスタイル */
     .card {
       background-color: #2e2e2e;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      width: 100%; /* gridの列幅に合わせる */
+      width: 100%; 
       max-width: 300px;
       padding: 20px;
       transition: transform 0.2s, box-shadow 0.2s;
@@ -148,7 +143,6 @@
       background-color: #45a049;
     }
     
-    /* レスポンシブ対応 */
     @media only screen and (max-width: 1024px) {
       .cards {
         grid-template-columns: repeat(2, 1fr);
@@ -178,87 +172,77 @@
   <h1>👜　App　💼</h1>
   
   <div class="container">
-    <!-- 内部の検索バー -->
+
     <div class="search-container">
       <input type="text" id="searchInput" placeholder="アプリを検索...">
     </div>
     
-    <!-- カード表示エリア -->
+
     <div class="cards">
-      <!-- gamesカード -->
+     
       <div class="card">
         <h3>games</h3>
         <p>いろいろなゲームがプレイできる</p>
         <button onclick="location.href='/games'">プレイする</button>
       </div>
       
-      <!-- 電卓カード -->
       <div class="card">
         <h3>Helios</h3>
         <p>海外の方が開発された静的なプロキシ</p>
         <button onclick="location.href='/helios'">利用する</button>
       </div>
       
-      <!-- プロキシカード -->
       <div class="card">
         <h3>プロキシ</h3>
         <p>高度なWebUnblocker（プロキシ）を提供</p>
         <button onclick="location.href='/unblocker'">利用する</button>
       </div>
       
-      <!-- MIN-Tube2プロキシカード -->
       <div class="card">
         <h3>MIN-Tube2プロキシ</h3>
         <p>MIN-Tube2に備え付けられたプロキシを提供</p>
         <button onclick="location.href='/min-sp'">利用する</button>
       </div>
       
-      <!-- BBSカード -->
       <div class="card">
         <h3>BBS</h3>
         <p>MIN-Tube2-BBSの提供（オープンチャット）</p>
         <button onclick="location.href='/BBS'">アクセスする</button>
       </div>
       
-      <!-- AIカード -->
       <div class="card">
         <h3>AI</h3>
         <p>AIの提供</p>
         <button onclick="location.href='/ai'">利用する</button>
       </div>
       
-      <!-- アプリダウンロードカード -->
       <div class="card">
         <h3>アプリダウンロード</h3>
         <p>オンラインでアプリをダウンロード</p>
         <button onclick="location.href='/app-dl'">ダウンロードする</button>
       </div>
       
-      <!-- サムネダウンロードカード -->
       <div class="card">
         <h3>サムネダウンロード</h3>
         <p>Youtubeのサムネをプロキシ経由を取得</p>
         <button onclick="location.href='/dl-thumbnail'">取得する</button>
       </div>
       
-      <!-- PrivateOff検索カード -->
       <div class="card">
         <h3>PrivateOff検索</h3>
         <p>キーワードが閲覧可能な検索</p>
         <button onclick="location.href='/privateoff'">検索する</button>
       </div>
       
-      <!-- 監視カード -->
       <div class="card">
-        <h3>ブログ</h3>
-        <p>作者の日誌</p>
+        <h3>iii</h3>
+        <p>i</p>
         <button onclick="location.href='/spectator'">入手</button>
       </div>
     </div>
   </div>
   
   <script>
-    // 内部検索バーによるカードフィルタリング
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', function() {
       const filter = this.value.toLowerCase().trim();
@@ -272,7 +256,6 @@
   </script>
   
   <script>
-    // ヘッダーの検索機能：submit時に別URLへリダイレクト
     document.addEventListener("DOMContentLoaded", function() {
       const form = document.getElementById("search-form");
       form.addEventListener("submit", function(event) {
