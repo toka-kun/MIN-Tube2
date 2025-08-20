@@ -9,7 +9,6 @@
       rel="stylesheet"
     />
     <style>
-      /* 全体リセット */
       * {
         box-sizing: border-box;
         margin: 0;
@@ -21,7 +20,6 @@
         color: #e0e0e0;
       }
       
-      /* ローディング表示 */
       #loading {
         position: fixed;
         top: 0;
@@ -59,7 +57,6 @@
         50% { opacity: 0.5; }
       }
       
-      /* ランディングページ（初回表示） */
       #landing {
         min-height: 195vh;
         padding-bottom: 200px; 
@@ -158,22 +155,19 @@
         opacity: 0;
         animation: fadeIn 1s forwards;
       }
-      /* 各リンクフェードイン遅延 */
       nav ul li a:nth-child(1) { animation-delay: 0.3s; }
       nav ul li a:nth-child(2) { animation-delay: 0.4s; }
       nav ul li a:nth-child(3) { animation-delay: 0.5s; }
       nav ul li a:nth-child(4) { animation-delay: 0.6s; }
       nav ul li a:nth-child(5) { animation-delay: 0.7s; }
       nav ul li a:nth-child(6) { animation-delay: 0.8s; }
-      /* ホバーで色変化 */
       nav ul li a:hover {
-        background-color: #444; /* 色変更：やや濃い灰色 */
+        background-color: #444; 
         color: #bb86fc;
       }
       
-      /* ツールコンテナ */
       .tools-container {
-        background-color: #2a2a2a; /* 色変更：濃い灰色 */
+        background-color: #2a2a2a; 
         border-radius: 20px;
         padding: 30px;
         margin: 5px auto;
@@ -200,7 +194,7 @@
         gap: 20px;
       }
       .card {
-        background-color: #3a3a3a; /* 色変更：やや明るめの灰色 */
+        background-color: #3a3a3a; 
         border-radius: 15px;
         padding: 20px;
         width: 280px;
@@ -231,9 +225,8 @@
         display: block;
       }
       
-      /* 急上昇セクションのスタイル */
       .trending-container {
-        background-color: #2f2f2f; /* 色変更：濃い灰色 */
+        background-color: #2f2f2f; 
         border-radius: 20px;
         padding: 30px;
         margin:   5px auto;
@@ -248,7 +241,7 @@
         text-align: center;
         font-size: 32px;
         margin-bottom: 20px;
-        color: #888; /* 色変更：やや薄めの灰色 */
+        color: #888; 
         opacity: 0;
         animation: fadeIn 1s forwards;
         animation-delay: 1.3s;
@@ -258,22 +251,21 @@
         height: 500px;
         border: none;
         border-radius: 15px;
-        background-color: #3a3a3a; /* 色変更：やや明るめの灰色 */
+        background-color: #3a3a3a; 
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.7);
         opacity: 0;
         animation: fadeIn 1s forwards;
         animation-delay: 1.4s;
       }
       
-      /* メインコンテンツ（検索結果表示用） */
       #mainContent {
         display: none;
       }
       header {
         display: flex;
         align-items: center;
-        justify-content: space-between; /* 変更点: space-betweenに */
-        background-color: #2f2f2f; /* 色変更：濃い灰色 */
+        justify-content: space-between; 
+        background-color: #2f2f2f; 
         padding: 10px 20px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         margin-bottom: 20px;
@@ -282,14 +274,12 @@
       header h1 {
         font-size: 24px;
         color: #bb86fc;
-        /* 追加：左側にロゴとして配置 */
       }
       header form {
         display: flex;
         max-width: 600px;
         width: 100%;
         position: relative;
-        /* 中央寄せは親flexのjustify-content: space-between;で調整済み */
       }
       header input#searchQuery {
         flex: 1;
@@ -326,7 +316,7 @@
         gap: 20px;
       }
       .video {
-        background-color: #2f2f2f; /* 色変更：濃い灰色 */
+        background-color: #2f2f2f; 
         border-radius: 4px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
         overflow: hidden;
@@ -349,10 +339,9 @@
       }
       .video-info h3 {
         font-size: 18px;
-        color: #ccc; /* 色変更：薄い灰色 */
+        color: #ccc; 
       }
       
-      /* 追加：チャンネル名表示とスタイル */
       .channel-name {
         display: block;
         margin-top: 8px;
@@ -368,13 +357,12 @@
         text-decoration: underline;
       }
       
-      /* オートコンプリート */
       .autocomplete-suggestions {
         position: absolute;
         top: 100%;
         left: 0;
         right: 0;
-        background-color: #2f2f2f; /* 色変更：濃い灰色 */
+        background-color: #2f2f2f; 
         border: 1px solid #444;
         border-top: none;
         z-index: 1000;
@@ -387,10 +375,9 @@
         color: #e0e0e0;
       }
       .autocomplete-item:hover {
-        background-color: #444; /* 色変更：濃い灰色 */
+        background-color: #444;
       }
       
-      /* インラインローディング */
       #inlineLoading {
         text-align: center;
         padding: 20px;
@@ -407,7 +394,6 @@
         font-size: 18px;
       }
       
-      /* フェードインアニメーションキー */
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -415,14 +401,11 @@
     </style>
   </head>
   <body>
-    <!-- ローディング表示 -->
     <div id="loading">
       <div class="spinner"></div>
       <div class="loading-text">Loading...</div>
     </div>
     
-    <!-- ナビゲーションバー -->
-    <!-- ここに条件付きで表示制御を仕込むため、最初はCSSで制御しない -->
     <nav id="mainNav">
       <img src="https://cdn.glitch.global/3aed761b-3153-44fc-9acd-1acf064d06b8/thumbnails%2FIMG_6462-removebg-preview.png?1746970237919" class="nav-logo" alt="Logo" />
       <ul>
@@ -434,7 +417,6 @@
       </ul>
     </nav>
     
-    <!-- ランディングページ -->
     <div id="landing">
       <h1>MIN-Tube2</h1>
       <form id="landingSearchForm">
@@ -442,7 +424,6 @@
         <button type="submit">Search</button>
       </form>
       
-      <!-- ツールコンテナ -->
       <div class="tools-container">
         <h2>Tools</h2>
         <div class="cards">
@@ -467,13 +448,11 @@
         </div>
       </div>
       
-      <!-- 急上昇動画コンテナ -->
       <div class="trending-container">
         <iframe src="/trend"></iframe>
       </div>
     </div>
     
-    <!-- メインコンテンツ（検索結果表示用） -->
     <div id="mainContent" style="display: none;">
       <header>
         <h1>MIN-Tube2</h1>
@@ -488,12 +467,10 @@
     </div>
     
     <script>
-      // --- 生成用関数 ---
       function generateRandomString() {
         return Math.random().toString(36).substring(2, 10);
       }
       
-      // --- グローバル変数 ---
       let currentPage = 0;
       let isFetching = false;
       const resultsDiv = document.getElementById("results");
@@ -501,7 +478,6 @@
       const landingSearchForm = document.getElementById("landingSearchForm");
       const landingQueryInput = document.getElementById("landingQuery");
       
-      // --- ローディング関連 ---
       function showLoading() {
         document.getElementById("loading").style.display = "flex";
       }
@@ -516,19 +492,16 @@
           <div class="loading-text">Now loading...</div>
         `;
         resultsDiv.appendChild(inline);
-        // アニメーション用にopacity設定
         setTimeout(() => { inline.style.opacity = 1; }, 10);
       }
       function hideInlineLoading() {
         const inline = document.getElementById("inlineLoading");
         if (inline) {
-          //フェードアウト
           inline.style.opacity = 0;
           setTimeout(() => { inline.remove(); }, 300);
         }
       }
       
-      // --- 検索処理 ---
       async function performSearch(query, page) {
         if (page === 0) {
           showLoading();
@@ -552,7 +525,6 @@
                   (item.type && item.type === "channel") ||
                   (item.id && item.id.startsWith("UC"))
                 ) {
-                  // チャンネルの場合
                   const channelId = item.id;
                   const title = item.title;
                   let thumbnailUrl =
@@ -577,28 +549,18 @@
                   });
                   resultsDiv.appendChild(channelDiv);
                 } else {
-                  // 動画の場合
                   const videoId = item.id;
                   const title = item.title;
                   const thumbnailUrl = "https://i3.ytimg.com/vi/" + videoId + "/sddefault.jpg";
                   const videoDiv = document.createElement("div");
                   videoDiv.className = "video";
                   videoDiv.setAttribute("data-item-id", item.id);
-                  // 追加：channelNameも設定
                   const channelName = item.channelTitle || item.shortBylineText?.runs?.[0]?.text || "";
                   const channelLink = item.channelTitle ? `/channel/${item.channelTitle}` : `#`;
                   
-                  // もしチャンネル名がある場合は表示
                   const channelHtml = channelName ? `<div class="channel-name" data-channel-url="${channelLink}">${channelName}</div>` : "";
                   
-                  // カードの中にチャンネル名を入れる
-                  // 既存の構造に追加
-                  // ただし、カード内のスタイル性を崩さないために、channel名はvideo-infoの中に配置
-                  // 既存のh3の下に追加
-                  // ただし、インナーのdiv.innerHTMLはテンプレートリテラル内に書き込み
-                  // すでにh3とpがあるので、その下に追加
-                  // まず、innerHTMLをリセットして構造を組み立てる
-                  // 例：
+
                   const htmlContent = `
                     <img src="${thumbnailUrl}" alt="${title}">
                     <div class="video-info">
@@ -607,7 +569,6 @@
                     </div>
                   `;
                   videoDiv.innerHTML = htmlContent;
-                  // クリックイベントで動画ページへ
                   videoDiv.addEventListener("click", function () {
                     window.location.href = `/video/${videoId}`;
                   });
@@ -678,7 +639,6 @@
       setupAutocomplete(landingQueryInput);
       setupAutocomplete(searchQueryInput);
       
-      // --- ランディング画面の検索送信 ---
       landingSearchForm.addEventListener("submit", function (e) {
         e.preventDefault();
         const query = landingQueryInput.value.trim();
@@ -688,23 +648,18 @@
         }
         resultsDiv.innerHTML = "";
         currentPage = 0;
-        // ヘッダーの検索欄にも値を引き継ぐ
         searchQueryInput.value = query;
-        // URL を /nothing/ + ランダムな文字列 に更新
         const randomStr = generateRandomString();
         history.pushState({}, "", "/nothing/" + randomStr);
         
-        // 検索結果表示時はランディング画面（およびツールコンテナ、急上昇コンテナ）を非表示
         document.getElementById("landing").style.display = "none";
         document.getElementById("mainContent").style.display = "block";
-        // 追加：ナビゲーションバーを非表示に
         document.getElementById("mainNav").style.display = "none";
         
         performSearch(query, currentPage);
         currentPage++;
       });
       
-      // --- ヘッダーの検索送信 ---
       document.getElementById("searchForm").addEventListener("submit", function (e) {
         e.preventDefault();
         const query = searchQueryInput.value.trim();
@@ -714,16 +669,13 @@
         }
         resultsDiv.innerHTML = "";
         currentPage = 0;
-        // ヘッダー検索時も URL 更新
         const randomStr = generateRandomString();
         history.pushState({}, "", "/nothing/" + randomStr);
-        // 追加：ナビゲーションバーを非表示に
         document.getElementById("mainNav").style.display = "none";
         performSearch(query, currentPage);
         currentPage++;
       });
       
-      // --- 無限スクロール ---
       window.addEventListener("scroll", async function () {
         if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && !isFetching) {
           const query = searchQueryInput.value.trim();
@@ -736,7 +688,6 @@
         }
       });
       
-      // --- URLによる自動検索処理 ---
       window.addEventListener("load", function () {
         const path = window.location.pathname;
         if (path.startsWith("/nothing/search")) {
@@ -746,10 +697,8 @@
             searchQueryInput.value = queryParam;
             resultsDiv.innerHTML = "";
             currentPage = 0;
-            // 自動検索実行時はランディングおよびツールコンテナを非表示
             document.getElementById("landing").style.display = "none";
             document.getElementById("mainContent").style.display = "block";
-            // 追加：ナビゲーションバーも非表示
             document.getElementById("mainNav").style.display = "none";
             performSearch(queryParam, currentPage);
             currentPage++;
@@ -757,7 +706,6 @@
         }
       });
       
-      // --- 親ページ（index.html）でのメッセージ受信処理 ---
       window.addEventListener("message", function(event) {
         if (event.data && event.data.videoId) {
           window.location.href = "/video/" + event.data.videoId;
