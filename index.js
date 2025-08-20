@@ -40,18 +40,18 @@ async function updateApiListCache() {
     console.error("GitHub APIリストの取得に失敗:", err);
   }
 
-  // 2. まずはGitHubのリストを`apiListCache`にセット
+  // 2. GitHubのリストを`apiListCache`にセット
   if (tempApiList.length > 0) {
     apiListCache = tempApiList;
   }
 
-  // 3. GlitchのAPIリストを取得（成功したら`apiListCache`を更新）
+  // 3. APIリストを取得
   try {
     const response = await fetch(API_HEALTH_CHECKER);
     if (response.ok) {
       mainApiList = await response.json();
       console.log("GlitchのAPIリストを取得しました:", mainApiList);
-      // 4. Glitchのリストが最新なら更新
+      // 4. リストが最新なら更新
       if (Array.isArray(mainApiList) && mainApiList.length > 0) {
         apiListCache = mainApiList;
         console.log("APIリストを最新のGlitchのリストに更新しました");
@@ -689,7 +689,7 @@ app.get("/video/:id", async (req, res, next) => {
         window.open(dlLink, '_blank');
       });
       
-      // 高画質化ボタンの動作：3秒間の高画質化アニメーション後、iframeに切り替え
+      
       highQualityBtn.addEventListener("click", () => {
         const container = document.getElementById("video-player-container");
         if (container) {
