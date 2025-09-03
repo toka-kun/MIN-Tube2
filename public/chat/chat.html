@@ -25,10 +25,9 @@
       --radius-sm: 10px;
       --radius-lg: 22px;
     }
-    *{ box-sizing: border-box; }
-    html, body{ height:100%; margin:0; padding:0; }
-    body{
-      margin:0;
+    * { box-sizing: border-box; }
+    html, body { height:100%; margin:0; padding:0; }
+    body {
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
         "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", sans-serif;
       background:
@@ -38,176 +37,173 @@
         var(--bg);
       color: var(--text);
     }
-    .app{
+    .app {
       display:flex; flex-direction:column; height:100dvh; max-width:900px; margin:0 auto;
     }
-    header.appbar{
+    header.appbar {
       position:sticky; top:0; z-index:10;
       display:flex; align-items:center; justify-content:space-between;
       padding:14px 16px;
       background: linear-gradient(180deg, rgba(23,26,43,0.9), rgba(23,26,43,0.75));
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border);
-      box-shadow: var(--shadow);
+      border-bottom:1px solid var(--border);
+      box-shadow:var(--shadow);
     }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-    }
-    .logo{
+    .brand { display:flex; align-items:center; gap:10px; }
+    .logo {
       width:28px; height:28px; border-radius:10px;
-      background:conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--success), var(--accent));
-      box-shadow:0 0 20px rgba(108,140,255,0.45), inset 0 0 20px rgba(255,255,255,0.05);
+      background: conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--success), var(--accent));
+      box-shadow: 0 0 20px rgba(108,140,255,0.45), inset 0 0 20px rgba(255,255,255,0.05);
     }
-    .title{ font-weight:700; letter-spacing:0.2px; }
-    .status{
+    .title { font-weight:700; letter-spacing:0.2px; }
+    .status {
       display:flex; align-items:center; gap:8px; font-size:13px; color: var(--muted);
     }
-    .dot{
+    .dot {
       width:10px; height:10px; border-radius:50%;
       background: var(--warning);
-      box-shadow: 0 0 0 4px rgba(255,211,91,0.15);
+      box-shadow:0 0 0 4px rgba(255,211,91,0.15);
     }
-    .dot.online{
+    .dot.online {
       background: var(--success);
-      box-shadow: 0 0 0 4px rgba(76,211,138,0.15);
+      box-shadow:0 0 0 4px rgba(76,211,138,0.15);
     }
-    .dot.offline{
+    .dot.offline {
       background: var(--danger);
-      box-shadow: 0 0 0 4px rgba(255,91,110,0.15);
+      box-shadow:0 0 0 4px rgba(255,91,110,0.15);
     }
-    .toolbar{ display:flex; gap:8px; }
-    button.btn{
+    .toolbar { display:flex; gap:8px; }
+    button.btn {
       appearance:none; border:1px solid var(--border); color: var(--text);
       background: linear-gradient(180deg, var(--panel), var(--panel-2));
       border-radius:10px; padding:8px 12px; font-weight:600; cursor:pointer;
-      transition: transform .06s ease, border-color .2s ease, background .2s ease;
+      transition:transform .06s ease, border-color .2s ease, background .2s ease;
     }
-    button.btn:hover{ border-color:#2f3761; }
-    button.btn:active{ transform: translateY(1px) scale(0.99); }
-    .btn.accent{ border-color:#2f3761; }
-    .btn.danger{
+    button.btn:hover { border-color:#2f3761; }
+    button.btn:active { transform: translateY(1px) scale(0.99); }
+    .btn.accent { border-color:#2f3761; }
+    .btn.danger {
       border-color:#503046;
       background: linear-gradient(180deg, #3a1b2a, #321727);
       color:#ffdbe1;
     }
-    main{
+    main {
       flex:1; overflow:auto; padding:14px 12px 0 12px;
     }
-    .notice{
+    .notice {
       text-align:center; color: var(--muted); font-size:13px; margin:8px 0 16px;
     }
-    .messages{
+    .messages {
       display:flex; flex-direction:column; gap:10px; padding-bottom:16px;
     }
-    .msg{
+    .msg {
       display:flex; gap:10px; max-width:92%;
-      transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+      transition:transform .2s ease, background .2s ease, box-shadow .2s ease;
     }
-    .msg.self{ align-self:flex-end; flex-direction:row-reverse; }
-    .avatar{
+    .msg.self { align-self:flex-end; flex-direction:row-reverse; }
+    .avatar {
       width:36px; height:36px; border-radius:10px; background:#1a1f3b;
       border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
       color:#b9c3ff; font-weight:700; text-transform:uppercase;
     }
-    .bubble{
+    .bubble {
       background: var(--bubble); border:1px solid var(--border); border-radius:14px;
-      padding:10px 12px; box-shadow: var(--shadow); min-width:120px;
+      padding:10px 12px; box-shadow:var(--shadow); min-width:120px;
     }
-    .self .bubble{
+    .self .bubble {
       background: var(--bubble-self); border-color:#36407a;
     }
-    .meta{
+    .meta {
       display:flex; align-items:center; gap:6px; color: var(--muted); font-size:12px;
       margin-bottom:6px;
     }
-    .name{ font-weight:700; color:#d6dcff; }
-    .text{
+    .name { font-weight:700; color:#d6dcff; }
+    .text {
       white-space:pre-wrap; word-wrap:break-word; line-height:1.5;
       color: var(--text);
     }
-    .reactions{
+    .reactions {
       display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;
     }
-    .react, .react-static{
+    .react, .react-static {
       display:inline-flex; align-items:center; gap:6px; font-size:13px;
       padding:6px 8px; border-radius:30px; border:1px solid var(--border);
       background: linear-gradient(180deg, #181c35, #131731);
       color:#d8dbff; cursor:pointer; user-select:none;
-      transition: transform .06s ease, border-color .2s ease, background .2s ease;
+      transition:transform .06s ease, border-color .2s ease, background .2s ease;
     }
-    .react:hover{ border-color:#2f3761; }
-    .react:active{ transform: translateY(1px) scale(0.99); }
-    .react[disabled]{ opacity:0.6; pointer-events:none; }
-    .react-static{ cursor:default; opacity:0.9; }
-    footer.composer{
+    .react:hover { border-color:#2f3761; }
+    .react:active { transform: translateY(1px) scale(0.99); }
+    .react[disabled] { opacity:0.6; pointer-events:none; }
+    .react-static { cursor:default; opacity:0.9; }
+    footer.composer {
       position:sticky; bottom:0; z-index:10;
       background: linear-gradient(180deg, rgba(23,26,43,0.75), rgba(18,21,39,0.9));
-      border-top:1px solid var(--border); padding:12px; box-shadow: var(--shadow);
+      border-top:1px solid var(--border); padding:12px; box-shadow:var(--shadow);
     }
-    .row{ display:flex; gap:10px; align-items:flex-start; }
-    .input{
+    .row { display:flex; gap:10px; align-items:flex-start; }
+    .input {
       flex:1; display:flex; padding:8px; gap:8px;
       border:1px solid var(--border); border-radius:var(--radius);
       background: linear-gradient(180deg, #151936, #10132b);
       box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
     }
-    .u-box{
+    .u-box {
       display:flex; align-items:center; gap:8px;
-      border-right:1px solid var(--border); padding-right:8px;
-      min-width:120px;
+      border-right:1px solid var(--border); padding-right:8px; min-width:120px;
     }
-    .u-tag{
+    .u-tag {
       display:flex; align-items:center; gap:8px;
       border:1px dashed #2a315a; border-radius:10px;
       padding:6px 8px; color:#c3caff; background:#121631;
     }
-    .u-edit{ margin-left:auto; }
-    textarea{
+    .u-edit { margin-left:auto; }
+    textarea {
       flex:1; resize:none; border:0; outline:0; background:transparent;
       color: var(--text); font:inherit; padding:4px 2px;
       min-height:44px; max-height:160px;
     }
-    .send{ display:flex; gap:10px; }
-    .toast{
+    .send { display:flex; gap:10px; }
+    .toast {
       position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
       background:#121631; color:#e6e9ff; border:1px solid var(--border);
-      border-radius:12px; padding:10px 14px; box-shadow: var(--shadow);
+      border-radius:12px; padding:10px 14px; box-shadow:var(--shadow);
       font-size:14px; opacity:0; pointer-events:none;
-      transition: opacity .25s ease, transform .25s ease;
+      transition:opacity .25s ease, transform .25s ease;
     }
-    .toast.show{
+    .toast.show {
       opacity:1; pointer-events:auto;
       transform:translateX(-50%) translateY(-4px);
     }
-    .modal-backdrop{
+    .modal-backdrop {
       position:fixed; inset:0; background:rgba(5,6,12,0.55);
       display:none; align-items:center; justify-content:center;
       padding:16px; z-index:20;
     }
-    .modal-backdrop.show{ display:flex; }
-    .modal{
+    .modal-backdrop.show { display:flex; }
+    .modal {
       width:min(520px,100%); background:#141834; border:1px solid var(--border);
-      border-radius:16px; box-shadow: var(--shadow);
+      border-radius:16px; box-shadow:var(--shadow);
       padding:16px; display:flex; flex-direction:column; gap:12px;
     }
-    .modal h3{ margin:0; font-size:18px; }
-    .field{ display:flex; flex-direction:column; gap:8px; }
-    .field label{ font-size:13px; color: var(--muted); }
-    .field input{
+    .modal h3 { margin:0; font-size:18px; }
+    .field { display:flex; flex-direction:column; gap:8px; }
+    .field label { font-size:13px; color: var(--muted); }
+    .field input {
       width:100%; padding:10px; border:1px solid var(--border);
       border-radius:10px; background:#0f1330; color: var(--text);
     }
-    .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:6px; }
-    .kbd{
+    .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:6px; }
+    .kbd {
       font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
       background:#121631; border:1px solid var(--border); border-bottom-color:#2a315a;
       border-radius:8px; padding:2px 6px; color:#c2c9ff;
     }
-    @media (max-width:600px){
-      .u-box{ display:none; }
-      .msg{ max-width:100%; }
-      .toolbar{ gap:6px; }
-      button.btn{ padding:7px 10px; }
+    @media (max-width:600px) {
+      .u-box { display:none; }
+      .msg { max-width:100%; }
+      .toolbar { gap:6px; }
+      button.btn { padding:7px 10px; }
     }
   </style>
 </head>
@@ -318,16 +314,14 @@
     (() => {
       'use strict';
 
-      const SERVER_URL = 'https://min2chatserver.onrender.com';
+      const SERVER_URL = 'https://min2chatserver.vercel.app';
 
-      // State
       let socket = null;
       let messages = [];
       let mySeed = null;
       let myName = null;
       let sending = false;
 
-      // Elements
       const el = {
         connDot: document.getElementById('connDot'),
         connText: document.getElementById('connText'),
@@ -352,7 +346,6 @@
         clearBtn: document.getElementById('clearBtn'),
       };
 
-      // ユーティリティ
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       const showToast = (msg, ms = 1800) => {
         el.toast.textContent = msg;
@@ -371,64 +364,47 @@
       };
       const makeSeed = () => {
         if (crypto && crypto.getRandomValues) {
-          const a = new Uint8Array(16);
-          crypto.getRandomValues(a);
-          return [...a]
-            .map(x => x.toString(16).padStart(2, '0'))
-            .join('');
+          const arr = new Uint8Array(16);
+          crypto.getRandomValues(arr);
+          return [...arr].map(x => x.toString(16).padStart(2, '0')).join('');
         }
         return Math.random().toString(36).slice(2) + Date.now().toString(36);
       };
-      const initials = name =>
-        (name || '?').trim().slice(0, 2).toUpperCase();
+      const initials = name => (name || '?').trim().slice(0,2).toUpperCase();
       const isAtBottom = () => {
         const m = document.querySelector('main');
         return m.scrollHeight - m.scrollTop - m.clientHeight < 80;
       };
       const scrollToBottom = smooth => {
         const m = document.querySelector('main');
-        m.scrollTo({ top: m.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+        m.scrollTo({ top: m.scrollHeight, behavior: smooth ? 'smooth':'auto' });
       };
-      const sanitizeText = t => String(t ?? '').replace(/\u0000/g, '');
-      const isDuplicate = msg =>
-        messages.some(
-          m =>
-            m.seed === msg.seed &&
-            m.time === msg.time &&
-            m.message === msg.message &&
-            m.username === msg.username
-        );
+      const sanitizeText = t => String(t||'').replace(/\u0000/g, '');
+      const isDuplicate = msg => messages.some(m =>
+        m.seed===msg.seed &&
+        m.time===msg.time &&
+        m.message===msg.message &&
+        m.username===msg.username
+      );
 
-      // Storage 取得/設定
       const storage = {
-        get name() {
-          return localStorage.getItem('chat_username') || '';
-        },
-        set name(v) {
-          localStorage.setItem('chat_username', v);
-        },
-        get seed() {
-          return localStorage.getItem('chat_seed') || '';
-        },
-        set seed(v) {
-          localStorage.setItem('chat_seed', v);
-        },
+        get name(){ return localStorage.getItem('chat_username')||''; },
+        set name(v){ localStorage.setItem('chat_username', v); },
+        get seed(){ return localStorage.getItem('chat_seed')||''; },
+        set seed(v){ localStorage.setItem('chat_seed', v); },
       };
 
-      // レンダリング
-      function renderAll() {
+      function renderAll(){
         el.messages.innerHTML = '';
-        messages.forEach((msg, i) => {
-          el.messages.appendChild(renderMessage(msg, i));
-        });
-        el.messages.parentElement.setAttribute('aria-busy', 'false');
+        messages.forEach((msg,i)=> el.messages.appendChild(renderMessage(msg,i)));
+        el.messages.parentElement.setAttribute('aria-busy','false');
         scrollToBottom(false);
       }
 
-      function renderMessage(msg, index) {
-        const isSelf = msg.seed === mySeed;
+      function renderMessage(msg,index){
+        const isSelf = msg.seed===mySeed;
         const wrap = document.createElement('div');
-        wrap.className = 'msg' + (isSelf ? ' self' : '');
+        wrap.className = 'msg'+(isSelf?' self':'');
         wrap.dataset.index = index;
 
         const avatar = document.createElement('div');
@@ -440,30 +416,31 @@
 
         const meta = document.createElement('div');
         meta.className = 'meta';
-        const name = document.createElement('span');
-        name.className = 'name';
-        name.textContent = sanitizeText(msg.username || 'unknown');
+        const nameEl = document.createElement('span');
+        nameEl.className = 'name';
+        nameEl.textContent = sanitizeText(msg.username||'unknown');
         const dot = document.createElement('span');
         dot.textContent = '•';
         dot.style.opacity = '0.6';
-        const time = document.createElement('span');
-        time.textContent = sanitizeText(msg.time || '');
-        meta.append(name, dot, time);
+        const timeEl = document.createElement('span');
+        timeEl.textContent = sanitizeText(msg.time||'');
+        meta.append(nameEl, dot, timeEl);
 
-        const text = document.createElement('div');
-        text.className = 'text';
-        text.textContent = sanitizeText(msg.message || '');
+        const textEl = document.createElement('div');
+        textEl.className = 'text';
+        textEl.textContent = sanitizeText(msg.message||'');
 
         const reactions = document.createElement('div');
         reactions.className = 'reactions';
 
-        const defaultReacts = ['👍', '❤️', '😂', '😡'];
-        const current = msg.reactions || {};
+        // 👍 と 😡 のみ
+        const defaultReacts = ['👍','😡'];
+        const current = msg.reactions||{};
         Object.keys(current)
-          .sort((a, b) => (current[b] || 0) - (current[a] || 0))
-          .forEach(key => {
+          .sort((a,b)=> (current[b]||0)-(current[a]||0))
+          .forEach(key=>{
             const cnt = current[key];
-            if (cnt > 0) {
+            if(cnt>0){
               const chip = document.createElement('span');
               chip.className = 'react-static';
               chip.textContent = `${key} ${cnt}`;
@@ -471,117 +448,106 @@
             }
           });
 
-        defaultReacts.forEach(r => {
+        defaultReacts.forEach(r=>{
           const btn = document.createElement('button');
           btn.className = 'react';
           btn.type = 'button';
           btn.setAttribute('aria-label', `リアクション ${r}`);
           btn.textContent = r;
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', ()=>{
             btn.disabled = true;
-            setTimeout(() => (btn.disabled = false), 500);
+            setTimeout(()=>btn.disabled=false, 1000);  // 連打防止
             const msgId = Number(wrap.dataset.index);
             socket.emit('updateReaction', { messageId: msgId, reaction: r });
           });
           reactions.appendChild(btn);
         });
 
-        bubble.append(meta, text, reactions);
+        bubble.append(meta, textEl, reactions);
         wrap.append(avatar, bubble);
         return wrap;
       }
 
-      function updateReactions(messageId, reactions) {
-        const wrap = el.messages.querySelector(`.msg[data-index="${messageId}"]`);
-        if (!wrap) return;
+      function updateReactions(id, reactions){
+        const wrap = el.messages.querySelector(`.msg[data-index="${id}"]`);
+        if(!wrap) return;
         const bar = wrap.querySelector('.reactions');
         bar.innerHTML = '';
-        Object.keys(reactions || {})
-          .sort((a, b) => (reactions[b] || 0) - (reactions[a] || 0))
-          .forEach(key => {
+        Object.keys(reactions||{})
+          .sort((a,b)=> (reactions[b]||0)-(reactions[a]||0))
+          .forEach(key=>{
             const cnt = reactions[key];
-            if (cnt > 0) {
+            if(cnt>0){
               const chip = document.createElement('span');
               chip.className = 'react-static';
               chip.textContent = `${key} ${cnt}`;
               bar.appendChild(chip);
             }
           });
-        ['👍', '❤️', '😂', '😡'].forEach(r => {
+        ['👍','😡'].forEach(r=>{
           const btn = document.createElement('button');
           btn.className = 'react';
           btn.type = 'button';
           btn.textContent = r;
           btn.setAttribute('aria-label', `リアクション ${r}`);
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', ()=>{
             btn.disabled = true;
-            setTimeout(() => (btn.disabled = false), 500);
-            socket.emit('updateReaction', { messageId, reaction: r });
+            setTimeout(()=>btn.disabled=false,1000);
+            socket.emit('updateReaction', { messageId: id, reaction: r });
           });
           bar.appendChild(btn);
         });
       }
 
-      // API 通信
-      async function fetchMessages() {
+      async function fetchMessages(){
         try {
-          el.messages.parentElement.setAttribute('aria-busy', 'true');
-          const res = await fetch(`${SERVER_URL}/api/messages`, { cache: 'no-store' });
-          if (!res.ok) throw new Error();
+          el.messages.parentElement.setAttribute('aria-busy','true');
+          const res = await fetch(`${SERVER_URL}/api/messages`, { cache:'no-store' });
+          if(!res.ok) throw 0;
           const data = await res.json();
-          if (!Array.isArray(data)) throw new Error();
+          if(!Array.isArray(data)) throw 0;
           messages = data;
           renderAll();
         } catch {
-          el.messages.parentElement.setAttribute('aria-busy', 'false');
+          el.messages.parentElement.setAttribute('aria-busy','false');
           showToast('メッセージ取得に失敗しました');
         }
       }
 
-      async function fetchUserCount() {
+      async function fetchUserCount(){
         try {
-          const res = await fetch(`${SERVER_URL}/user`, { cache: 'no-store' });
-          if (!res.ok) throw new Error();
+          const res = await fetch(`${SERVER_URL}/user`, { cache:'no-store' });
+          if(!res.ok) throw 0;
           const j = await res.json();
-          el.userCount.textContent = `オンライン: ${j.userCount ?? '-'}`;
+          el.userCount.textContent = `オンライン: ${j.userCount||'-'}`;
         } catch {
           el.userCount.textContent = 'オンライン: -';
         }
       }
 
-      async function sendMessage() {
-        if (sending) return;
+      async function sendMessage(){
+        if(sending) return;
         const txt = sanitizeText(el.input.value).trim();
-        if (!txt) return;
-        if (!myName) {
+        if(!txt) return;
+        if(!myName){
           showToast('ユーザー名を設定してください');
           openUserModal();
           return;
         }
-        if (!mySeed) {
+        if(!mySeed){
           mySeed = storage.seed = makeSeed();
           el.seed.value = mySeed;
         }
-        const payload = {
-          username: myName,
-          message: txt,
-          time: nowTimeString(),
-          seed: mySeed,
-        };
+        const payload = { username:myName, message:txt, time:nowTimeString(), seed:mySeed };
         sending = true;
         el.send.disabled = true;
         try {
           const res = await fetch(`${SERVER_URL}/api/messages`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
+            method:'POST',
+            headers:{ 'Content-Type':'application/json' },
             body: JSON.stringify(payload)
           });
-          if (!res.ok) {
-            const e = await res.json().catch(() => ({}));
-            throw new Error(e.error || '送信失敗');
-          }
+          if(!res.ok) throw await res.json();
           el.input.value = '';
           autoResize(el.input);
         } catch {
@@ -593,111 +559,107 @@
         }
       }
 
-      async function clearAllMessages(pass) {
+      async function clearAllMessages(pass){
         try {
           const res = await fetch(`${SERVER_URL}/api/pass`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-requested-with': 'fetch'
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json',
+              'x-requested-with':'fetch'
             },
-            body: JSON.stringify({ password: pass })
+            body: JSON.stringify({ password:pass })
           });
-          const j = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error();
-          showToast(j.message || '履歴を削除しました');
+          const j = await res.json().catch(()=>({}));
+          if(!res.ok) throw 0;
+          showToast(j.message||'履歴を削除しました');
         } catch {
           showToast('削除に失敗しました');
         }
       }
 
-      // Socket.IO 設定
-      function setupSocket() {
+      function setupSocket(){
         socket = io(SERVER_URL, {
-          transports: ['polling'] // ← WebSocket ではなく polling のみ
+          transports:['polling'],
+          reconnection: true,
+          reconnectionAttempts: Infinity,
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000,
+          pingInterval: 20000,
+          pingTimeout: 5000
         });
 
-        socket.on('connect', () => {
-          el.connDot.classList.remove('offline');
-          el.connDot.classList.add('online');
+        socket.on('connect', ()=>{
+          el.connDot.classList.replace('offline','online');
           el.connText.textContent = 'オンライン';
           fetchUserCount();
         });
 
-        socket.on('disconnect', () => {
-          el.connDot.classList.remove('online');
-          el.connDot.classList.add('offline');
+        socket.on('disconnect', ()=>{
+          el.connDot.classList.replace('online','offline');
           el.connText.textContent = '切断';
         });
 
-        socket.on('newMessage', msg => {
-          if (isDuplicate(msg)) return;
+        socket.on('newMessage', msg=>{
+          if(isDuplicate(msg)) return;
           const atBot = isAtBottom();
           messages.push(msg);
-          const node = renderMessage(msg, messages.length - 1);
-          el.messages.appendChild(node);
-          if (atBot) scrollToBottom(true);
+          el.messages.appendChild(renderMessage(msg, messages.length-1));
+          if(atBot) scrollToBottom(true);
         });
 
-        socket.on('updateReaction', ({ messageId, reactions }) => {
-          if (typeof messageId !== 'number') return;
-          messages[messageId].reactions = reactions || {};
-          updateReactions(messageId, messages[messageId].reactions);
+        socket.on('updateReaction', ({ messageId, reactions })=>{
+          if(typeof messageId !== 'number') return;
+          messages[messageId].reactions = reactions||{};
+          updateReactions(messageId, reactions);
         });
 
-        socket.on('clearMessages', () => {
+        socket.on('clearMessages', ()=>{
           messages = [];
           el.messages.innerHTML = '';
-          showToast('管理者によりチャット履歴が削除されました', 2000);
+          showToast('管理者により履歴が削除されました',2000);
         });
       }
 
-      // UI ヘルパー
-      function autoResize(ta) {
+      function autoResize(ta){
         ta.style.height = 'auto';
         ta.style.height = Math.min(160, Math.max(44, ta.scrollHeight)) + 'px';
       }
 
-      function openUserModal() {
-        el.username.value = myName || '';
-        el.seed.value = mySeed || '';
+      function openUserModal(){
+        el.username.value = myName||'';
+        el.seed.value = mySeed||'';
         el.userModal.classList.add('show');
       }
-      function closeUserModal() {
-        el.userModal.classList.remove('show');
-      }
-      function openAdminModal() {
+      function closeUserModal(){ el.userModal.classList.remove('show'); }
+      function openAdminModal(){
         el.adminPass.value = '';
         el.adminModal.classList.add('show');
-        setTimeout(() => el.adminPass.focus(), 0);
+        setTimeout(()=>el.adminPass.focus(),0);
       }
-      function closeAdminModal() {
-        el.adminModal.classList.remove('show');
-      }
+      function closeAdminModal(){ el.adminModal.classList.remove('show'); }
 
-      // イベント登録
       el.send.addEventListener('click', sendMessage);
-      el.input.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+      el.input.addEventListener('keydown', e=>{
+        if(e.key==='Enter' && !e.shiftKey){
           e.preventDefault();
           sendMessage();
         }
       });
-      el.input.addEventListener('input', () => autoResize(el.input));
+      el.input.addEventListener('input', ()=>autoResize(el.input));
 
       el.userOpen.addEventListener('click', openUserModal);
       el.userEdit.addEventListener('click', openUserModal);
       el.userCancel.addEventListener('click', closeUserModal);
-      el.userSave.addEventListener('click', () => {
+      el.userSave.addEventListener('click', ()=>{
         const v = sanitizeText(el.username.value).trim();
-        if (!v || v.length > 24) {
+        if(!v || v.length>24){
           showToast('ユーザー名は1〜24文字以内で設定してください');
           return;
         }
         myName = v;
         storage.name = myName;
         el.usernameTag.textContent = myName;
-        if (!mySeed) {
+        if(!mySeed){
           mySeed = storage.seed = makeSeed();
           el.seed.value = mySeed;
         }
@@ -707,9 +669,9 @@
 
       el.adminOpen.addEventListener('click', openAdminModal);
       el.adminClose.addEventListener('click', closeAdminModal);
-      el.clearBtn.addEventListener('click', async () => {
+      el.clearBtn.addEventListener('click', async ()=>{
         const p = el.adminPass.value;
-        if (!p) {
+        if(!p){
           showToast('パスワードを入力してください');
           return;
         }
@@ -717,30 +679,29 @@
         closeAdminModal();
       });
 
-      [el.userModal, el.adminModal].forEach(modal => {
-        modal.addEventListener('click', e => {
-          if (e.target === modal) modal.classList.remove('show');
+      [el.userModal, el.adminModal].forEach(modal=>{
+        modal.addEventListener('click', e=>{
+          if(e.target===modal) modal.classList.remove('show');
         });
       });
 
-      // 初期化
-      (async () => {
+      (async ()=>{
         myName = storage.name;
         mySeed = storage.seed || makeSeed();
         storage.seed = mySeed;
-        el.usernameTag.textContent = myName || '未設定';
+        el.usernameTag.textContent = myName||'未設定';
         el.seed.value = mySeed;
 
         await fetchMessages();
         setupSocket();
         fetchUserCount();
-        setInterval(fetchUserCount, 10000);
-        setTimeout(() => el.input.focus(), 0);
+        // ユーザー数は30秒ごとに更新して負荷軽減
+        setInterval(fetchUserCount, 30000);
+        setTimeout(()=>el.input.focus(),0);
       })();
 
-      // 閲覧離脱防止
-      window.addEventListener('beforeunload', e => {
-        if (el.input.value.trim()) {
+      window.addEventListener('beforeunload', e=>{
+        if(el.input.value.trim()){
           e.preventDefault();
           e.returnValue = '';
         }
