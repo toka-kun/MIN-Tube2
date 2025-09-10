@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YouTube DL Studio — Ultra-fast, Elegant, Single-File</title>
+  <meta name="description" content="YouTubeダウンローダー" />
+  <meta name="color-scheme" content="light" />
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#f7f9fc;
+      --muted:#eef2f7;
+      --ink:#0b1220;
+      --ink-2:#2d3a55;
+      --ink-3:#5a6b8a;
+      --brand:#2563eb;
+      --brand-2:#1e40af;
+      --accent:#10b981;
+      --accent-2:#059669;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --ring: 0 0 0 4px color-mix(in srgb, var(--brand) 20%, transparent);
+      --shadow-lg: 0 30px 60px -15px rgba(17,24,39,.2), 0 18px 36px -18px rgba(17,24,39,.12);
+      --shadow-md: 0 10px 24px rgba(17,24,39,.12), 0 6px 12px rgba(17,24,39,.08);
+      --radius-2: 14px;
+      --radius-1: 10px;
+      --radius-0: 8px;
+      --grid-gap: 18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Meiryo", "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(37,99,235,.08), transparent 60%),
+        radial-gradient(900px 500px at 100% 0%, rgba(16,185,129,.06), transparent 50%),
+        var(--bg);
+      letter-spacing:.01em;
+    }
+
+    a{color:var(--brand);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .container{
+      width: min(1200px, 92vw);
+      margin: 0 auto;
+      padding: 28px 0 64px;
+    }
+
+    /* Header */
+    .nav{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom: 24px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      user-select:none;
+    }
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      background:
+        conic-gradient(from 0deg, rgba(37,99,235,.9), rgba(16,185,129,.9), rgba(37,99,235,.9));
+      position:relative; overflow:hidden; box-shadow: var(--shadow-md);
+      transform: translateZ(0);
+    }
+    .logo::after{
+      content:""; position:absolute; inset:2px; border-radius:10px; background:rgba(255,255,255,.82);
+      backdrop-filter: blur(2px);
+    }
+    .brand-title{
+      font-weight:800; font-size:20px; letter-spacing:.02em;
+    }
+    .tagline{
+      color:var(--ink-3); font-size:13px;
+    }
+
+    /* Hero */
+    .hero{
+      display:grid; grid-template-columns: 1.2fr .8fr; gap: var(--grid-gap);
+      align-items:stretch;
+      margin: 8px 0 22px;
+    }
+    @media (max-width: 960px){
+      .hero{ grid-template-columns: 1fr; }
+    }
+    .panel{
+      background: var(--card);
+      border:1px solid var(--muted);
+      border-radius: var(--radius-2);
+      box-shadow: var(--shadow-lg);
+      padding: 22px;
+      position:relative;
+      overflow:hidden;
+    }
+    .panel::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(500px 120px at 10% 0%, rgba(37,99,235,.10), transparent 60%),
+                  radial-gradient(400px 100px at 90% 0%, rgba(16,185,129,.10), transparent 60%);
+      pointer-events:none;
+    }
+
+    .title{
+      font-size:26px; font-weight:800; margin: 2px 0 16px;
+      letter-spacing:.01em;
+    }
+    .subtitle{
+      color:var(--ink-3); margin: -8px 0 18px; font-size:14.5px;
+    }
+
+    .input-row{
+      display:flex; gap:10px; width:100%;
+    }
+    .input{
+      flex:1;
+      background:#fff;
+      border:1px solid var(--muted);
+      padding:14px 16px;
+      border-radius:12px;
+      font-size:15px;
+      outline: none;
+      transition: box-shadow .2s, border-color .2s, transform .05s;
+    }
+    .input:focus{
+      border-color: color-mix(in srgb, var(--brand) 35%, var(--muted));
+      box-shadow: var(--ring);
+    }
+    .btn{
+      position:relative;
+      border:none; cursor:pointer; color:#fff; font-weight:700;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+      padding: 12px 16px; border-radius:12px; box-shadow: var(--shadow-md);
+      transition: transform .06s ease, filter .2s ease;
+      display:inline-flex; align-items:center; gap:10px;
+      white-space:nowrap;
+    }
+    .btn:hover{filter: brightness(1.05)}
+    .btn:active{transform: translateY(1px)}
+    .btn-ghost{
+      background: transparent; color: var(--ink-2); border:1px solid var(--muted);
+    }
+    .btn-soft{
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    }
+    .btn-warn{
+      background: linear-gradient(135deg, var(--warn) 0%, #d97706 100%);
+    }
+    .btn-danger{
+      background: linear-gradient(135deg, var(--danger) 0%, #b91c1c 100%);
+    }
+
+    /* Visual panel */
+    .visual{
+      border-radius: 16px;
+      background:
+        radial-gradient(120px 120px at 20% 20%, rgba(37,99,235,.15), transparent),
+        radial-gradient(140px 140px at 80% 30%, rgba(16,185,129,.18), transparent),
+        linear-gradient(180deg, #fff, #f8fbff);
+      border:1px solid var(--muted);
+      position:relative;
+      overflow:hidden;
+      min-height: 180px;
+    }
+    .orb{
+      --s: 120px;
+      position:absolute; width: var(--s); height: var(--s); border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(37,99,235,.35));
+      filter: blur(1px);
+      animation: float 9s ease-in-out infinite;
+      mix-blend-mode: screen;
+    }
+    .orb.two{
+      --s: 150px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(16,185,129,.35));
+      animation-duration: 11s;
+      animation-delay: -2s;
+    }
+    @keyframes float{
+      0%{ transform: translate(10px, 10px) }
+      50%{ transform: translate(220px, 0px) }
+      100%{ transform: translate(10px, 10px) }
+    }
+    .visual-caption{
+      position:absolute; bottom:16px; left:16px; right:16px;
+      background: rgba(255,255,255,.65);
+      border:1px solid var(--muted);
+      padding:12px 14px; border-radius:12px;
+      backdrop-filter: blur(6px);
+      display:flex; align-items:center; gap:12px;
+      box-shadow: var(--shadow-md);
+      font-size:13px; color:var(--ink-2);
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 0 rgba(16,185,129, .6);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse{
+      0%{ box-shadow: 0 0 0 0 rgba(16,185,129,.6) }
+      70%{ box-shadow: 0 0 0 10px rgba(16,185,129, 0) }
+      100%{ box-shadow: 0 0 0 0 rgba(16,185,129, 0) }
+    }
+
+    /* Results */
+    .results{
+      display:none; margin-top: 22px;
+    }
+
+
+    .video-card{
+      display:flex;
+      flex-direction: column;
+      gap: 18px;
+      background:#fff; border:1px solid var(--muted); border-radius:16px; padding:16px;
+      box-shadow: var(--shadow-lg);
+      max-width: 100%;
+    }
+
+    .thumb{
+      position:relative; overflow:hidden; border-radius:12px; background: #e9eef6;
+      aspect-ratio: 16/9; border:1px solid var(--muted);
+      width: 100%;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .thumb img{ width:100%; height:100%; object-fit:cover; display:block }
+    .thumb .skeleton{ position:absolute; inset:0; }
+
+    .video-meta{
+      width: 100%;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .video-meta h2{
+      margin: 2px 0 6px; font-size:20px; line-height:1.4;
+    }
+    .meta{
+      color:var(--ink-3); font-size:13.5px;
+    }
+    .badge-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .badge{
+      font-size:12px; color:var(--ink-2); background: var(--card); border:1px solid var(--muted);
+      padding:6px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:6px;
+    }
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;
+    }
+
+    /* Formats */
+    .section-title{
+      margin: 18px 0 10px; font-size:18px; font-weight:800;
+    }
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom: 10px;
+    }
+    .filter{
+      background:#fff; border:1px solid var(--muted); border-radius:10px; padding:8px 10px; color:var(--ink-2);
+    }
+    .formats{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 900px){
+      .formats{ grid-template-columns: 1fr; }
+    }
+    .format-card{
+      background:#fff; border:1px solid var(--muted); border-radius:12px; padding:14px;
+      display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center;
+      transition: transform .08s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .format-card:hover{
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+      border-color: color-mix(in srgb, var(--brand) 25%, var(--muted));
+    }
+    .format-title{
+      font-weight:700; font-size:15px;
+    }
+    .format-sub{
+      color:var(--ink-3); font-size:12.5px; margin-top:4px;
+    }
+    .format-actions{
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .pill{
+      font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid var(--muted); background: var(--card);
+      color:var(--ink-2);
+    }
+
+    /* Subtitle area */
+    .subs{
+      margin-top: 18px;
+      background:#fff; border:1px solid var(--muted); border-radius:12px; padding:14px;
+      box-shadow: var(--shadow-md);
+    }
+    .subs-pre{
+      background: #0b1220; color:#e6edf7; border-radius:10px; padding:12px; overflow:auto; max-height: 240px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12.5px;
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed; top: 18px; right: 18px; z-index: 9999; display:flex; flex-direction:column; gap:10px;
+    }
+    .toast-item{
+      background: #0b1220; color:#e6edf7; padding: 12px 14px; border-radius: 10px; box-shadow: var(--shadow-md);
+      border:1px solid rgba(255,255,255,.08);
+      animation: slideIn .24s ease;
+    }
+    @keyframes slideIn{
+      from{ transform: translateY(-10px); opacity:0 } to { transform: translateY(0); opacity:1 }
+    }
+
+    /* Skeletons & loaders */
+    .skeleton{
+      background: linear-gradient(90deg, #eef2f7 25%, #f6f9ff 37%, #eef2f7 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer{
+      0%{ background-position: 100% 0 } 100%{ background-position: 0 0 }
+    }
+
+    .loader{
+      --size: 18px;
+      width: var(--size); height: var(--size); border-radius:50%;
+      border: 3px solid rgba(37,99,235,.25);
+      border-top-color: var(--brand);
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin{ to{ transform: rotate(360deg)} }
+
+    .progress{
+      width: 160px; height: 10px; background: #eef2f7; border-radius: 999px; overflow: hidden;
+      border:1px solid var(--muted);
+      position: relative;
+    }
+    .progress > span{
+      position:absolute; left:0; top:0; bottom:0; width:0%;
+      background: linear-gradient(90deg, var(--brand), var(--accent));
+      transition: width .15s linear;
+    }
+    .progress-label{
+      font-size:12px; color:var(--ink-3);
+    }
+
+    /* Footer note */
+    .footnote{
+      margin-top: 24px; color: var(--ink-3); font-size: 12.5px; text-align:center;
+    }
+
+    /* Utility */
+    .hidden{ display:none !important; }
+    .nowrap{ white-space: nowrap; }
+    .grow{ flex:1 }
+    .right{ text-align:right }
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+
+  <div class="container">
+    <div class="nav">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <div class="brand-title">YouTube DL Studio</div>
+          <div class="tagline">動画を１から取得.最速の処理</div>
+        </div>
+      </div>
+      <div class="badge"><span class="dot"></span> 安定稼働モード</div>
+    </div>
+
+    <div class="hero">
+      <div class="panel">
+        <div class="title">動画IDまたはURLを入力して解析</div>
+        <div class="subtitle">例: https://www.youtube.com/watch?v=S19UcWdOA-I または S19UcWdOA-I</div>
+        <form id="form" autocomplete="off">
+          <div class="input-row">
+            <input class="input" id="input" placeholder="YouTubeのURL / 動画ID" inputmode="url" />
+            <button class="btn" id="fetchBtn" type="submit">
+              <span class="loader hidden" id="btnSpinner"></span>
+              <span id="btnLabel">解析</span>
+            </button>
+          </div>
+        </form>
+        <div class="actions" style="margin-top:12px">
+          <button class="btn btn-ghost" id="demoBtn">デモを試す</button>
+          <button class="btn btn-soft" id="clearBtn">クリア</button>
+        </div>
+      </div>
+      <div class="visual panel">
+        <div class="orb" style="left:24px; top:24px"></div>
+        <div class="orb two" style="right:-10px; top:50px"></div>
+        <div class="visual-caption">
+          <div class="dot"></div>
+          <div>
+            <div style="font-weight:700">状態を明快にします</div>
+            <div class="meta">解析・DL中にフィードバックを表示します</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="results" class="results">
+      <div class="video-card">
+        <div class="thumb">
+          <img id="thumb" alt="Thumbnail" class="hidden" />
+          <div id="thumbSkeleton" class="skeleton"></div>
+        </div>
+        <div class="video-meta">
+          <h2 id="videoTitle" class="skeleton" style="height:28px; width:80%; border-radius:8px"></h2>
+          <div class="meta" id="videoMeta" style="margin-top:6px"></div>
+          <div class="badge-row" id="badges"></div>
+          <div class="actions">
+            <a class="btn btn-soft" id="openOnYouTube" target="_blank" rel="noopener">YouTubeで開く</a>
+            <button class="btn btn-ghost" id="copyInfoBtn">情報をコピー</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">フォーマット</div>
+      <div class="toolbar">
+        <select id="typeFilter" class="filter">
+          <option value="all">すべて</option>
+          <option value="video">映像のみ</option>
+          <option value="audio">音声のみ</option>
+          <option value="muxed">映像+音声</option>
+        </select>
+        <select id="qualityFilter" class="filter">
+          <option value="any">品質: 指定なし</option>
+          <option value="1080">1080p</option>
+          <option value="720">720p</option>
+          <option value="480">480p</option>
+          <option value="360">360p</option>
+          <option value="audio">音質優先</option>
+        </select>
+        <div class="grow"></div>
+        <div class="pill"><strong>合計:</strong> <span id="formatCount">0</span></div>
+      </div>
+      <div id="formats" class="formats"></div>
+
+      <div class="section-title">字幕 / 文字起こし</div>
+      <div class="subs">
+        <div class="toolbar">
+          <div class="pill"><strong>利用可能:</strong> <span id="subsCount">0</span></div>
+          <div class="grow"></div>
+          <button class="btn btn-ghost" id="fetchSubsAllBtn">すべて取得</button>
+        </div>
+        <div id="subsList" class="badge-row" style="margin:0 0 10px"></div>
+        <pre id="subsContent" class="subs-pre hidden"></pre>
+      </div>
+
+      <div class="footnote">
+        利用できるフォーマットは動画により異なります。ダウンロードに失敗した場合は「リンクを開く」または「リンクをコピー」で試してください。
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const input = $('#input');
+    const form = $('#form');
+    const fetchBtn = $('#fetchBtn');
+    const btnSpinner = $('#btnSpinner');
+    const btnLabel = $('#btnLabel');
+
+    const resultsEl = $('#results');
+    const thumbEl = $('#thumb');
+    const thumbSkeletonEl = $('#thumbSkeleton');
+    const videoTitleEl = $('#videoTitle');
+    const videoMetaEl = $('#videoMeta');
+    const badgesEl = $('#badges');
+    const openOnYouTubeEl = $('#openOnYouTube');
+    const copyInfoBtn = $('#copyInfoBtn');
+
+    const typeFilter = $('#typeFilter');
+    const qualityFilter = $('#qualityFilter');
+    const formatCountEl = $('#formatCount');
+    const formatsEl = $('#formats');
+
+    const subsCountEl = $('#subsCount');
+    const subsListEl = $('#subsList');
+    const subsContentEl = $('#subsContent');
+    const fetchSubsAllBtn = $('#fetchSubsAllBtn');
+
+    const demoBtn = $('#demoBtn');
+    const clearBtn = $('#clearBtn');
+
+    let currentData = null;
+    let filteredFormats = [];
+
+    function toast(msg, type='info', timeout=3000){
+      const t = document.createElement('div');
+      t.className = 'toast-item';
+      t.style.background = type === 'error' ? '#7f1d1d' : type === 'warn' ? '#7a4e0b' : '#0b1220';
+      t.style.borderColor = 'rgba(255,255,255,.08)';
+      t.textContent = msg;
+      $('#toast').appendChild(t);
+      setTimeout(()=>{ t.style.opacity = '0'; t.style.transform = 'translateY(-6px)'; }, timeout - 250);
+      setTimeout(()=> t.remove(), timeout);
+    }
+
+    function parseYouTubeId(text){
+      if(!text) return '';
+      const idMatch = text.match(/(?:v=|\/shorts\/|youtu\.be\/|\/live\/)([a-zA-Z0-9_-]{6,})/) || text.match(/^([a-zA-Z0-9_-]{6,})$/);
+      return idMatch ? idMatch[1] : '';
+    }
+
+    function bytes(n){
+      if(n == null || isNaN(n)) return '—';
+      const units = ['B','KB','MB','GB','TB'];
+      let i=0, v=n;
+      while(v >= 1024 && i < units.length-1){ v/=1024; i++; }
+      return `${v.toFixed(v<10?2:1)} ${units[i]}`;
+    }
+
+    function seconds(s){
+      if(!Number.isFinite(s)) return '—';
+      const h = Math.floor(s/3600);
+      const m = Math.floor((s%3600)/60);
+      const ss = Math.floor(s%60);
+      return h>0 ? `${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}` : `${m}:${String(ss).padStart(2,'0')}`;
+    }
+
+    function extIcon(ext){
+      const map = { mp4:'📺', webm:'🎞️', weba:'🎧', m4a:'🎧', mp3:'🎧' };
+      return map[ext] || '📦';
+    }
+
+    function qualityLabel(fmt){
+      if(fmt.vcodec && fmt.vcodec !== 'none' && fmt.acodec && fmt.acodec !== 'none'){
+        return '映像+音声';
+      } else if(fmt.vcodec && fmt.vcodec !== 'none'){
+        return '映像のみ';
+      } else if(fmt.acodec && fmt.acodec !== 'none'){
+      return '音声のみ';
+      }
+      return '不明';
+    }
+
+    function detectType(fmt){
+      const hasV = fmt.vcodec && fmt.vcodec !== 'none';
+      const hasA = fmt.acodec && fmt.acodec !== 'none';
+      if(hasV && hasA) return 'muxed';
+      if(hasV) return 'video';
+      if(hasA) return 'audio';
+      return 'other';
+    }
+
+    function qualityNumber(q){
+      if(!q) return 0;
+      const m = String(q).match(/(\d{3,4})p/);
+      if(m) return parseInt(m[1],10);
+      if(String(q).toLowerCase().includes('high')) return 999; // audio high
+      return 0;
+    }
+
+    function setLoading(loading){
+      fetchBtn.disabled = loading;
+      btnSpinner.classList.toggle('hidden', !loading);
+      btnLabel.textContent = loading ? '解析中...' : '解析';
+    }
+
+    function resetUI(){
+      resultsEl.style.display = 'none';
+      thumbEl.classList.add('hidden');
+      thumbSkeletonEl.classList.remove('hidden');
+      videoTitleEl.classList.add('skeleton'); videoTitleEl.textContent = '';
+      videoMetaEl.textContent = '';
+      badgesEl.innerHTML = '';
+      formatsEl.innerHTML = '';
+      formatCountEl.textContent = '0';
+      subsListEl.innerHTML = '';
+      subsCountEl.textContent = '0';
+      subsContentEl.textContent = '';
+      subsContentEl.classList.add('hidden');
+      openOnYouTubeEl.href = '#';
+      currentData = null;
+      filteredFormats = [];
+    }
+
+    function populateVideo(data, videoId){
+      // Thumbnail
+      thumbEl.src = data.thumbnail || '';
+      thumbEl.onload = () => {
+        thumbSkeletonEl.classList.add('hidden');
+        thumbEl.classList.remove('hidden');
+      };
+      thumbEl.onerror = () => {
+        thumbSkeletonEl.classList.add('hidden');
+        thumbEl.classList.add('hidden');
+      };
+
+      // Title & meta
+      videoTitleEl.classList.remove('skeleton');
+      videoTitleEl.textContent = data.title || 'タイトル不明';
+
+      const dur = seconds(data.duration);
+      videoMetaEl.innerHTML = `
+        <span class="pill"><strong>長さ:</strong> ${dur}</span>
+        <span class="pill"><strong>ソース:</strong> ${data.source || '—'}</span>
+        <span class="pill"><strong>サーバー:</strong> ${data.server || '—'}</span>
+      `;
+
+      // Badges
+      badgesEl.innerHTML = '';
+      const b1 = document.createElement('div');
+      b1.className='badge';
+      b1.innerHTML = '📌 <strong>状態:</strong> ' + (data.message || '—');
+      badgesEl.appendChild(b1);
+
+      const b2 = document.createElement('div');
+      b2.className='badge';
+      b2.innerHTML = '🧩 <strong>形式数:</strong> ' + (data.formats?.length ?? 0);
+      badgesEl.appendChild(b2);
+
+      const b3 = document.createElement('div');
+      b3.className='badge';
+      b3.innerHTML = '📝 <strong>字幕:</strong> ' + (data.subtitles?.length ?? 0);
+      badgesEl.appendChild(b3);
+
+      openOnYouTubeEl.href = `https://www.youtube.com/watch?v=${videoId}`;
+
+      resultsEl.style.display = 'block';
+    }
+
+    function applyFilters(){
+      if(!currentData) return;
+      const t = typeFilter.value; // all, video, audio, muxed
+      const q = qualityFilter.value; // any / numeric / audio
+
+      filteredFormats = (currentData.formats || []).filter(fmt => {
+        const type = detectType(fmt);
+        const typeOk = (t === 'all') ? true : type === t;
+
+        let qOk = true;
+        if(q === 'audio'){
+          qOk = type === 'audio';
+        } else if(q !== 'any'){
+          const want = parseInt(q,10);
+          qOk = qualityNumber(fmt.quality) === want;
+        }
+
+        return typeOk && qOk;
+      });
+
+      renderFormats();
+    }
+
+    function renderFormats(){
+      formatsEl.innerHTML = '';
+      formatCountEl.textContent = String(filteredFormats.length);
+
+      if(filteredFormats.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'format-card';
+        empty.innerHTML = `
+          <div>
+            <div class="format-title">該当するフォーマットがありません</div>
+            <div class="format-sub">フィルターを変更して再度お試しください。</div>
+          </div>
+          <div class="format-actions">
+            <div class="pill">—</div>
+          </div>
+        `;
+        formatsEl.appendChild(empty);
+        return;
+      }
+
+      filteredFormats
+        .sort((a,b) => (qualityNumber(b.quality) - qualityNumber(a.quality)) || ((b.filesize||0)-(a.filesize||0)))
+        .forEach((fmt, idx) => {
+          const type = detectType(fmt);
+          const icon = extIcon(fmt.ext);
+          const label = qualityLabel(fmt);
+          const size = bytes(fmt.filesize);
+          const card = document.createElement('div');
+          card.className = 'format-card';
+          card.innerHTML = `
+            <div>
+              <div class="format-title">${icon} ${fmt.quality || '品質不明'} <span class="pill" style="margin-left:6px">${fmt.ext?.toUpperCase() || '—'}</span></div>
+              <div class="format-sub">
+                <strong>タイプ:</strong> ${label} /
+                <strong>映像:</strong> ${fmt.vcodec || '—'} /
+                <strong>音声:</strong> ${fmt.acodec || '—'} /
+                <strong>サイズ:</strong> ${size} /
+                <strong>プロトコル:</strong> ${fmt.protocol || '—'}
+              </div>
+            </div>
+            <div class="format-actions">
+              <button class="btn" data-action="download" data-idx="${idx}" title="高速ダウンロード">ダウンロード</button>
+              <button class="btn btn-ghost" data-action="open" data-idx="${idx}" title="新しいタブで開く">リンクを開く</button>
+              <button class="btn btn-ghost" data-action="copy" data-idx="${idx}" title="URLをコピー">コピー</button>
+            </div>
+          `;
+          formatsEl.appendChild(card);
+        });
+    }
+
+    // Attempt to stream with progress and create a safe downloadable Blob URL.
+    async function streamDownload(url, filename, onProgress){
+      const res = await fetch(url, { mode: 'cors' });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const total = Number(res.headers.get('content-length')) || 0;
+      const reader = res.body?.getReader();
+      if(!reader) throw new Error('Stream not supported');
+
+      const chunks = [];
+      let received = 0;
+
+      while(true){
+        const { done, value } = await reader.read();
+        if(done) break;
+        chunks.push(value);
+        received += value.length;
+        if(total && onProgress){
+          onProgress(Math.min(100, Math.round(received / total * 100)), received, total);
+        }
+      }
+      const blob = new Blob(chunks);
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Trigger download
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=> URL.revokeObjectURL(blobUrl), 10000);
+    }
+
+    function filenameFor(data, fmt){
+      const safe = (data.title || 'video').replace(/[\\/:*?"<>|]+/g,' ').trim().replace(/\s+/g,' ');
+      const q = fmt.quality || detectType(fmt);
+      const ext = (fmt.ext || 'bin').toLowerCase();
+      return `${safe} - ${q}.${ext}`;
+    }
+
+    function attachFormatActions(){
+      formatsEl.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if(!btn) return;
+        const idx = Number(btn.dataset.idx);
+        const action = btn.dataset.action;
+        const fmt = filteredFormats[idx];
+        if(!fmt || !fmt.url){
+          toast('URLが見つかりませんでした', 'error');
+          return;
+        }
+        const name = filenameFor(currentData, fmt);
+
+        if(action === 'open'){
+          window.open(fmt.url, '_blank', 'noopener');
+          return;
+        }
+        if(action === 'copy'){
+          try{
+            await navigator.clipboard.writeText(fmt.url);
+            toast('リンクをコピーしました');
+          }catch{
+            toast('コピーに失敗しました', 'error');
+          }
+          return;
+        }
+        if(action === 'download'){
+          // Create a temporary inline progress UI
+          const container = btn.parentElement;
+          const progWrap = document.createElement('div');
+          progWrap.style.display = 'grid';
+          progWrap.style.gridTemplateColumns = 'auto auto';
+          progWrap.style.alignItems = 'center';
+          progWrap.style.gap = '8px';
+          progWrap.style.minWidth = '220px';
+
+          const prog = document.createElement('div');
+          prog.className = 'progress';
+          const bar = document.createElement('span');
+          prog.appendChild(bar);
+
+          const label = document.createElement('div');
+          label.className = 'progress-label';
+          label.textContent = '準備中...';
+
+          progWrap.append(prog, label);
+          const prev = [...container.children];
+          container.innerHTML = '';
+          container.appendChild(progWrap);
+
+          try{
+            await streamDownload(fmt.url, name, (pct, rec, tot) => {
+              bar.style.width = pct + '%';
+              label.textContent = tot ? `${pct}% (${bytes(rec)}/${bytes(tot)})` : `${pct}%`;
+            });
+            label.textContent = '完了';
+            toast('ダウンロードを開始しました');
+          }catch(err){
+            // Fallback: open direct URL (lets the browser handle it)
+            toast('ストリーミングに失敗。リンクを開きます。', 'warn');
+            const a = document.createElement('a');
+            a.href = fmt.url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }finally{
+            // Restore buttons after a short delay
+            setTimeout(()=>{
+              container.innerHTML = '';
+              prev.forEach(el => container.appendChild(el));
+            }, 1400);
+          }
+        }
+      }, { passive: true });
+    }
+
+    function renderSubtitles(subs){
+      subsListEl.innerHTML = '';
+      if(!subs || subs.length === 0){
+        subsCountEl.textContent = '0';
+        return;
+      }
+      subsCountEl.textContent = String(subs.length);
+      subs.forEach((s, i) => {
+        const item = document.createElement('div');
+        item.className = 'badge';
+        const code = s.code || 'unknown';
+        item.innerHTML = `🗣️ <strong>${s.text || code}</strong>`;
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-ghost';
+        btn.style.marginLeft = '6px';
+        btn.textContent = '取得';
+        btn.addEventListener('click', () => fetchSubtitleSingle(s));
+        const btnDl = document.createElement('button');
+        btnDl.className = 'btn btn-ghost';
+        btnDl.style.marginLeft = '6px';
+        btnDl.textContent = '保存';
+        btnDl.addEventListener('click', () => downloadSubtitle(s));
+        item.append(btn, btnDl);
+        subsListEl.appendChild(item);
+      });
+    }
+
+    async function fetchSubtitleText(url){
+      const res = await fetch(url);
+      if(!res.ok) throw new Error(`字幕取得失敗: HTTP ${res.status}`);
+      return await res.text();
+    }
+
+    async function fetchSubtitleSingle(sub){
+      if(!sub?.url){
+        toast('字幕URLがありません', 'error');
+        return;
+      }
+      subsContentEl.classList.remove('hidden');
+      subsContentEl.textContent = '取得中...';
+      try{
+        const text = await fetchSubtitleText(sub.url);
+        subsContentEl.textContent = normalizeSubtitle(text);
+        toast('字幕を取得しました');
+      }catch(e){
+        subsContentEl.textContent = '';
+        subsContentEl.classList.add('hidden');
+        toast('字幕取得に失敗しました', 'error');
+      }
+    }
+
+    function normalizeSubtitle(text){
+      // Show as-is; for SRT/VTT both are readable in <pre>.
+      // Remove BOM, trim extra spaces.
+      return text.replace(/^\uFEFF/, '').trim();
+    }
+
+    async function downloadSubtitle(sub){
+      try{
+        const text = await fetchSubtitleText(sub.url);
+        const blob = new Blob([normalizeSubtitle(text)], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        const title = (currentData?.title || 'subtitle').replace(/[\\/:*?"<>|]+/g,' ').trim();
+        const code = sub.code || 'cc';
+        a.href = URL.createObjectURL(blob);
+        a.download = `${title} - ${code}.vtt`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
+        toast('字幕を保存しました');
+      }catch(e){
+        toast('字幕の保存に失敗しました', 'error');
+      }
+    }
+
+    async function fetchAllSubtitles(){
+      const subs = currentData?.subtitles || [];
+      if(subs.length === 0){ toast('字幕がありません', 'warn'); return; }
+      subsContentEl.classList.remove('hidden');
+      subsContentEl.textContent = '一括取得中...\n';
+      for(const sub of subs){
+        subsContentEl.textContent += `\n[${sub.text || sub.code}] を取得中...\n`;
+        try{
+          const t = await fetchSubtitleText(sub.url);
+          subsContentEl.textContent += normalizeSubtitle(t).slice(0, 2000) + '\n---\n';
+        }catch{
+          subsContentEl.textContent += '取得に失敗しました\n---\n';
+        }
+      }
+      toast('すべての字幕取得が完了しました');
+    }
+
+    function buildApiUrl(raw){
+      const id = parseYouTubeId(raw);
+      if(!id){
+        throw new Error('有効な動画ID/URLを入力してください');
+      }
+      // Provided endpoint format: https://yt-dl-test.vercel.app/dl/Youtube動画ID
+      return { api: `https://yt-dl-test.vercel.app/dl/${encodeURIComponent(id)}`, id };
+    }
+
+    async function fetchInfo(raw){
+      const { api, id } = buildApiUrl(raw);
+      setLoading(true);
+      resetUI();
+      try{
+        const res = await fetch(api, { mode: 'cors' });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        // Expected shape: { res_data: {...}, message: "success" }
+        const data = json?.res_data || json || {};
+        currentData = {
+          title: data.title,
+          source: data.source,
+          server: data.server,
+          thumbnail: data.thumbnail,
+          duration: data.duration,
+          message: data.message,
+          subtitles: Array.isArray(data.subtitles) ? data.subtitles : [],
+          formats: Array.isArray(data.formats) ? data.formats : [],
+        };
+        populateVideo(currentData, id);
+        renderSubtitles(currentData.subtitles);
+        applyFilters();
+        toast('解析が完了しました');
+      }catch(e){
+        toast('解析に失敗しました: ' + e.message, 'error', 4000);
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    // UI events
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const v = input.value.trim();
+      if(!v){ toast('URLまたはIDを入力してください', 'warn'); return; }
+      fetchInfo(v);
+    });
+
+    demoBtn.addEventListener('click', () => {
+      input.value = 'https://www.youtube.com/watch?v=S19UcWdOA-I';
+      form.requestSubmit();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      resetUI();
+      toast('クリアしました');
+    });
+
+    typeFilter.addEventListener('change', applyFilters);
+    qualityFilter.addEventListener('change', applyFilters);
+
+    copyInfoBtn.addEventListener('click', async () => {
+      if(!currentData){ toast('データがありません', 'warn'); return; }
+      const info = [
+        `Title: ${currentData.title}`,
+        `Duration: ${seconds(currentData.duration)}`,
+        `Source: ${currentData.source}`,
+        `Server: ${currentData.server}`,
+        `Formats: ${currentData.formats?.length ?? 0}`,
+        `Subtitles: ${currentData.subtitles?.length ?? 0}`,
+      ].join('\n');
+      try{
+        await navigator.clipboard.writeText(info);
+        toast('情報をコピーしました');
+      }catch{
+        toast('コピーに失敗しました', 'error');
+      }
+    });
+
+    fetchSubsAllBtn.addEventListener('click', fetchAllSubtitles);
+
+    attachFormatActions();
+
+    // Prefill hint on load
+    window.addEventListener('DOMContentLoaded', () => {
+      input.placeholder = '例: https://www.youtube.com/watch?v=S19UcWdOA-I';
+    });
+  </script>
+</body>
+</html>
