@@ -1,10 +1,12 @@
+version: 1
 services:
   - type: web
-    name: study
+    name: studieeees
     env: node
     plan: free
-    buildCommand: "npm install"
-    startCommand: "npm start"
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
     envVars:
-      - key: NODE_ENV
-        value: production
+      - key: NODE_VERSION
+        value: 16
