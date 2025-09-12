@@ -923,7 +923,7 @@
         throw new Error('有効な動画ID/URLを入力してください');
       }
       // Provided endpoint format: https://yt-dl-test.vercel.app/dl/Youtube動画ID
-      return { api: `https://yt-dl-test.vercel.app/dl/${encodeURIComponent(id)}`, id };
+      return { api: `htmlproxy/https://yt-dl-test.vercel.app/dl/${encodeURIComponent(id)}`, id };
     }
 
     async function fetchInfo(raw){
