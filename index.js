@@ -202,14 +202,14 @@ app.get("/video/:id", async (req, res, next) => {
     let commentsData = null;
     let successfulApi = null;
 
-    const overallTimeout = 15000; // 全体のタイムアウト時間
+    const overallTimeout = 20000; // 全体のタイムアウト時間
     const startTime = Date.now();
 
     let streamUrlResult = null; // これを待っている間に設定
     let streamUrlTimeoutReached = false;
 
     // 5秒間のタイムアウトを設定
-    const streamUrlTimeout = 8000;
+    const streamUrlTimeout = 10000;
 
     // Promiseを使って動画URL取得を並行処理
     const fetchVideoPromise = (async () => {
