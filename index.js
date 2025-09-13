@@ -191,7 +191,7 @@ app.get("/video/:id", async (req, res, next) => {
   if (!videoId) {
     return res.status(400).send("動画IDが必要です");
   }
-
+  
   try {
     if (!Array.isArray(apiListCache) || apiListCache.length === 0) {
       return res.status(500).send("有効なAPIリストが取得できませんでした。");
@@ -202,14 +202,12 @@ app.get("/video/:id", async (req, res, next) => {
     let commentsData = null;
     let successfulApi = null;
 
-    // 動画取得の最大待機時間を 5 秒に設定
-    const videoFetchTimeout = 5000;
+    const overallTimeout = 20000;
     const startTime = Date.now();
 
-    // 5 秒以内に stream_url が取得できるまでループ
-    while (Date.now() - startTime < videoFetchTimeout) {
+    while (Date.now() - startTime < overallTimeout) {
       for (const apiBase of apiList) {
-        if (Date.now() - startTime >= videoFetchTimeout) break;
+        if (Date.now() - startTime >= overallTimeout) break;
         try {
           const videoResponse = await fetchWithTimeout(
             `${apiBase}/api/video/${videoId}`,
@@ -226,19 +224,17 @@ app.get("/video/:id", async (req, res, next) => {
           }
         } catch (err) {
           console.warn(`${apiBase} での動画取得エラー: ${err.message}`);
+          continue;
         }
       }
       if (videoData && videoData.stream_url) break;
     }
 
-    // 5 秒以内に取得できなかった場合のフォールバック
     if (!videoData || !videoData.stream_url) {
       videoData = videoData || {};
-      // 直接 iframe 埋め込み用 URL を stream_url にセット
-      videoData.stream_url = `https://www.youtube-nocookie.com/embed/${videoId}`;
+      videoData.stream_url = "youtube-nocookie";
     }
 
-    // 成功 API があればコメントを取得
     if (successfulApi) {
       try {
         const commentsResponse = await fetchWithTimeout(
@@ -253,41 +249,28 @@ app.get("/video/:id", async (req, res, next) => {
         console.warn(`${successfulApi} でのコメント取得エラー: ${err.message}`);
       }
     }
-    // コメントが取れなければ空に
     if (!commentsData) {
       commentsData = { commentCount: 0, comments: [] };
     }
 
-    // stream_url の形式で埋め込みタグを切り替え
-    let streamEmbedHTML;
-    if (videoData.stream_url.startsWith("https://www.youtube-nocookie.com/embed/")) {
-      // フォールバック YouTube 埋め込み
-      streamEmbedHTML = `
-        <iframe
-          src="${videoData.stream_url}?autoplay=1"
-          frameborder="0"
-          allow="autoplay; encrypted-media"
-          allowfullscreen
-          style="width:932px; height:524px; border-radius:8px;">
-        </iframe>
-      `;
-    } else {
-      // API から取ってきた MP4 ストリーム
-      streamEmbedHTML = `
-        <video controls autoplay style="border-radius: 8px;">
-          <source src="${videoData.stream_url}" type="video/mp4">
-          お使いのブラウザは video タグに対応していません。
-        </video>
-      `;
-    }
+    const streamEmbedHTML =
+      videoData.stream_url !== "youtube-nocookie"
+        ? `<video controls autoplay style="border-radius: 8px;">
+             <source src="${videoData.stream_url}" type="video/mp4">
+             お使いのブラウザは video タグに対応していません。
+           </video>`
+        : `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="border-radius: 8px;"></iframe>`;
 
-    // コメント描画
+    const youtubeEmbedHTML = `<iframe style="width: 932px; height:524px; border: none; border-radius: 8px;" src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+
     let commentsHTML = "";
-    if (Array.isArray(commentsData.comments) && commentsData.comments.length > 0) {
+    if (commentsData.comments && Array.isArray(commentsData.comments) && commentsData.comments.length > 0) {
       commentsHTML = commentsData.comments
         .map((comment) => {
           const thumb =
-            comment.authorThumbnails?.[0]?.url || "";
+            comment.authorThumbnails && comment.authorThumbnails.length > 0
+              ? comment.authorThumbnails[0].url
+              : "";
           return `
             <div class="comment">
               <div class="comment-header">
@@ -298,14 +281,13 @@ app.get("/video/:id", async (req, res, next) => {
               <div class="comment-body">${comment.contentHtml || comment.content}</div>
               <div class="comment-stats">Likes: ${comment.likeCount || 0}</div>
             </div>
-          `;
+        `;
         })
         .join("");
     } else {
       commentsHTML = "<p>コメントがありません。</p>";
     }
 
-    // 最終レスポンス HTML
     const html = `
 <!DOCTYPE html>
 <html lang="ja">
