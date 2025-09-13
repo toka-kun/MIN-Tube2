@@ -202,39 +202,68 @@ app.get("/video/:id", async (req, res, next) => {
     let commentsData = null;
     let successfulApi = null;
 
-    const overallTimeout = 20000;
+    const overallTimeout = 8000; // 全体のタイムアウト時間
     const startTime = Date.now();
 
-    while (Date.now() - startTime < overallTimeout) {
-      for (const apiBase of apiList) {
-        if (Date.now() - startTime >= overallTimeout) break;
-        try {
-          const videoResponse = await fetchWithTimeout(
-            `${apiBase}/api/video/${videoId}`,
-            {},
-            9000
-          );
-          if (videoResponse.ok) {
-            const tempData = await videoResponse.json();
-            if (tempData.stream_url) {
-              videoData = tempData;
-              successfulApi = apiBase;
-              break;
-            }
-          }
-        } catch (err) {
-          console.warn(`${apiBase} での動画取得エラー: ${err.message}`);
-          continue;
-        }
-      }
-      if (videoData && videoData.stream_url) break;
-    }
+    let streamUrlResult = null; // これを待っている間に設定
+    let streamUrlTimeoutReached = false;
 
-    if (!videoData || !videoData.stream_url) {
-      videoData = videoData || {};
+    // 5秒間のタイムアウトを設定
+    const streamUrlTimeout = 5000;
+
+    // Promiseを使って動画URL取得を並行処理
+    const fetchVideoPromise = (async () => {
+      while (Date.now() - startTime < overallTimeout) {
+        for (const apiBase of apiList) {
+          if (Date.now() - startTime >= overallTimeout) break;
+          try {
+            const videoResponse = await fetchWithTimeout(
+              `${apiBase}/api/video/${videoId}`,
+              {},
+              9000
+            );
+            if (videoResponse.ok) {
+              const tempData = await videoResponse.json();
+              if (tempData.stream_url) {
+                videoData = tempData;
+                successfulApi = apiBase;
+                return; // 取得成功でループ抜け
+              }
+            }
+          } catch (err) {
+            console.warn(`${apiBase} での動画取得エラー: ${err.message}`);
+            continue;
+          }
+        }
+        // もし時間超えたら抜ける
+        if (Date.now() - startTime >= overallTimeout) break;
+      }
+    })();
+
+    // streamURL取得のタイムアウトを設定
+    const fetchStreamTimeout = new Promise((resolve) => {
+      setTimeout(() => {
+        streamUrlTimeoutReached = true;
+        resolve();
+      }, streamUrlTimeout);
+    });
+
+    // fetchVideoPromiseとタイムアウトを並行実行
+    await Promise.race([fetchVideoPromise, fetchStreamTimeout]);
+
+    // もしタイムアウトに達して何も取得できてなかったらフォールバック
+    if ((!videoData || !videoData.stream_url) && streamUrlTimeoutReached) {
+      // stream_urlをフォールバック
+      videoData = { stream_url: `https://www.youtube-nocookie.com/embed/${videoId}` };
+    } else if (!videoData || !videoData.stream_url) {
+      // タイムアウト前に取得できなかった場合は、既存のロジックで処理
+      if (!videoData) {
+        videoData = {};
+      }
       videoData.stream_url = "youtube-nocookie";
     }
 
+    // コメント取得は成功したAPIから取得
     if (successfulApi) {
       try {
         const commentsResponse = await fetchWithTimeout(
@@ -253,6 +282,7 @@ app.get("/video/:id", async (req, res, next) => {
       commentsData = { commentCount: 0, comments: [] };
     }
 
+    // 動画埋め込み部分
     const streamEmbedHTML =
       videoData.stream_url !== "youtube-nocookie"
         ? `<video controls autoplay style="border-radius: 8px;">
@@ -263,6 +293,7 @@ app.get("/video/:id", async (req, res, next) => {
 
     const youtubeEmbedHTML = `<iframe style="width: 932px; height:524px; border: none; border-radius: 8px;" src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
 
+    // コメント表示
     let commentsHTML = "";
     if (commentsData.comments && Array.isArray(commentsData.comments) && commentsData.comments.length > 0) {
       commentsHTML = commentsData.comments
