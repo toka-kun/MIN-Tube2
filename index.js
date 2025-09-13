@@ -220,7 +220,7 @@ app.get("/video/:id", async (req, res, next) => {
             const videoResponse = await fetchWithTimeout(
               `${apiBase}/api/video/${videoId}`,
               {},
-              9000
+              15000
             );
             if (videoResponse.ok) {
               const tempData = await videoResponse.json();
