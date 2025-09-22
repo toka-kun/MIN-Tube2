@@ -780,6 +780,10 @@ app.get("/bbs", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat/chat.html"));
 });
 
+app.get("/hd", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "oasobi/HD/mp4quality.html"));
+});
+
 app.get("/downloader", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app/yt.html"));
 });
