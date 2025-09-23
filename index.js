@@ -784,6 +784,9 @@ app.get("/hd", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "oasobi/HD/mp4quality.html"));
 });
 
+app.get("/paste", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app/paste.html"));
+});
 app.get("/downloader", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app/yt.html"));
 });
