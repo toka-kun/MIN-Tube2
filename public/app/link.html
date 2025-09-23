@@ -1,512 +1,522 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Blob Link Factory — アップロードで即リンク生成</title>
-<style>
-  :root {
-    --bg: #0f1115;
-    --fg: #e8ebf0;
-    --muted: #a9b0be;
-    --primary: #7cafff;
-    --primary-2: #497cff;
-    --accent: #5ce0c7;
-    --danger: #ff6b6b;
-    --card: #151922;
-    --border: #212738;
-    --shadow: 0 10px 30px rgba(0,0,0,0.35);
-    --radius: 14px;
-    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans JP", "Apple Color Emoji", "Segoe UI Emoji";
-  }
-  .light {
-    --bg: #f8fafc;
-    --fg: #0e1320;
-    --muted: #50607a;
-    --primary: #2556e8;
-    --primary-2: #1946cc;
-    --accent: #128a74;
-    --danger: #c63d3d;
-    --card: #ffffff;
-    --border: #dfe6ef;
-    --shadow: 0 10px 30px rgba(10,35,70,0.12);
-  }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    background: radial-gradient(1200px 800px at 10% -10%, rgba(71,92,255,0.12), transparent 40%), 
-                radial-gradient(900px 900px at 90% 110%, rgba(92,224,199,0.16), transparent 45%), var(--bg);
-    color: var(--fg);
-    font-family: var(--font);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    letter-spacing: 0.02em;
-  }
-  .container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 28px 20px 50px;
-  }
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; margin-bottom: 22px;
-  }
-  .brand {
-    display: flex; align-items: center; gap: 14px;
-  }
-  .logo {
-    width: 42px; height: 42px; border-radius: 12px;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    box-shadow: 0 8px 20px rgba(71,92,255,0.35), inset 0 0 20px rgba(255,255,255,0.15);
-  }
-  h1 {
-    margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.02em;
-  }
-  .subtitle { color: var(--muted); font-size: 13.5px; }
-  .toolbar { display: flex; gap: 10px; align-items: center; }
-  .btn {
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--fg);
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-    transition: transform .08s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
-  }
-  .btn:hover { transform: translateY(-1px); }
-  .btn.primary {
-    background: linear-gradient(135deg, var(--primary), var(--primary-2));
-    border: none; color: #fff;
-    box-shadow: 0 8px 20px rgba(71,92,255,0.35);
-  }
-  .btn.ghost { background: transparent; }
-  .btn.danger { background: transparent; border-color: rgba(255,107,107,.5); color: var(--danger); }
-  .switch {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 12px; border-radius: 10px; border: 1px dashed var(--border);
-    color: var(--muted);
-  }
-  .grid {
-    display: grid; grid-template-columns: 1fr;
-    gap: 16px; margin-top: 14px;
-  }
-  @media (min-width: 900px) {
-    .grid { grid-template-columns: 1.1fr 0.9fr; }
-  }
-  .card {
-    background: rgba(21,25,34,0.7);
-    backdrop-filter: saturate(140%) blur(8px);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-  }
-  .pad { padding: 16px; }
-  .dropzone {
-    display: grid; place-items: center;
-    min-height: 160px; text-align: center;
-    border: 2px dashed var(--border);
-    border-radius: 14px; color: var(--muted);
-    transition: border-color .2s ease, background .2s ease;
-  }
-  .dropzone.dragover {
-    border-color: var(--primary);
-    background: rgba(71,92,255,0.08);
-  }
-  .dropzone .lead { font-weight: 700; font-size: 15px; color: var(--fg); }
-  .helper { font-size: 12.5px; margin-top: 6px; }
-  .hidden { display: none !important; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blob Link Maker — 一括アップロード対応</title>
+  <meta name="description" content="どんな形式のファイルでも一括で選択・ドラッグ＆ドロップでBlobリンクを生成。進捗バー、コピー、ダウンロード、URL解放、低スペック端末向け最適化。">
+  <style>
+    :root{
+      --bg: #0f1115;
+      --panel: #161a22;
+      --accent: #4f8cff;
+      --accent-2: #00d4aa;
+      --text: #e8edf7;
+      --muted: #9aa6b2;
+      --danger: #ff6b6b;
+      --ok: #2ecc71;
+      --focus: #ffd66b;
+      --border: #232836;
+      --shadow: 0 8px 24px rgba(0,0,0,0.35);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --gap: 16px;
+      --gap-lg: 24px;
+      --gap-xl: 32px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1000px 600px at 10% -10%, rgba(79,140,255,0.07), transparent 70%),
+                  radial-gradient(900px 600px at 110% 10%, rgba(0,212,170,0.06), transparent 70%),
+                  var(--bg);
+      color: var(--text);
+      font: 16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: var(--gap-xl) var(--gap-lg);
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: var(--gap);
+      margin-bottom: var(--gap-xl);
+    }
+    .title{
+      display:flex;
+      align-items:flex-end;
+      gap: 14px;
+    }
+    .logo{
+      width: 44px; height:44px;
+      border-radius: 12px;
+      background:
+        conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--accent) 70%) border-box;
+      box-shadow: var(--shadow);
+      position:relative;
+      isolation:isolate;
+    }
+    .logo::after{
+      content:"";
+      position:absolute; inset: 6px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+      mix-blend-mode: overlay;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(22px, 5vw, 32px);
+      letter-spacing: 0.2px;
+    }
+    .subtitle{
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
 
-  .list {
-    display: grid; gap: 10px; margin-top: 10px;
-    max-height: 58vh; overflow: auto; padding-right: 6px;
-  }
-  .item {
-    display: grid; grid-template-columns: 1fr auto; gap: 10px;
-    border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px; background: var(--card);
-  }
-  .meta { display: grid; gap: 6px; }
-  .meta .name { font-weight: 700; font-size: 14px; }
-  .meta .details { color: var(--muted); font-size: 12.5px; }
-  .url-box {
-    display: grid; grid-template-columns: 1fr auto; gap: 8px;
-    align-items: center;
-  }
-  .url {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-    font-size: 12px; background: rgba(0,0,0,0.2);
-    border: 1px solid var(--border); border-radius: 8px; padding: 8px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 10px; border-radius: 999px; font-size: 12px;
-    border: 1px solid var(--border); color: var(--muted);
-  }
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)) , var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: var(--gap-lg);
+    }
 
-  .preview {
-    border: 1px solid var(--border);
-    border-radius: 12px; overflow: hidden;
-    background: var(--card);
-  }
-  .preview header {
-    padding: 10px 12px; border-bottom: 1px solid var(--border);
-  }
-  .preview-body { padding: 12px; max-height: 58vh; overflow: auto; }
-  .preview .placeholder { color: var(--muted); text-align: center; padding: 50px 10px; }
-  .preview img, .preview video, .preview audio, .preview iframe {
-    max-width: 100%; border-radius: 8px;
-    background: #000;
-  }
-  .preview pre {
-    background: rgba(0,0,0,0.2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    overflow: auto;
-    font-size: 12.5px;
-  }
+    /* Dropzone */
+    .dropzone{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--gap);
+      align-items:center;
+    }
+    .zone{
+      border: 1.5px dashed #2a3244;
+      background: rgba(79,140,255,0.06);
+      border-radius: var(--radius);
+      padding: var(--gap-xl);
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .zone.dragover{
+      background: rgba(0,212,170,0.12);
+      border-color: var(--accent-2);
+      transform: scale(1.01);
+    }
+    .zone h2{
+      margin:0 0 8px;
+      font-size: clamp(18px, 3.5vw, 22px);
+    }
+    .zone p{ margin:0; color: var(--muted); }
+    .zone .tips{
+      margin-top: 10px; font-size: 13px; color: #aab3c0;
+    }
+    .actions{
+      display:flex; flex-direction:column; gap: 10px;
+    }
+    .btn{
+      appearance:none; border: 1px solid transparent; cursor:pointer;
+      border-radius: 12px; padding: 12px 16px;
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(79,140,255,0.20), rgba(79,140,255,0.12));
+      transition: transform 120ms ease, filter 120ms ease, border-color 120ms ease, background 160ms ease;
+      font-weight: 600;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+    .btn:focus-visible{ outline: 2px solid var(--focus); outline-offset: 2px; }
+    .btn.secondary{
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border-color: #2a3244;
+      font-weight: 600;
+    }
+    .btn.danger{
+      background: linear-gradient(180deg, rgba(255,107,107,0.18), rgba(255,107,107,0.10));
+      border-color: #5a2020;
+    }
 
-  .toast {
-    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
-    background: var(--card); color: var(--fg);
-    border: 1px solid var(--border); border-radius: 999px;
-    padding: 10px 16px; font-weight: 700; font-size: 13px;
-    box-shadow: var(--shadow); opacity: 0; pointer-events: none;
-    transition: opacity .2s ease, transform .2s ease;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
-</style>
+    /* Progress */
+    .progress-wrap{
+      margin-top: var(--gap-lg);
+      display:grid;
+      gap: 10px;
+    }
+    .progress{
+      height: 12px;
+      background: #1a2030;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow:hidden;
+      position:relative;
+    }
+    .progress .bar{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 140ms linear;
+    }
+    .progress .label{
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* File list */
+    .list{
+      margin-top: var(--gap-xl);
+      display:flex; flex-direction:column; gap: 12px;
+    }
+    .item{
+      display:grid;
+      grid-template-columns: minmax(160px, 1.3fr) minmax(100px, 0.7fr) minmax(160px, 1fr) auto;
+      gap: 12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    }
+    .name{ font-weight:600; }
+    .meta{ color: var(--muted); font-size: 13px; }
+    .link a{
+      color: var(--accent);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .item .controls{
+      display:flex; gap: 8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .copy-tag{
+      display:inline-flex; gap:6px; align-items:center;
+      color:#aab3c0; font-size:12px;
+      visibility:hidden;
+    }
+    .copy-tag.show{ visibility:visible; }
+
+    /* Toolbar */
+    .toolbar{
+      margin-top: var(--gap-lg);
+      display:flex; gap: 10px; flex-wrap:wrap;
+    }
+    .switch{
+      display:flex; align-items:center; gap: 8px; color: var(--muted); font-size: 14px;
+    }
+    .switch input{ accent-color: var(--accent-2); }
+
+    /* Footer */
+    footer{
+      margin-top: var(--gap-xl);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Responsive */
+    @media (max-width: 720px){
+      .dropzone{ grid-template-columns: 1fr; }
+      .item{ grid-template-columns: 1fr; }
+      .item .controls{ justify-content:flex-start; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .btn, .zone, .progress .bar{ transition: none; }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
+      <div class="title">
+        <div aria-hidden="true" class="logo"></div>
         <div>
-          <h1>Blob Link Factory</h1>
-          <div class="subtitle">どんなファイルでもアップロード→即Blobリンク生成。コピー、ダウンロード、プレビュー、永続保存まで。</div>
+          <h1>Blob Link Maker</h1>
+          <div class="subtitle">どんな形式でもOK。ドラッグ＆ドロップと一括選択でBlobリンクを即生成。</div>
         </div>
       </div>
-      <div class="toolbar">
-        <button id="chooseBtn" class="btn primary">ファイルを選択</button>
-        <label class="switch">
-          <input id="themeToggle" type="checkbox" aria-label="テーマ切替">
-          <span>ライトテーマ</span>
-        </label>
+      <div class="actions">
+        <button class="btn" id="copyAll">すべてのリンクをコピー</button>
+        <button class="btn danger" id="revokeAll">すべてのURLを解放</button>
       </div>
     </header>
 
-    <div class="grid">
-      <section class="card pad" aria-label="アップロード">
-        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="ここにファイルをドラッグ&ドロップ">
-          <div class="lead">ドラッグ&ドロップ、または「ファイルを選択」をクリック</div>
-          <div class="helper">複数可 / あらゆる形式に対応。安全のため、リンクは同一セッションでのみ有効です。</div>
-          <input id="fileInput" type="file" multiple class="hidden" aria-hidden="true">
+    <section class="panel" aria-label="ファイル入力とドロップゾーン">
+      <div class="dropzone">
+        <div class="zone" id="zone" tabindex="0" role="button" aria-describedby="zoneDesc" aria-label="ここにファイルをドラッグ＆ドロップ、またはクリックで選択">
+          <h2>ドラッグ＆ドロップ、またはクリックで選択</h2>
+          <p id="zoneDesc">複数選択・一括処理対応。リンクはローカルで安全に生成されます。</p>
+          <p class="tips">画像、動画、音声、ドキュメント、アーカイブなど、任意の拡張子に対応。</p>
+          <input type="file" id="fileInput" multiple aria-label="ファイルを選択" style="position:absolute; inset:0; opacity:0; cursor:pointer;">
         </div>
-        <div class="list" id="list"></div>
-      </section>
-
-      <aside class="card preview">
-        <header>
-          <strong>プレビュー</strong>
-          <span class="tag" id="previewMeta"></span>
-        </header>
-        <div class="preview-body" id="previewBody">
-          <div class="placeholder">ファイルを選択するとここにプレビューが表示されます。</div>
-        </div>
-      </aside>
-    </div>
-  </div>
-
-  <div class="toast" id="toast">コピーしました</div>
-
-<script>
-/* ========= ユーティリティ ========= */
-const $ = (sel, root=document) => root.querySelector(sel);
-const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-const formatBytes = (n) => {
-  const units = ["B","KB","MB","GB","TB"];
-  const i = Math.min(Math.floor(Math.log10(n || 1) / 3), units.length - 1);
-  const v = n / Math.pow(1000, i);
-  return `${v.toFixed(v < 10 ? 2 : 1)} ${units[i]}`;
-};
-const showToast = (msg) => {
-  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 1500);
-};
-const isType = (file, prefix) => (file.type || '').startsWith(prefix);
-
-/* ========= IndexedDB（ローカル永続化） ========= */
-const DB_NAME = 'bloblink-factory';
-const STORE = 'files';
-let db;
-
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = (e) => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains(STORE)) {
-        d.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
-      }
-    };
-    req.onsuccess = () => { db = req.result; resolve(); };
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function addFileRecord(record) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const store = tx.objectStore(STORE);
-    const req = store.add(record);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function deleteFileRecord(id) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const store = tx.objectStore(STORE);
-    const req = store.delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function getAllRecords() {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const store = tx.objectStore(STORE);
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-/* ========= 状態 ========= */
-const state = {
-  items: [] // {id, file, url}
-};
-
-/* ========= Blob URL生成＆UI反映 ========= */
-function createObjectItem(rec) {
-  const file = rec.data; // Blob/File
-  const url = URL.createObjectURL(file);
-  const item = { id: rec.id, file, url, name: rec.name, size: rec.size, type: rec.type, lastModified: rec.lastModified };
-  state.items.unshift(item);
-  renderList();
-}
-
-async function handleFiles(files) {
-  if (!files || !files.length) return;
-  for (const file of files) {
-    const record = {
-      name: file.name,
-      size: file.size,
-      type: file.type || 'application/octet-stream',
-      lastModified: file.lastModified || Date.now(),
-      data: file // Blobをそのまま保存
-    };
-    const id = await addFileRecord(record);
-    record.id = id;
-    createObjectItem(record);
-  }
-  showToast('アップロード完了。リンクを作成しました');
-}
-
-/* ========= リスト表示 ========= */
-function renderList() {
-  const list = $('#list');
-  list.innerHTML = '';
-  state.items.forEach((it) => {
-    const el = document.createElement('div');
-    el.className = 'item';
-    el.innerHTML = `
-      <div class="meta">
-        <div class="name">${escapeHtml(it.name)}</div>
-        <div class="details">種類: ${it.type || '不明'} ・ サイズ: ${formatBytes(it.size)} ・ 更新: ${formatDate(it.lastModified)}</div>
-        <div class="url-box">
-          <div class="url" title="${it.url}">${it.url}</div>
-          <div class="actions">
-            <button class="btn" data-act="copy">コピー</button>
-            <a class="btn" data-act="open" href="${it.url}" target="_blank" rel="noopener">開く</a>
-            <a class="btn" data-act="download" href="${it.url}" download="${escapeFilename(it.name)}">保存</a>
-            <button class="btn ghost" data-act="preview">プレビュー</button>
-            <button class="btn danger" data-act="revoke">リンク無効化</button>
-            <button class="btn danger" data-act="delete">削除</button>
-          </div>
+        <div class="actions">
+          <button class="btn secondary" id="clearList">リストをクリア</button>
+          <label class="switch">
+            <input type="checkbox" id="preciseProgress">
+            <span>精密進捗（低スペック非推奨）</span>
+          </label>
         </div>
       </div>
-      <div class="tag">Blob URL</div>
-    `;
-    // ハンドラ
-    el.addEventListener('click', async (e) => {
-      const act = e.target.getAttribute('data-act');
-      if (!act) return;
-      e.preventDefault();
-      if (act === 'copy') {
-        await navigator.clipboard.writeText(it.url).catch(()=>{});
-        showToast('リンクをコピーしました');
-      } else if (act === 'preview') {
-        renderPreview(it);
-      } else if (act === 'revoke') {
-        URL.revokeObjectURL(it.url);
-        it.url = '(revoked)';
-        renderList();
-        showToast('リンクを無効化しました');
-      } else if (act === 'delete') {
-        await deleteFileRecord(it.id);
-        // revokeしてメモリ解放
-        if (it.url && it.url.startsWith('blob:')) URL.revokeObjectURL(it.url);
-        state.items = state.items.filter(x => x.id !== it.id);
-        renderList();
-        // プレビューが対象ならクリア
-        const currentMeta = $('#previewMeta').textContent || '';
-        if (currentMeta.includes(it.name)) clearPreview();
-        showToast('削除しました');
+
+      <div class="progress-wrap" aria-live="polite">
+        <div class="progress" aria-label="全体の進捗">
+          <div class="bar" id="overallBar"></div>
+        </div>
+        <div class="progress label" id="overallLabel">待機中</div>
+      </div>
+    </section>
+
+    <section class="list" id="fileList" aria-label="生成されたリンク一覧">
+      <!-- items will be injected here -->
+    </section>
+
+    <footer>
+      <p>生成されたBlobリンクはこのブラウザセッション内でのみ有効です。必要がなくなったら「URLを解放」でメモリを節約できます。</p>
+    </footer>
+  </div>
+
+  <script>
+    // State
+    const state = {
+      items: [], // { id, file, url }
+      processing: false,
+      precise: false
+    };
+
+    // Elements
+    const zone = document.getElementById('zone');
+    const input = document.getElementById('fileInput');
+    const list = document.getElementById('fileList');
+    const overallBar = document.getElementById('overallBar');
+    const overallLabel = document.getElementById('overallLabel');
+    const clearBtn = document.getElementById('clearList');
+    const copyAllBtn = document.getElementById('copyAll');
+    const revokeAllBtn = document.getElementById('revokeAll');
+    const preciseToggle = document.getElementById('preciseProgress');
+
+    // Utils
+    const formatBytes = (bytes) => {
+      const units = ['B','KB','MB','GB','TB'];
+      const i = Math.min(Math.floor(Math.log(bytes || 1)/Math.log(1024)), units.length-1);
+      const val = bytes / Math.pow(1024, i);
+      return `${val.toFixed(val >= 100 || i === 0 ? 0 : 1)} ${units[i]}`;
+    };
+
+    const mimeShort = (type) => type || 'unknown/unknown';
+
+    const setOverall = (ratio, text) => {
+      overallBar.style.width = `${Math.max(0, Math.min(100, ratio*100))}%`;
+      overallLabel.textContent = text;
+    };
+
+    const createItemRow = ({ id, file, url }) => {
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.dataset.id = id;
+
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = file.name;
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = `${formatBytes(file.size)} ・ ${mimeShort(file.type)}`;
+
+      const linkWrap = document.createElement('div');
+      linkWrap.className = 'link';
+      const a = document.createElement('a');
+      a.href = url;
+      a.textContent = url;
+      a.download = file.name;
+      a.rel = 'noopener';
+      linkWrap.appendChild(a);
+
+      const controls = document.createElement('div');
+      controls.className = 'controls';
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'btn secondary';
+      copyBtn.textContent = 'リンクをコピー';
+      const copiedTag = document.createElement('span');
+      copiedTag.className = 'copy-tag';
+      copiedTag.textContent = 'コピー済み';
+
+      copyBtn.addEventListener('click', async () => {
+        try{
+          await navigator.clipboard.writeText(url);
+          copiedTag.classList.add('show');
+          setTimeout(()=>copiedTag.classList.remove('show'), 1400);
+        }catch(e){
+          alert('クリップボードへのコピーに失敗しました。');
+        }
+      });
+
+      const dlBtn = document.createElement('button');
+      dlBtn.className = 'btn';
+      dlBtn.textContent = 'ダウンロード';
+      dlBtn.addEventListener('click', () => {
+        a.click();
+      });
+
+      const revokeBtn = document.createElement('button');
+      revokeBtn.className = 'btn danger';
+      revokeBtn.textContent = 'URLを解放';
+      revokeBtn.addEventListener('click', () => {
+        try{
+          URL.revokeObjectURL(url);
+        }catch(_){}
+        item.classList.add('revoked');
+        a.textContent = '(解放済み)';
+        a.removeAttribute('href');
+        revokeBtn.disabled = true;
+        revokeBtn.textContent = '解放済み';
+      });
+
+      controls.append(copyBtn, copiedTag, dlBtn, revokeBtn);
+      item.append(name, meta, linkWrap, controls);
+      return item;
+    };
+
+    const addItemsToList = (items) => {
+      const frag = document.createDocumentFragment();
+      items.forEach(it => frag.appendChild(createItemRow(it)));
+      list.appendChild(frag);
+    };
+
+    const resetOverall = () => setOverall(0, '待機中');
+
+    // Processing
+    const processFiles = async (files) => {
+      if (!files || files.length === 0) return;
+      // To stay friendly to low-spec devices, process sequentially
+      state.processing = true;
+      const total = files.length;
+      let done = 0;
+      setOverall(0, `準備中… (${total}件)`);
+
+      const newItems = [];
+
+      for (const file of files){
+        // Lightweight path: create URL directly (no reading)
+        if (!state.precise){
+          const url = URL.createObjectURL(file);
+          const it = { id: crypto.randomUUID?.() || String(Date.now()+Math.random()), file, url };
+          newItems.push(it);
+          done++;
+          setOverall(done/total, `生成中… ${done} / ${total}`);
+          await new Promise(r => setTimeout(r)); // yield to UI
+          continue;
+        }
+
+        // Precise progress (reads file stream; heavier on memory/CPU)
+        let loaded = 0;
+        const totalBytes = file.size || 1;
+        // Create URL without waiting (so you can use it immediately)
+        const url = URL.createObjectURL(file);
+        const it = { id: crypto.randomUUID?.() || String(Date.now()+Math.random()), file, url };
+        newItems.push(it);
+
+        if (file.stream && typeof file.stream === 'function'){
+          const reader = file.stream().getReader();
+          // Read to report progress and yield regularly
+          try{
+            while(true){
+              const { done: streamDone, value } = await reader.read();
+              if (streamDone) break;
+              loaded += (value?.byteLength || 0);
+              setOverall((done + loaded/totalBytes)/total, `読み込み中… ${done+1} / ${total}（${Math.round(loaded/totalBytes*100)}%）`);
+              // Small pause to keep UI responsive
+              await new Promise(r => setTimeout(r, 0));
+            }
+          }catch(_){
+            // If streaming fails, fall back to count-based
+          }
+        }else{
+          // Legacy fallback: indicate as processed without precise bytes
+          setOverall((done+0.99)/total, `読み込み中… ${done+1} / ${total}`);
+          await new Promise(r => setTimeout(r, 10));
+        }
+        done++;
+        setOverall(done/total, `生成中… ${done} / ${total}`);
+        await new Promise(r => setTimeout(r, 0));
+      }
+
+      // Commit UI updates
+      addItemsToList(newItems);
+      state.items.push(...newItems);
+      setOverall(1, `完了：${total}件`);
+      setTimeout(resetOverall, 1200);
+      state.processing = false;
+    };
+
+    // Events: input & drag/drop
+    input.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      await processFiles(files);
+      input.value = '';
+    });
+
+    const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+    ['dragenter','dragover','dragleave','drop'].forEach(evt => {
+      zone.addEventListener(evt, prevent, false);
+    });
+    zone.addEventListener('dragenter', ()=> zone.classList.add('dragover'));
+    zone.addEventListener('dragover', ()=> zone.classList.add('dragover'));
+    zone.addEventListener('dragleave', ()=> zone.classList.remove('dragover'));
+    zone.addEventListener('drop', async (e) => {
+      zone.classList.remove('dragover');
+      const dt = e.dataTransfer;
+      const files = Array.from(dt.files || []);
+      await processFiles(files);
+    });
+
+    // Click on zone focuses file picker
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+    });
+
+    // Toolbar
+    clearBtn.addEventListener('click', () => {
+      list.innerHTML = '';
+      state.items = [];
+      resetOverall();
+    });
+
+    copyAllBtn.addEventListener('click', async () => {
+      const urls = state.items.map(it => it.url).join('\n');
+      if (!urls) return;
+      try{
+        await navigator.clipboard.writeText(urls);
+        overallLabel.textContent = 'すべてコピーしました';
+      }catch(e){
+        alert('コピーに失敗しました。');
       }
     });
-    list.appendChild(el);
-  });
-}
 
-/* ========= プレビュー ========= */
-function clearPreview() {
-  $('#previewMeta').textContent = '';
-  $('#previewBody').innerHTML = '<div class="placeholder">ファイルを選択するとここにプレビューが表示されます。</div>';
-}
+    revokeAllBtn.addEventListener('click', () => {
+      state.items.forEach(it => { try{ URL.revokeObjectURL(it.url); }catch(_){} });
+      // Mark UI
+      document.querySelectorAll('.item .link a').forEach(a => { a.textContent='(解放済み)'; a.removeAttribute('href'); });
+      document.querySelectorAll('.item .btn.danger').forEach(b => { b.disabled=true; b.textContent='解放済み'; });
+      overallLabel.textContent = 'すべて解放しました';
+    });
 
-async function renderPreview(it) {
-  const meta = `種類: ${it.type || '不明'} ・ サイズ: ${formatBytes(it.size)}`;
-  $('#previewMeta').textContent = `${it.name} ｜ ${meta}`;
-  const body = $('#previewBody');
-  body.innerHTML = '';
+    preciseToggle.addEventListener('change', (e) => {
+      state.precise = !!e.target.checked;
+      const note = state.precise ? '精密進捗：ON（端末に負荷がかかります）' : '精密進捗：OFF（軽量モード）';
+      overallLabel.textContent = note;
+    });
 
-  try {
-    if (isType(it.file, 'image/')) {
-      const img = document.createElement('img');
-      img.src = it.url;
-      img.alt = it.name;
-      body.appendChild(img);
-    } else if (isType(it.file, 'video/')) {
-      const vid = document.createElement('video');
-      vid.src = it.url; vid.controls = true;
-      vid.style.maxHeight = '50vh';
-      body.appendChild(vid);
-    } else if (isType(it.file, 'audio/')) {
-      const aud = document.createElement('audio');
-      aud.src = it.url; aud.controls = true;
-      body.appendChild(aud);
-    } else if (isType(it.file, 'text/') || it.type === 'application/json' || it.name.endsWith('.md')) {
-      // テキストはサイズ制限（2MB）
-      if (it.size > 2 * 1024 * 1024) {
-        body.innerHTML = '<div class="placeholder">テキストが大きすぎるためプレビューを省略します（>2MB）。ダウンロードしてご確認ください。</div>';
-      } else {
-        const text = await blobToText(it.file);
-        const pre = document.createElement('pre');
-        pre.textContent = text;
-        body.appendChild(pre);
+    // Safety: warn before unload if URLs exist
+    window.addEventListener('beforeunload', (e) => {
+      if (state.items.length > 0){
+        e.preventDefault();
+        e.returnValue = '';
       }
-    } else if (it.type === 'application/pdf' || it.name.endsWith('.pdf')) {
-      const iframe = document.createElement('iframe');
-      iframe.src = it.url;
-      iframe.style.width = '100%';
-      iframe.style.height = '60vh';
-      iframe.setAttribute('loading', 'lazy');
-      body.appendChild(iframe);
-    } else {
-      const box = document.createElement('div');
-      box.className = 'placeholder';
-      box.innerHTML = 'この形式はインライン表示に対応していない可能性があります。<br>「開く」または「保存」をお試しください。';
-      body.appendChild(box);
-    }
-  } catch {
-    body.innerHTML = '<div class="placeholder">プレビュー中に問題が発生しました。リンクから直接開いてください。</div>';
-  }
-}
-
-function blobToText(blob) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
-    r.readAsText(blob);
-  });
-}
-
-/* ========= 小さなヘルパー ========= */
-function escapeHtml(s='') {
-  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-}
-function escapeFilename(s='file') {
-  return s.replace(/[^\w\-.]+/g, '_');
-}
-function formatDate(ts) {
-  try {
-    const d = new Date(ts);
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    const hh = String(d.getHours()).padStart(2,'0');
-    const mm = String(d.getMinutes()).padStart(2,'0');
-    return `${y}/${m}/${day} ${hh}:${mm}`;
-  } catch { return '—'; }
-}
-
-/* ========= イベント ========= */
-(async function init() {
-  // テーマ
-  const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-  if (prefersLight) document.body.classList.add('light');
-  $('#themeToggle').checked = document.body.classList.contains('light');
-  $('#themeToggle').addEventListener('change', (e) => {
-    document.body.classList.toggle('light', e.target.checked);
-  });
-
-  // DBを開く＆復元
-  await openDB();
-  const records = await getAllRecords();
-  records.sort((a,b) => (b.lastModified || 0) - (a.lastModified || 0));
-  records.forEach(createObjectItem);
-
-  // ドロップゾーン
-  const dz = $('#dropzone');
-  const fileInput = $('#fileInput');
-  $('#chooseBtn').addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, (e) => {
-    e.preventDefault(); e.stopPropagation(); dz.classList.add('dragover');
-  }));
-  ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, (e) => {
-    e.preventDefault(); e.stopPropagation(); dz.classList.remove('dragover');
-  }));
-  dz.addEventListener('drop', (e) => {
-    const files = e.dataTransfer.files;
-    handleFiles(files);
-  });
-  dz.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') $('#chooseBtn').click();
-  });
-
-  // 初期状態
-  renderList();
-})();
-
-/* ========= クリーンアップ ========= */
-window.addEventListener('beforeunload', () => {
-  // 現在のセッションのblob URLを解放（次回はIndexedDBから再生成）
-  state.items.forEach(it => {
-    if (it.url && it.url.startsWith('blob:')) URL.revokeObjectURL(it.url);
-  });
-});
-</script>
+    });
+  </script>
 </body>
 </html>
