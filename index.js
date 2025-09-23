@@ -787,6 +787,11 @@ app.get("/hd", (req, res) => {
 app.get("/paste", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app/paste.html"));
 });
+
+app.get("/link", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app/link.html"));
+});
+
 app.get("/downloader", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app/yt.html"));
 });
