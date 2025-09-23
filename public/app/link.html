@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blob Link Factory — アップロードで即リンク生成</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --fg: #e8ebf0;
+    --muted: #a9b0be;
+    --primary: #7cafff;
+    --primary-2: #497cff;
+    --accent: #5ce0c7;
+    --danger: #ff6b6b;
+    --card: #151922;
+    --border: #212738;
+    --shadow: 0 10px 30px rgba(0,0,0,0.35);
+    --radius: 14px;
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans JP", "Apple Color Emoji", "Segoe UI Emoji";
+  }
+  .light {
+    --bg: #f8fafc;
+    --fg: #0e1320;
+    --muted: #50607a;
+    --primary: #2556e8;
+    --primary-2: #1946cc;
+    --accent: #128a74;
+    --danger: #c63d3d;
+    --card: #ffffff;
+    --border: #dfe6ef;
+    --shadow: 0 10px 30px rgba(10,35,70,0.12);
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 800px at 10% -10%, rgba(71,92,255,0.12), transparent 40%), 
+                radial-gradient(900px 900px at 90% 110%, rgba(92,224,199,0.16), transparent 45%), var(--bg);
+    color: var(--fg);
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: 0.02em;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 20px 50px;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; margin-bottom: 22px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+  }
+  .logo {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    box-shadow: 0 8px 20px rgba(71,92,255,0.35), inset 0 0 20px rgba(255,255,255,0.15);
+  }
+  h1 {
+    margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.02em;
+  }
+  .subtitle { color: var(--muted); font-size: 13.5px; }
+  .toolbar { display: flex; gap: 10px; align-items: center; }
+  .btn {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform .08s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    border: none; color: #fff;
+    box-shadow: 0 8px 20px rgba(71,92,255,0.35);
+  }
+  .btn.ghost { background: transparent; }
+  .btn.danger { background: transparent; border-color: rgba(255,107,107,.5); color: var(--danger); }
+  .switch {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 10px; border: 1px dashed var(--border);
+    color: var(--muted);
+  }
+  .grid {
+    display: grid; grid-template-columns: 1fr;
+    gap: 16px; margin-top: 14px;
+  }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: 1.1fr 0.9fr; }
+  }
+  .card {
+    background: rgba(21,25,34,0.7);
+    backdrop-filter: saturate(140%) blur(8px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .pad { padding: 16px; }
+  .dropzone {
+    display: grid; place-items: center;
+    min-height: 160px; text-align: center;
+    border: 2px dashed var(--border);
+    border-radius: 14px; color: var(--muted);
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .dropzone.dragover {
+    border-color: var(--primary);
+    background: rgba(71,92,255,0.08);
+  }
+  .dropzone .lead { font-weight: 700; font-size: 15px; color: var(--fg); }
+  .helper { font-size: 12.5px; margin-top: 6px; }
+  .hidden { display: none !important; }
+
+  .list {
+    display: grid; gap: 10px; margin-top: 10px;
+    max-height: 58vh; overflow: auto; padding-right: 6px;
+  }
+  .item {
+    display: grid; grid-template-columns: 1fr auto; gap: 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; background: var(--card);
+  }
+  .meta { display: grid; gap: 6px; }
+  .meta .name { font-weight: 700; font-size: 14px; }
+  .meta .details { color: var(--muted); font-size: 12.5px; }
+  .url-box {
+    display: grid; grid-template-columns: 1fr auto; gap: 8px;
+    align-items: center;
+  }
+  .url {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12px; background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: 999px; font-size: 12px;
+    border: 1px solid var(--border); color: var(--muted);
+  }
+
+  .preview {
+    border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+    background: var(--card);
+  }
+  .preview header {
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+  }
+  .preview-body { padding: 12px; max-height: 58vh; overflow: auto; }
+  .preview .placeholder { color: var(--muted); text-align: center; padding: 50px 10px; }
+  .preview img, .preview video, .preview audio, .preview iframe {
+    max-width: 100%; border-radius: 8px;
+    background: #000;
+  }
+  .preview pre {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    overflow: auto;
+    font-size: 12.5px;
+  }
+
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: var(--card); color: var(--fg);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 10px 16px; font-weight: 700; font-size: 13px;
+    box-shadow: var(--shadow); opacity: 0; pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Blob Link Factory</h1>
+          <div class="subtitle">どんなファイルでもアップロード→即Blobリンク生成。コピー、ダウンロード、プレビュー、永続保存まで。</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="chooseBtn" class="btn primary">ファイルを選択</button>
+        <label class="switch">
+          <input id="themeToggle" type="checkbox" aria-label="テーマ切替">
+          <span>ライトテーマ</span>
+        </label>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card pad" aria-label="アップロード">
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="ここにファイルをドラッグ&ドロップ">
+          <div class="lead">ドラッグ&ドロップ、または「ファイルを選択」をクリック</div>
+          <div class="helper">複数可 / あらゆる形式に対応。安全のため、リンクは同一セッションでのみ有効です。</div>
+          <input id="fileInput" type="file" multiple class="hidden" aria-hidden="true">
+        </div>
+        <div class="list" id="list"></div>
+      </section>
+
+      <aside class="card preview">
+        <header>
+          <strong>プレビュー</strong>
+          <span class="tag" id="previewMeta"></span>
+        </header>
+        <div class="preview-body" id="previewBody">
+          <div class="placeholder">ファイルを選択するとここにプレビューが表示されます。</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">コピーしました</div>
+
+<script>
+/* ========= ユーティリティ ========= */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const formatBytes = (n) => {
+  const units = ["B","KB","MB","GB","TB"];
+  const i = Math.min(Math.floor(Math.log10(n || 1) / 3), units.length - 1);
+  const v = n / Math.pow(1000, i);
+  return `${v.toFixed(v < 10 ? 2 : 1)} ${units[i]}`;
+};
+const showToast = (msg) => {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+};
+const isType = (file, prefix) => (file.type || '').startsWith(prefix);
+
+/* ========= IndexedDB（ローカル永続化） ========= */
+const DB_NAME = 'bloblink-factory';
+const STORE = 'files';
+let db;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE)) {
+        d.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => { db = req.result; resolve(); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function addFileRecord(record) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    const req = store.add(record);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function deleteFileRecord(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    const req = store.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getAllRecords() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const store = tx.objectStore(STORE);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/* ========= 状態 ========= */
+const state = {
+  items: [] // {id, file, url}
+};
+
+/* ========= Blob URL生成＆UI反映 ========= */
+function createObjectItem(rec) {
+  const file = rec.data; // Blob/File
+  const url = URL.createObjectURL(file);
+  const item = { id: rec.id, file, url, name: rec.name, size: rec.size, type: rec.type, lastModified: rec.lastModified };
+  state.items.unshift(item);
+  renderList();
+}
+
+async function handleFiles(files) {
+  if (!files || !files.length) return;
+  for (const file of files) {
+    const record = {
+      name: file.name,
+      size: file.size,
+      type: file.type || 'application/octet-stream',
+      lastModified: file.lastModified || Date.now(),
+      data: file // Blobをそのまま保存
+    };
+    const id = await addFileRecord(record);
+    record.id = id;
+    createObjectItem(record);
+  }
+  showToast('アップロード完了。リンクを作成しました');
+}
+
+/* ========= リスト表示 ========= */
+function renderList() {
+  const list = $('#list');
+  list.innerHTML = '';
+  state.items.forEach((it) => {
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.innerHTML = `
+      <div class="meta">
+        <div class="name">${escapeHtml(it.name)}</div>
+        <div class="details">種類: ${it.type || '不明'} ・ サイズ: ${formatBytes(it.size)} ・ 更新: ${formatDate(it.lastModified)}</div>
+        <div class="url-box">
+          <div class="url" title="${it.url}">${it.url}</div>
+          <div class="actions">
+            <button class="btn" data-act="copy">コピー</button>
+            <a class="btn" data-act="open" href="${it.url}" target="_blank" rel="noopener">開く</a>
+            <a class="btn" data-act="download" href="${it.url}" download="${escapeFilename(it.name)}">保存</a>
+            <button class="btn ghost" data-act="preview">プレビュー</button>
+            <button class="btn danger" data-act="revoke">リンク無効化</button>
+            <button class="btn danger" data-act="delete">削除</button>
+          </div>
+        </div>
+      </div>
+      <div class="tag">Blob URL</div>
+    `;
+    // ハンドラ
+    el.addEventListener('click', async (e) => {
+      const act = e.target.getAttribute('data-act');
+      if (!act) return;
+      e.preventDefault();
+      if (act === 'copy') {
+        await navigator.clipboard.writeText(it.url).catch(()=>{});
+        showToast('リンクをコピーしました');
+      } else if (act === 'preview') {
+        renderPreview(it);
+      } else if (act === 'revoke') {
+        URL.revokeObjectURL(it.url);
+        it.url = '(revoked)';
+        renderList();
+        showToast('リンクを無効化しました');
+      } else if (act === 'delete') {
+        await deleteFileRecord(it.id);
+        // revokeしてメモリ解放
+        if (it.url && it.url.startsWith('blob:')) URL.revokeObjectURL(it.url);
+        state.items = state.items.filter(x => x.id !== it.id);
+        renderList();
+        // プレビューが対象ならクリア
+        const currentMeta = $('#previewMeta').textContent || '';
+        if (currentMeta.includes(it.name)) clearPreview();
+        showToast('削除しました');
+      }
+    });
+    list.appendChild(el);
+  });
+}
+
+/* ========= プレビュー ========= */
+function clearPreview() {
+  $('#previewMeta').textContent = '';
+  $('#previewBody').innerHTML = '<div class="placeholder">ファイルを選択するとここにプレビューが表示されます。</div>';
+}
+
+async function renderPreview(it) {
+  const meta = `種類: ${it.type || '不明'} ・ サイズ: ${formatBytes(it.size)}`;
+  $('#previewMeta').textContent = `${it.name} ｜ ${meta}`;
+  const body = $('#previewBody');
+  body.innerHTML = '';
+
+  try {
+    if (isType(it.file, 'image/')) {
+      const img = document.createElement('img');
+      img.src = it.url;
+      img.alt = it.name;
+      body.appendChild(img);
+    } else if (isType(it.file, 'video/')) {
+      const vid = document.createElement('video');
+      vid.src = it.url; vid.controls = true;
+      vid.style.maxHeight = '50vh';
+      body.appendChild(vid);
+    } else if (isType(it.file, 'audio/')) {
+      const aud = document.createElement('audio');
+      aud.src = it.url; aud.controls = true;
+      body.appendChild(aud);
+    } else if (isType(it.file, 'text/') || it.type === 'application/json' || it.name.endsWith('.md')) {
+      // テキストはサイズ制限（2MB）
+      if (it.size > 2 * 1024 * 1024) {
+        body.innerHTML = '<div class="placeholder">テキストが大きすぎるためプレビューを省略します（>2MB）。ダウンロードしてご確認ください。</div>';
+      } else {
+        const text = await blobToText(it.file);
+        const pre = document.createElement('pre');
+        pre.textContent = text;
+        body.appendChild(pre);
+      }
+    } else if (it.type === 'application/pdf' || it.name.endsWith('.pdf')) {
+      const iframe = document.createElement('iframe');
+      iframe.src = it.url;
+      iframe.style.width = '100%';
+      iframe.style.height = '60vh';
+      iframe.setAttribute('loading', 'lazy');
+      body.appendChild(iframe);
+    } else {
+      const box = document.createElement('div');
+      box.className = 'placeholder';
+      box.innerHTML = 'この形式はインライン表示に対応していない可能性があります。<br>「開く」または「保存」をお試しください。';
+      body.appendChild(box);
+    }
+  } catch {
+    body.innerHTML = '<div class="placeholder">プレビュー中に問題が発生しました。リンクから直接開いてください。</div>';
+  }
+}
+
+function blobToText(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+    r.readAsText(blob);
+  });
+}
+
+/* ========= 小さなヘルパー ========= */
+function escapeHtml(s='') {
+  return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function escapeFilename(s='file') {
+  return s.replace(/[^\w\-.]+/g, '_');
+}
+function formatDate(ts) {
+  try {
+    const d = new Date(ts);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    return `${y}/${m}/${day} ${hh}:${mm}`;
+  } catch { return '—'; }
+}
+
+/* ========= イベント ========= */
+(async function init() {
+  // テーマ
+  const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  if (prefersLight) document.body.classList.add('light');
+  $('#themeToggle').checked = document.body.classList.contains('light');
+  $('#themeToggle').addEventListener('change', (e) => {
+    document.body.classList.toggle('light', e.target.checked);
+  });
+
+  // DBを開く＆復元
+  await openDB();
+  const records = await getAllRecords();
+  records.sort((a,b) => (b.lastModified || 0) - (a.lastModified || 0));
+  records.forEach(createObjectItem);
+
+  // ドロップゾーン
+  const dz = $('#dropzone');
+  const fileInput = $('#fileInput');
+  $('#chooseBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation(); dz.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation(); dz.classList.remove('dragover');
+  }));
+  dz.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+  });
+  dz.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') $('#chooseBtn').click();
+  });
+
+  // 初期状態
+  renderList();
+})();
+
+/* ========= クリーンアップ ========= */
+window.addEventListener('beforeunload', () => {
+  // 現在のセッションのblob URLを解放（次回はIndexedDBから再生成）
+  state.items.forEach(it => {
+    if (it.url && it.url.startsWith('blob:')) URL.revokeObjectURL(it.url);
+  });
+});
+</script>
+</body>
+</html>
