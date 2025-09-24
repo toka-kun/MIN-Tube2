@@ -3,740 +3,854 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HTML Compiler — Blob/Download/History</title>
+  <title>HTMLコンパイラ | 高速プレビュー・Blobリンク・ダウンロード・履歴保存</title>
+  <meta name="color-scheme" content="dark light" />
   <style>
     :root {
+      color-scheme: dark light;
       --bg: #0f1216;
-      --panel: #151a21;
-      --panel-2: #1b2129;
-      --accent: #6ae3ff;
-      --accent-2: #ff7b7b;
-      --text: #e8eef7;
-      --muted: #a8b0bd;
-      --success: #5ee39f;
-      --warning: #ffd56a;
-      --shadow: rgba(0,0,0,0.35);
+      --bg-soft: #151a21;
+      --panel: #11161d;
+      --border: #232a34;
+      --text: #e6e8ea;
+      --muted: #a7b0be;
+      --accent: #3aa0ff;
+      --accent-2: #7c4dff;
+      --ok: #2ecc71;
+      --warn: #f5a623;
+      --danger: #ff4d4f;
+      --shadow: 0 8px 24px rgba(0,0,0,0.25);
       --radius: 12px;
       --radius-sm: 8px;
-      --radius-lg: 18px;
+      --radius-xs: 6px;
+      --pad: 14px;
+      --pad-lg: 18px;
+      --pad-sm: 10px;
+      --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Noto Sans Mono", "Roboto Mono", "Source Code Pro", monospace;
     }
-    :root.light {
-      --bg: #f7f9fc;
-      --panel: #ffffff;
-      --panel-2: #f0f3f9;
-      --accent: #0078ff;
-      --accent-2: #ff3b3b;
-      --text: #1f2a37;
-      --muted: #506075;
-      --success: #17a673;
-      --warning: #d79b00;
-      --shadow: rgba(0,0,0,0.08);
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-    body { margin: 0; display: grid; grid-template-rows: auto 1fr; }
 
-    /* Header */
-    header {
-      position: sticky; top: 0; z-index: 10;
-      display: grid; grid-template-columns: 1fr auto;
-      gap: 12px; align-items: center;
-      padding: 14px 16px; background: var(--panel);
-      box-shadow: 0 6px 20px var(--shadow);
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f7f9;
+        --bg-soft: #ffffff;
+        --panel: #ffffff;
+        --border: #e3e7ee;
+        --text: #1e2228;
+        --muted: #5a6679;
+        --shadow: 0 10px 30px rgba(25, 33, 45, 0.1);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100vh;
+    }
+
+    /* Topbar */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: linear-gradient(180deg, var(--bg-soft), var(--panel));
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: saturate(1.2) blur(8px);
+    }
+    .topbar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 10px var(--pad-lg);
+      align-items: center;
     }
     .brand {
-      display: flex; align-items: center; gap: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .brand .logo {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: radial-gradient(100% 100% at 0% 0%, var(--accent) 0%, transparent 50%), 
-                  radial-gradient(100% 100% at 100% 100%, var(--accent-2) 0%, transparent 60%),
-                  linear-gradient(135deg, var(--panel-2), var(--panel));
-      box-shadow: 0 10px 24px var(--shadow);
+    .logo {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: var(--shadow);
     }
-    .brand .title {
-      font-weight: 700; letter-spacing: 0.3px; font-size: 18px;
+    .title {
+      font-weight: 700; letter-spacing: 0.2px;
     }
     .actions {
-      display: flex; flex-wrap: wrap; gap: 8px;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
     }
     .btn {
-      appearance: none; border: none; cursor: pointer;
-      padding: 10px 14px; border-radius: var(--radius-sm);
-      background: var(--panel-2); color: var(--text);
-      box-shadow: 0 4px 10px var(--shadow);
-      transition: transform 0.04s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-      font-weight: 600; font-size: 13px;
+      appearance: none; border: 1px solid var(--border);
+      background: var(--bg-soft); color: var(--text);
+      padding: 10px 14px; border-radius: var(--radius-xs);
+      font-weight: 600; cursor: pointer;
+      transition: transform .08s ease, box-shadow .2s, background .2s, border-color .2s;
+      box-shadow: 0 2px 10px rgba(0,0,0,.12);
     }
     .btn:hover { transform: translateY(-1px); }
-    .btn.primary { background: linear-gradient(135deg, var(--accent), #64b8ff); color: #06223c; }
-    .btn.success { background: linear-gradient(135deg, var(--success), #7ff0b8); color: #06233a; }
-    .btn.warn { background: linear-gradient(135deg, var(--warning), #ffdba1); color: #3f2a00; }
-    .btn.ghost { background: transparent; border: 1px solid var(--panel-2); }
+    .btn:active { transform: translateY(0); }
+    .btn-primary {
+      background: linear-gradient(180deg, rgba(58,160,255,.15), rgba(58,160,255,.05));
+      border-color: rgba(58,160,255,.5);
+    }
+    .btn-success {
+      background: linear-gradient(180deg, rgba(46,204,113,.15), rgba(46,204,113,.05));
+      border-color: rgba(46,204,113,.5);
+    }
+    .btn-danger {
+      background: linear-gradient(180deg, rgba(255,77,79,.15), rgba(255,77,79,.05));
+      border-color: rgba(255,77,79,.5);
+    }
     .kbd {
-      padding: 2px 6px; border-radius: 6px; background: var(--panel-2); color: var(--muted);
-      font-size: 12px; margin-left: 6px; border: 1px solid rgba(255,255,255,0.06);
+      display: inline-block; border: 1px solid var(--border);
+      border-bottom-width: 2px; border-radius: 6px; padding: 2px 6px;
+      font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+      background: var(--panel);
+      margin-left: 6px;
     }
 
     /* Layout */
-    .app {
-      display: grid; grid-template-columns: 340px 1fr; gap: 16px;
-      padding: 16px; overflow: hidden;
+    .main {
+      max-width: 1200px;
+      margin: 18px auto;
+      padding: 0 var(--pad-lg);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
     }
-    .side {
-      background: var(--panel); border-radius: var(--radius);
-      box-shadow: 0 12px 28px var(--shadow);
-      display: grid; grid-template-rows: auto auto 1fr auto; overflow: hidden;
+    @media (max-width: 1024px) {
+      .main { grid-template-columns: 1fr; }
     }
-    .side header { background: transparent; box-shadow: none; padding: 12px 12px; grid-template-columns: 1fr; }
-    .side-title { font-weight: 700; font-size: 14px; color: var(--muted); }
-    .project-meta {
-      display: grid; gap: 8px; padding: 0 12px 12px;
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 300px;
     }
-    .input, .select {
-      width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
-      border: 1px solid var(--panel-2); background: var(--panel-2); color: var(--text);
-      font-size: 13px; outline: none;
+    .panel-header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: var(--pad);
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--bg-soft), transparent);
     }
-    .meta-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
-    .history {
-      overflow: auto; border-top: 1px solid var(--panel-2);
+    .panel-title { font-weight: 700; }
+    .panel-sub { color: var(--muted); font-size: 12px; }
+    .panel-body { display: grid; grid-template-rows: auto 1fr; }
+
+    /* Editor */
+    .editors {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      padding: var(--pad);
+    }
+    @media (max-width: 900px) {
+      .editors { grid-template-columns: 1fr; }
+    }
+    .editor {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--bg-soft);
+      min-height: 200px;
+    }
+    .editor-header {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
+    }
+    .editor-title { font-weight: 700; font-size: 13px; }
+    .editor-tools { display: flex; gap: 8px; align-items: center; }
+    .editor textarea {
+      width: 100%; height: 100%;
+      border: none; outline: none; resize: vertical;
+      font-family: var(--font-mono);
+      font-size: 13px; line-height: 1.6;
       padding: 12px;
+      background: transparent; color: var(--text);
+    }
+    .editor textarea::placeholder { color: var(--muted); }
+
+    /* Preview */
+    .preview-wrap { padding: var(--pad); }
+    .preview-controls {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;
+      align-items: center;
+    }
+    .preview-iframe {
+      width: 100%; height: 60vh; min-height: 320px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #fff;
+    }
+    .status {
+      font-size: 12px; color: var(--muted);
+    }
+
+    /* History */
+    .history {
+      padding: var(--pad);
+      border-top: 1px solid var(--border);
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.02));
+    }
+    .history-header {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+      margin-bottom: 8px;
+    }
+    .history-list {
+      display: grid; gap: 8px;
+      max-height: 220px; overflow: auto;
+      padding-right: 6px;
     }
     .history-item {
-      background: var(--panel-2); border-radius: var(--radius-sm); padding: 10px;
-      display: grid; gap: 6px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.06);
+      display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xs);
+      padding: 8px 10px;
     }
-    .history-item h4 { margin: 0; font-size: 14px; }
-    .history-item .muted { color: var(--muted); font-size: 12px; }
-    .history-item .row { display: flex; gap: 8px; }
-    .history-item .btn { padding: 8px 10px; font-size: 12px; }
-
-    /* Main editor/output */
-    .main {
-      display: grid; grid-template-rows: auto 1fr; gap: 14px; min-width: 0;
+    .history-name { font-weight: 600; }
+    .history-time { color: var(--muted); font-size: 12px; }
+    .icon-btn {
+      appearance: none; border: 1px solid var(--border);
+      background: var(--panel); color: var(--text);
+      padding: 6px 8px; border-radius: 8px; cursor: pointer;
     }
-    .toolbar {
-      background: var(--panel); border-radius: var(--radius);
-      display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px;
-      box-shadow: 0 12px 28px var(--shadow);
-    }
-    .spacer { flex: 1; }
-    .grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-height: 0;
-    }
-    .pane {
-      background: var(--panel); border-radius: var(--radius);
-      box-shadow: 0 12px 28px var(--shadow);
-      display: grid; grid-template-rows: auto 1fr; min-height: 200px; overflow: hidden;
-    }
-    .pane header { background: transparent; box-shadow: none; padding: 10px 12px; grid-template-columns: auto auto 1fr; gap: 8px; }
-    .pane-title { font-weight: 700; font-size: 13px; color: var(--muted); }
-    .editor {
-      width: 100%; height: 100%; resize: none; border: none; outline: none;
-      padding: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      background: linear-gradient(180deg, var(--panel-2), var(--panel));
-      color: var(--text); font-size: 13px; line-height: 1.5;
-    }
-    .output-wrap { position: relative; }
-    iframe.output {
-      width: 100%; height: 100%; border: none; background: white;
-    }
-    .statusbar {
-      position: absolute; right: 12px; bottom: 12px; padding: 8px 10px;
-      background: rgba(0,0,0,0.6); color: #e0f7ff; border-radius: 8px; font-size: 12px;
-      backdrop-filter: blur(6px);
-    }
-    .blob-row {
-      display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; margin-top: 8px;
-    }
-    .blob-url {
-      width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px dashed var(--panel-2);
-      background: var(--panel-2); color: var(--muted); font-size: 12px;
-    }
+    .icon-btn:hover { background: var(--bg-soft); }
 
     /* Footer */
-    footer {
-      padding: 10px 16px; color: var(--muted); font-size: 12px; text-align: center;
+    .footer {
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 12px var(--pad-lg);
+      display: flex; justify-content: space-between; align-items: center;
+      color: var(--muted); font-size: 12px;
     }
 
-    /* Responsive */
-    @media (max-width: 1080px) {
-      .app { grid-template-columns: 1fr; }
-      .grid { grid-template-columns: 1fr; }
+    /* Tooltip */
+    .tooltip { position: relative; }
+    .tooltip:hover::after {
+      content: attr(data-tip);
+      position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+      background: var(--panel); color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 8px; white-space: nowrap;
+      box-shadow: var(--shadow); font-size: 12px; z-index: 100;
+    }
+
+    /* Scrollbars */
+    .history-list::-webkit-scrollbar,
+    textarea::-webkit-scrollbar {
+      width: 10px; height: 10px;
+    }
+    .history-list::-webkit-scrollbar-thumb,
+    textarea::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 8px;
+    }
+    .history-list::-webkit-scrollbar-track,
+    textarea::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    /* Hidden (for a11y-helpers) */
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <div class="logo"></div>
-      <div class="title">HTML Compiler — Blob & Download & History</div>
-    </div>
-    <div class="actions">
-      <button class="btn primary" id="btn-run">Run <span class="kbd">Ctrl ⌘ + Enter</span></button>
-      <button class="btn success" id="btn-blob">Generate Blob Link</button>
-      <button class="btn" id="btn-download">Download .html</button>
-      <button class="btn ghost" id="btn-new">New</button>
-      <button class="btn ghost" id="btn-save">Save</button>
-      <button class="btn ghost" id="btn-save-as">Save As</button>
-      <button class="btn ghost" id="btn-theme">Toggle Theme</button>
-    </div>
-  </header>
-
-  <main class="app">
-    <aside class="side">
-      <header>
-        <div class="side-title">Project</div>
-      </header>
-      <div class="project-meta">
-        <div class="meta-row">
-          <input class="input" id="project-name" placeholder="プロジェクト名" />
-          <button class="btn" id="btn-rename">Rename</button>
+  <div class="app">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div class="title">HTMLコンパイラ</div>
+          <div class="panel-sub">高速プレビュー / Blobリンク生成 / ダウンロード / 履歴保存</div>
         </div>
-        <select class="select" id="preset-select">
-          <option value="">Preset: なし</option>
-          <option value="starter">Preset: スターター</option>
-          <option value="canvas">Preset: Canvas アニメ</option>
-          <option value="tailwind">Preset: Tailwind CDN</option>
-        </select>
-        <div class="meta-row">
-          <input class="input" id="search-history" placeholder="履歴検索..." />
-          <button class="btn" id="btn-clear-history">Clear All</button>
+        <div class="actions">
+          <button class="btn btn-primary tooltip" id="compileBtn" data-tip="Ctrl+Enterでコンパイル">コンパイル</button>
+          <button class="btn btn-success tooltip" id="saveSnapshotBtn" data-tip="Ctrl+Sでスナップショット保存">スナップショット保存</button>
+          <button class="btn tooltip" id="newProjectBtn" data-tip="初期テンプレートにリセット">新規</button>
+          <button class="btn tooltip" id="exportHistoryBtn" data-tip="履歴をJSONでエクスポート">履歴エクスポート</button>
+          <label class="btn tooltip" data-tip="履歴JSONをインポート">
+            <input type="file" id="importHistoryInput" accept="application/json" class="sr-only" />
+            履歴インポート
+          </label>
+          <a class="btn" id="openBlobLink" href="#" target="_blank" rel="noopener">Blobで開く</a>
+          <button class="btn" id="downloadBtn">ダウンロード</button>
         </div>
       </div>
-      <div class="history" id="history"></div>
-      <div style="padding:12px; border-top: 1px solid var(--panel-2);">
-        <div class="muted" style="font-size:12px;">
-          Blobリンクはブラウザセッション中のみ有効です。永続化したい場合は .html をダウンロードしてください。
-        </div>
-      </div>
-    </aside>
+    </header>
 
-    <section class="main">
-      <div class="toolbar">
-        <button class="btn" id="btn-auto">Auto Compile: On</button>
-        <button class="btn" id="btn-format">Format</button>
-        <button class="btn" id="btn-reset-layout">Reset Layout</button>
-        <div class="spacer"></div>
-        <div class="muted" style="font-size:12px;">
-          HTML/CSS/JS を統合して安全な iframe で実行します
+    <!-- Main -->
+    <main class="main">
+      <!-- Editors -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">エディタ</div>
+          <div class="panel-sub">入力はローカルに自動保存されます</div>
+          <div class="status" id="statusText">準備完了</div>
         </div>
-      </div>
+        <div class="panel-body">
+          <div class="editors">
+            <div class="editor" id="htmlEditor">
+              <div class="editor-header">
+                <div class="editor-title">HTML</div>
+                <div class="editor-tools">
+                  <button class="icon-btn" data-action="wrap-basic">基本構造</button>
+                </div>
+                <div class="panel-sub">拡張: ショートカットあり</div>
+              </div>
+              <textarea id="htmlInput" spellcheck="false" placeholder="<!DOCTYPE html> などのHTMLを入力"></textarea>
+            </div>
 
-      <div class="grid">
-        <div class="pane">
-          <header>
-            <div class="pane-title">HTML</div>
-            <div class="muted" style="font-size:12px;">index.html</div>
-          </header>
-          <textarea class="editor" id="html-editor" spellcheck="false"></textarea>
-        </div>
+            <div class="editor" id="cssEditor">
+              <div class="editor-header">
+                <div class="editor-title">CSS</div>
+                <div class="editor-tools">
+                  <button class="icon-btn" data-action="inject-reset">Reset</button>
+                  <button class="icon-btn" data-action="inject-center">中央配置</button>
+                </div>
+                <div class="panel-sub">ページのスタイルを定義</div>
+              </div>
+              <textarea id="cssInput" spellcheck="false" placeholder="CSSを入力"></textarea>
+            </div>
 
-        <div class="pane">
-          <header>
-            <div class="pane-title">CSS</div>
-            <div class="muted" style="font-size:12px;">styles.css</div>
-          </header>
-          <textarea class="editor" id="css-editor" spellcheck="false"></textarea>
-        </div>
-
-        <div class="pane">
-          <header>
-            <div class="pane-title">JavaScript</div>
-            <div class="muted" style="font-size:12px;">main.js</div>
-          </header>
-          <textarea class="editor" id="js-editor" spellcheck="false"></textarea>
-        </div>
-
-        <div class="pane output-wrap">
-          <header>
-            <div class="pane-title">Output</div>
-            <div class="muted" style="font-size:12px;">sandboxed iframe</div>
-          </header>
-          <iframe class="output" id="output" sandbox="allow-scripts allow-modals allow-forms"></iframe>
-          <div class="statusbar" id="status">Idle</div>
-        </div>
-      </div>
-
-      <div class="pane" style="margin-top:16px;">
-        <header>
-          <div class="pane-title">Blob link & Download</div>
-          <div class="muted" style="font-size:12px;">セッション内有効のリンク生成とダウンロード</div>
-        </header>
-        <div style="padding:12px;">
-          <div class="blob-row">
-            <input class="blob-url" id="blob-url" readonly placeholder="Blobリンクはここに表示されます..." />
-            <button class="btn" id="btn-copy-blob">Copy</button>
-            <button class="btn" id="btn-revoke-blob">Revoke</button>
+            <div class="editor" id="jsEditor">
+              <div class="editor-header">
+                <div class="editor-title">JavaScript</div>
+                <div class="editor-tools">
+                  <button class="icon-btn" data-action="inject-hello">Hello</button>
+                  <button class="icon-btn" data-action="try-catch">try/catch</button>
+                </div>
+                <div class="panel-sub">動き・ロジック</div>
+              </div>
+              <textarea id="jsInput" spellcheck="false" placeholder="JavaScriptを入力"></textarea>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
-  </main>
 
-  <footer>
-    Built for speed: debounced compile, sandboxed runtime, localStorage history, Blob URL management, and full download support.
-  </footer>
+        <div class="history">
+          <div class="history-header">
+            <div class="panel-title">履歴</div>
+            <div class="panel-sub">最新50件まで保持</div>
+            <div class="panel-sub">ダブルクリックで復元</div>
+          </div>
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </section>
+
+      <!-- Preview -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">プレビュー</div>
+          <div class="panel-sub">Blobで安全に分離して表示</div>
+          <div class="status" id="previewStatus">未コンパイル</div>
+        </div>
+        <div class="panel-body">
+          <div class="preview-wrap">
+            <div class="preview-controls">
+              <label class="tooltip" data-tip="HTMLのタイトルに使用">
+                <input id="projectTitleInput" type="text" placeholder="プロジェクト名" style="padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-soft);color:var(--text);min-width:220px;" />
+              </label>
+              <span class="panel-sub">Blob URL:</span>
+              <code id="blobUrlText" style="font-family:var(--font-mono);font-size:12px;color:var(--muted);max-width:50%;overflow:auto;white-space:nowrap;display:inline-block;"></code>
+            </div>
+            <iframe id="preview" class="preview-iframe" sandbox="allow-forms allow-pointer-lock allow-popups allow-scripts allow-modals allow-downloads" referrerpolicy="no-referrer"></iframe>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-inner">
+        <div>キーボード: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> コンパイル / <span class="kbd">Ctrl</span> + <span class="kbd">S</span> スナップショット保存</div>
+        <div>ローカルのみで動作。外部送信なし。</div>
+      </div>
+    </footer>
+  </div>
 
   <script>
-    // State
-    const state = {
-      name: "Untitled",
-      html: "",
-      css: "",
-      js: "",
-      autoCompile: true,
-      blobUrl: null,
-      lastCompiledSize: 0,
-      lastCompileTime: 0,
-    };
+    (() => {
+      'use strict';
 
-    // Elements
-    const el = {
-      html: document.getElementById('html-editor'),
-      css: document.getElementById('css-editor'),
-      js: document.getElementById('js-editor'),
-      out: document.getElementById('output'),
-      status: document.getElementById('status'),
-      blobUrl: document.getElementById('blob-url'),
-      history: document.getElementById('history'),
-      name: document.getElementById('project-name'),
-      preset: document.getElementById('preset-select'),
-      searchHistory: document.getElementById('search-history'),
-      // Buttons
-      run: document.getElementById('btn-run'),
-      blob: document.getElementById('btn-blob'),
-      download: document.getElementById('btn-download'),
-      theme: document.getElementById('btn-theme'),
-      rename: document.getElementById('btn-rename'),
-      save: document.getElementById('btn-save'),
-      saveAs: document.getElementById('btn-save-as'),
-      clearHistory: document.getElementById('btn-clear-history'),
-      auto: document.getElementById('btn-auto'),
-      format: document.getElementById('btn-format'),
-      resetLayout: document.getElementById('btn-reset-layout'),
-      copyBlob: document.getElementById('btn-copy-blob'),
-      revokeBlob: document.getElementById('btn-revoke-blob'),
-      newProject: document.getElementById('btn-new'),
-    };
+      // Keys
+      const LS_CURRENT_KEY = 'htmlc_current_v1';
+      const LS_HISTORY_KEY = 'htmlc_history_v1';
+      const HISTORY_LIMIT = 50;
 
-    // Utils
-    const fmtBytes = (n) => {
-      const units = ['B','KB','MB','GB'];
-      let i = 0; let v = n;
-      while (v >= 1024 && i < units.length-1) { v /= 1024; i++; }
-      return `${v.toFixed(v < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
-    };
-    const nowStr = () => new Date().toLocaleString();
-    const debounce = (fn, ms=400) => {
-      let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-    };
+      // Elements
+      const htmlInput = document.getElementById('htmlInput');
+      const cssInput = document.getElementById('cssInput');
+      const jsInput = document.getElementById('jsInput');
 
-    // Persistence
-    const LS_KEY = 'html-compiler-history';
-    function loadHistory() {
-      try {
-        const raw = localStorage.getItem(LS_KEY);
-        return raw ? JSON.parse(raw) : [];
-      } catch (e) {
-        console.warn('Failed to load history', e);
-        return [];
-      }
-    }
-    function saveHistory(entries) {
-      try { localStorage.setItem(LS_KEY, JSON.stringify(entries)); }
-      catch (e) { console.warn('Failed to save history', e); }
-    }
-    function addHistoryEntry(entry) {
-      const entries = loadHistory();
-      entries.unshift(entry);
-      saveHistory(entries);
-      renderHistory(entries);
-    }
-    function deleteHistoryIndex(index) {
-      const entries = loadHistory();
-      entries.splice(index, 1);
-      saveHistory(entries);
-      renderHistory(entries);
-    }
-    function renderHistory(entries = loadHistory(), filter = '') {
-      const list = entries
-        .map((e, i) => ({ ...e, i }))
-        .filter(e => {
-          const q = filter.trim().toLowerCase();
-          if (!q) return true;
-          return e.name.toLowerCase().includes(q) ||
-                 (e.tags || []).some(t => t.toLowerCase().includes(q));
-        });
+      const statusText = document.getElementById('statusText');
+      const previewStatus = document.getElementById('previewStatus');
+      const preview = document.getElementById('preview');
+      const blobUrlText = document.getElementById('blobUrlText');
+      const projectTitleInput = document.getElementById('projectTitleInput');
 
-      el.history.innerHTML = '';
-      if (list.length === 0) {
-        const div = document.createElement('div');
-        div.className = 'muted';
-        div.textContent = '履歴はありません';
-        el.history.appendChild(div);
-        return;
-      }
+      const compileBtn = document.getElementById('compileBtn');
+      const saveSnapshotBtn = document.getElementById('saveSnapshotBtn');
+      const newProjectBtn = document.getElementById('newProjectBtn');
+      const exportHistoryBtn = document.getElementById('exportHistoryBtn');
+      const importHistoryInput = document.getElementById('importHistoryInput');
+      const openBlobLink = document.getElementById('openBlobLink');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const historyList = document.getElementById('historyList');
 
-      for (const item of list) {
-        const wrap = document.createElement('div');
-        wrap.className = 'history-item';
+      // State
+      let currentBlobUrl = null;
+      let saveDebounceTimer = null;
+      let compileDebounceTimer = null;
 
-        const h4 = document.createElement('h4');
-        h4.textContent = item.name || 'Untitled';
-        wrap.appendChild(h4);
+      // Utilities
+      const nowIso = () => new Date().toISOString();
 
-        const meta = document.createElement('div');
-        meta.className = 'muted';
-        meta.textContent = `${item.date} • ${fmtBytes(item.size)} • ${item.auto ? 'Auto' : 'Manual'}`;
-        wrap.appendChild(meta);
+      const safeParseJSON = (str, fallback) => {
+        try { return JSON.parse(str); } catch { return fallback; }
+      };
 
-        const row = document.createElement('div');
-        row.className = 'row';
+      const clampHistory = (arr) => {
+        if (Array.isArray(arr) && arr.length > HISTORY_LIMIT) {
+          return arr.slice(0, HISTORY_LIMIT);
+        }
+        return arr;
+      };
 
-        const btnLoad = document.createElement('button');
-        btnLoad.className = 'btn';
-        btnLoad.textContent = 'Load';
-        btnLoad.onclick = () => loadProject(item);
-        row.appendChild(btnLoad);
+      const setStatus = (msg) => {
+        statusText.textContent = msg;
+      };
+      const setPreviewStatus = (msg) => {
+        previewStatus.textContent = msg;
+      };
 
-        const btnRename = document.createElement('button');
-        btnRename.className = 'btn';
-        btnRename.textContent = 'Rename';
-        btnRename.onclick = () => {
-          const newName = prompt('新しい名前', item.name);
-          if (newName && newName.trim()) {
-            const entries = loadHistory();
-            const idx = item.i;
-            entries[idx].name = newName.trim();
-            saveHistory(entries);
-            renderHistory(entries, el.searchHistory.value);
+      const revokeBlobUrl = () => {
+        if (currentBlobUrl) {
+          try { URL.revokeObjectURL(currentBlobUrl); } catch {}
+          currentBlobUrl = null;
+        }
+      };
+
+      const makeDoc = (title, html, css, js) => {
+        // Minimal CSP via meta is informative (not enforcing in Blob), but keep good hygiene.
+        return [
+          '<!DOCTYPE html>',
+          '<html lang="ja">',
+          '<head>',
+          '<meta charset="utf-8" />',
+          '<meta name="viewport" content="width=device-width, initial-scale=1" />',
+          '<title>', escapeHtml(title || 'Untitled'), '</title>',
+          '<style>', css || '', '</style>',
+          '</head>',
+          '<body>',
+          html || '',
+          '<script>',
+          // Wrap user JS in IIFE for scoping
+          '(function(){try{',
+          js || '',
+          '}catch(e){console.error("Runtime error:", e);}})();',
+          '<\/script>',
+          '</body>',
+          '</html>'
+        ].join('');
+      };
+
+      const escapeHtml = (str) => {
+        const span = document.createElement('span');
+        span.textContent = String(str);
+        return span.innerHTML;
+      };
+
+      const loadInitial = () => {
+        const current = safeParseJSON(localStorage.getItem(LS_CURRENT_KEY), null);
+        if (current && typeof current === 'object') {
+          htmlInput.value = current.html || '';
+          cssInput.value = current.css || '';
+          jsInput.value = current.js || '';
+          projectTitleInput.value = current.title || '';
+          setStatus('前回の編集内容を読み込みました');
+        } else {
+          // Default scaffold
+          projectTitleInput.value = '新規プロジェクト';
+          htmlInput.value = [
+            '<main class="container">',
+            '  <h1>HTMLコンパイラへようこそ</h1>',
+            '  <p>左のエディタでHTML/CSS/JSを編集し、右で結果を確認できます。</p>',
+            '  <button id="btn">クリックして挨拶</button>',
+            '</main>'
+          ].join('\n');
+
+          cssInput.value = [
+            ':root {',
+            '  --primary: #3aa0ff;',
+            '  --bg: #f8fafc;',
+            '  --text: #0f172a;',
+            '}',
+            'html, body { height: 100%; background: var(--bg); color: var(--text); }',
+            '.container {',
+            '  max-width: 720px; margin: 8vh auto; padding: 24px;',
+            '  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;',
+            '  box-shadow: 0 10px 30px rgba(0,0,0,.06);',
+            '}',
+            'h1 {',
+            '  background: linear-gradient(135deg, var(--primary), #7c4dff);',
+            '  -webkit-background-clip: text; background-clip: text; color: transparent;',
+            '}',
+            'button {',
+            '  appearance: none; border: 1px solid #e5e7eb; border-radius: 10px;',
+            '  padding: 10px 16px; font-weight: 700; cursor: pointer;',
+            '  background: linear-gradient(180deg, rgba(58,160,255,.15), rgba(58,160,255,.05));',
+            '}',
+            'button:hover { transform: translateY(-1px); }'
+          ].join('\n');
+
+          jsInput.value = [
+            'document.getElementById("btn")?.addEventListener("click", () => {',
+            '  alert("こんにちは！HTMLコンパイラのプレビューです。");',
+            '});'
+          ].join('\n');
+
+          setStatus('新規テンプレートを読み込みました');
+          persistCurrentDebounced();
+          compileDebounced();
+        }
+        renderHistory();
+      };
+
+      const persistCurrentDebounced = () => {
+        if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+        saveDebounceTimer = setTimeout(() => {
+          const data = {
+            title: projectTitleInput.value || '',
+            html: htmlInput.value || '',
+            css: cssInput.value || '',
+            js: jsInput.value || ''
+          };
+          try {
+            localStorage.setItem(LS_CURRENT_KEY, JSON.stringify(data));
+            setStatus('自動保存しました');
+          } catch (e) {
+            setStatus('保存に失敗しました');
+            console.error(e);
           }
+        }, 250);
+      };
+
+      const compileNow = () => {
+        try {
+          const title = projectTitleInput.value || 'Untitled';
+          const html = htmlInput.value || '';
+          const css = cssInput.value || '';
+          const js = jsInput.value || '';
+          const doc = makeDoc(title, html, css, js);
+
+          revokeBlobUrl();
+          const blob = new Blob([doc], { type: 'text/html' });
+          const blobUrl = URL.createObjectURL(blob);
+          currentBlobUrl = blobUrl;
+
+          // Update UI
+          preview.src = blobUrl;
+          openBlobLink.href = blobUrl;
+          blobUrlText.textContent = blobUrl;
+          setPreviewStatus('コンパイル完了');
+        } catch (e) {
+          setPreviewStatus('コンパイルに失敗しました');
+          console.error(e);
+        }
+      };
+
+      const compileDebounced = () => {
+        if (compileDebounceTimer) clearTimeout(compileDebounceTimer);
+        compileDebounceTimer = setTimeout(compileNow, 300);
+      };
+
+      const saveSnapshot = () => {
+        const item = {
+          id: crypto.randomUUID(),
+          at: nowIso(),
+          title: projectTitleInput.value || 'Untitled',
+          html: htmlInput.value || '',
+          css: cssInput.value || '',
+          js: jsInput.value || ''
         };
-        row.appendChild(btnRename);
+        const old = clampHistory(safeParseJSON(localStorage.getItem(LS_HISTORY_KEY), [])) || [];
+        const next = [item, ...old].slice(0, HISTORY_LIMIT);
+        try {
+          localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(next));
+          setStatus('スナップショットを保存しました');
+          renderHistory();
+        } catch (e) {
+          setStatus('スナップショット保存に失敗しました');
+          console.error(e);
+        }
+      };
 
-        const btnDelete = document.createElement('button');
-        btnDelete.className = 'btn warn';
-        btnDelete.textContent = 'Delete';
-        btnDelete.onclick = () => deleteHistoryIndex(item.i);
-        row.appendChild(btnDelete);
+      const deleteSnapshot = (id) => {
+        const old = safeParseJSON(localStorage.getItem(LS_HISTORY_KEY), []) || [];
+        const next = old.filter(x => x.id !== id);
+        localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(next));
+        renderHistory();
+      };
 
-        wrap.appendChild(row);
-        el.history.appendChild(wrap);
-      }
-    }
+      const restoreSnapshot = (id) => {
+        const old = safeParseJSON(localStorage.getItem(LS_HISTORY_KEY), []) || [];
+        const item = old.find(x => x.id === id);
+        if (!item) return;
+        projectTitleInput.value = item.title || '';
+        htmlInput.value = item.html || '';
+        cssInput.value = item.css || '';
+        jsInput.value = item.js || '';
+        setStatus('スナップショットを復元しました');
+        persistCurrentDebounced();
+        compileDebounced();
+      };
 
-    // Compilation
-    function buildDocument({ html, css, js }) {
-      const doc = `
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Compiled Output</title>
-<style>
-${css || ''}
-</style>
-</head>
-<body>
-${html || ''}
+      const renderHistory = () => {
+        const items = safeParseJSON(localStorage.getItem(LS_HISTORY_KEY), []) || [];
+        historyList.innerHTML = '';
+        if (!items.length) {
+          const empty = document.createElement('div');
+          empty.className = 'panel-sub';
+          empty.textContent = '履歴はまだありません。スナップショットを保存してみてください。';
+          historyList.appendChild(empty);
+          return;
+        }
+        for (const item of items) {
+          const row = document.createElement('div');
+          row.className = 'history-item';
+          row.dataset.id = item.id;
 
-<script>
-try {
-${js || ''}
-// Console proxy to bubble messages (optional)
-} catch (e) {
-  const pre = document.createElement('pre');
-  pre.textContent = 'Runtime error: ' + e.message;
-  pre.style.color = 'crimson';
-  pre.style.padding = '12px';
-  document.body.appendChild(pre);
-}
-</script>
-</body>
-</html>`;
-      return doc;
-    }
+          const name = document.createElement('div');
+          name.className = 'history-name';
+          name.textContent = item.title || 'Untitled';
 
-    function setStatus(text) { el.status.textContent = text; }
+          const time = document.createElement('div');
+          time.className = 'history-time';
+          const dt = new Date(item.at);
+          time.textContent = dt.toLocaleString();
 
-    function compileAndRender() {
-      const t0 = performance.now();
-      const doc = buildDocument({ html: state.html, css: state.css, js: state.js });
-      const blob = new Blob([doc], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
+          const actions = document.createElement('div');
+          actions.style.display = 'flex';
+          actions.style.gap = '8px';
 
-      // Update output iframe
-      el.out.src = url;
+          const restoreBtn = document.createElement('button');
+          restoreBtn.className = 'icon-btn';
+          restoreBtn.textContent = '復元';
+          restoreBtn.addEventListener('click', () => restoreSnapshot(item.id));
 
-      // Replace previous blob URL if any
-      if (state.blobUrl) URL.revokeObjectURL(state.blobUrl);
-      state.blobUrl = url;
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'icon-btn';
+          deleteBtn.textContent = '削除';
+          deleteBtn.addEventListener('click', () => deleteSnapshot(item.id));
 
-      const t1 = performance.now();
-      state.lastCompiledSize = doc.length;
-      state.lastCompileTime = t1 - t0;
-      setStatus(`Compiled: ${fmtBytes(state.lastCompiledSize)} • ${state.lastCompileTime.toFixed(1)} ms`);
-      el.blobUrl.value = state.blobUrl;
+          actions.appendChild(restoreBtn);
+          actions.appendChild(deleteBtn);
 
-      // Save to history (auto snapshot)
-      addHistoryEntry({
-        name: state.name,
-        html: state.html,
-        css: state.css,
-        js: state.js,
-        date: nowStr(),
-        size: doc.length,
-        auto: state.autoCompile,
+          row.appendChild(name);
+          row.appendChild(time);
+          row.appendChild(actions);
+
+          row.addEventListener('dblclick', () => restoreSnapshot(item.id));
+
+          historyList.appendChild(row);
+        }
+      };
+
+      const downloadCurrent = () => {
+        try {
+          const fileName = (projectTitleInput.value || 'project').replace(/[/\\?%*:|"<>]/g, '_') + '.html';
+          const doc = makeDoc(projectTitleInput.value || 'Untitled', htmlInput.value || '', cssInput.value || '', jsInput.value || '');
+          const blob = new Blob([doc], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setStatus('ダウンロードを開始しました');
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (e) {
+          setStatus('ダウンロードに失敗しました');
+          console.error(e);
+        }
+      };
+
+      const newProject = () => {
+        if (!confirm('現在の内容を初期テンプレートに置き換えます。よろしいですか？')) return;
+        localStorage.removeItem(LS_CURRENT_KEY);
+        loadInitial();
+        setStatus('新規プロジェクトを作成しました');
+      };
+
+      const exportHistory = () => {
+        const items = safeParseJSON(localStorage.getItem(LS_HISTORY_KEY), []) || [];
+        const payload = {
+          exportedAt: nowIso(),
+          items
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'htmlc_history.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setStatus('履歴をエクスポートしました');
+      };
+
+      const importHistory = (file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const payload = safeParseJSON(reader.result, null);
+          if (!payload || !Array.isArray(payload.items)) {
+            alert('履歴JSONの形式が不正です');
+            return;
+          }
+          const merged = [...payload.items, ...(safeParseJSON(localStorage.getItem(LS_HISTORY_KEY), []) || [])];
+          // Deduplicate by id and clamp
+          const map = new Map();
+          for (const it of merged) {
+            if (it && it.id && !map.has(it.id)) map.set(it.id, it);
+          }
+          const next = Array.from(map.values()).slice(0, HISTORY_LIMIT);
+          localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(next));
+          renderHistory();
+          setStatus('履歴をインポートしました');
+        };
+        reader.onerror = () => alert('履歴の読み込みに失敗しました');
+        reader.readAsText(file);
+      };
+
+      // Toolbar injectors
+      const handleEditorTool = (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'wrap-basic') {
+          const content = htmlInput.value.trim();
+          htmlInput.value = content || [
+            '<section class="hero">',
+            '  <h1>タイトル</h1>',
+            '  <p>サブテキスト</p>',
+            '</section>'
+          ].join('\n');
+          compileDebounced();
+        } else if (action === 'inject-reset') {
+          cssInput.value = [
+            '* { box-sizing: border-box; }',
+            'html, body { height: 100%; margin: 0; }',
+            'img, svg, video { display: block; max-width: 100%; }',
+            ':root { color-scheme: light dark; }'
+          ].join('\n');
+          compileDebounced();
+        } else if (action === 'inject-center') {
+          cssInput.value += '\n\n' + [
+            'body { display: grid; place-items: center; min-height: 100vh; }',
+            '.center { text-align: center; padding: 20px; }'
+          ].join('\n');
+          compileDebounced();
+        } else if (action === 'inject-hello') {
+          jsInput.value += '\n' + 'console.log("Hello from HTMLコンパイラ");';
+          compileDebounced();
+        } else if (action === 'try-catch') {
+          jsInput.value += '\n' + [
+            'try {',
+            '  // ここに安全に試したい処理を書く',
+            '} catch (e) {',
+            '  console.error("Error:", e);',
+            '}'
+          ].join('\n');
+          compileDebounced();
+        }
+      };
+
+      // Events
+      document.addEventListener('input', (e) => {
+        if (e.target === htmlInput || e.target === cssInput || e.target === jsInput || e.target === projectTitleInput) {
+          persistCurrentDebounced();
+          compileDebounced();
+        }
       });
-    }
 
-    const debouncedCompile = debounce(() => {
-      if (state.autoCompile) compileAndRender();
-    }, 500);
-
-    // Editing/Formatting
-    function normalizeIndent(text) {
-      // Simple formatter: trim trailing spaces, normalize newlines
-      return text
-        .replace(/\t/g, '  ')
-        .replace(/[ \t]+$/gm, '')
-        .replace(/\r\n/g, '\n');
-    }
-    function formatAll() {
-      state.html = normalizeIndent(state.html);
-      state.css = normalizeIndent(state.css);
-      state.js = normalizeIndent(state.js);
-      el.html.value = state.html;
-      el.css.value = state.css;
-      el.js.value = state.js;
-      setStatus('Formatted');
-    }
-
-    // Project load/save
-    function loadProject(entry) {
-      state.name = entry.name || 'Untitled';
-      state.html = entry.html || '';
-      state.css = entry.css || '';
-      state.js = entry.js || '';
-      el.name.value = state.name;
-      el.html.value = state.html;
-      el.css.value = state.css;
-      el.js.value = state.js;
-      setStatus('Project loaded');
-      if (state.autoCompile) compileAndRender();
-    }
-    function newProject() {
-      state.name = 'Untitled';
-      state.html = starterHTML;
-      state.css = starterCSS;
-      state.js = starterJS;
-      el.name.value = state.name;
-      el.html.value = state.html;
-      el.css.value = state.css;
-      el.js.value = state.js;
-      setStatus('New project');
-      if (state.autoCompile) compileAndRender();
-    }
-    function saveProject() {
-      addHistoryEntry({
-        name: state.name,
-        html: state.html,
-        css: state.css,
-        js: state.js,
-        date: nowStr(),
-        size: (state.html.length + state.css.length + state.js.length),
-        auto: false,
+      document.addEventListener('click', handleEditorTool);
+      compileBtn.addEventListener('click', compileNow);
+      saveSnapshotBtn.addEventListener('click', saveSnapshot);
+      newProjectBtn.addEventListener('click', newProject);
+      exportHistoryBtn.addEventListener('click', exportHistory);
+      downloadBtn.addEventListener('click', downloadCurrent);
+      importHistoryInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) importHistory(file);
+        importHistoryInput.value = '';
       });
-      setStatus('Saved to history');
-    }
-    function saveProjectAs() {
-      const name = prompt('プロジェクト名を入力', state.name);
-      if (name && name.trim()) {
-        state.name = name.trim();
-        el.name.value = state.name;
-        saveProject();
-      }
-    }
-    function renameProject() {
-      const name = el.name.value.trim();
-      if (name) {
-        state.name = name;
-        setStatus('Renamed');
-      }
-    }
 
-    // Blob URL & Download
-    function generateBlobLink() {
-      const doc = buildDocument({ html: state.html, css: state.css, js: state.js });
-      const blob = new Blob([doc], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      el.blobUrl.value = url;
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        const isMac = navigator.platform.toUpperCase().includes('MAC');
+        const ctrl = isMac ? e.metaKey : e.ctrlKey;
+        if (ctrl && e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          saveSnapshot();
+        }
+        if (ctrl && e.key === 'Enter') {
+          e.preventDefault();
+          compileNow();
+        }
+      });
 
-      // Revoke previous if differs
-      if (state.blobUrl && state.blobUrl !== url) URL.revokeObjectURL(state.blobUrl);
-      state.blobUrl = url;
-      setStatus('Blob URL generated');
-    }
-    function revokeBlobLink() {
-      if (state.blobUrl) {
-        URL.revokeObjectURL(state.blobUrl);
-        state.blobUrl = null;
-        el.blobUrl.value = '';
-        setStatus('Blob URL revoked');
-      }
-    }
-    async function copyBlobLink() {
-      if (!el.blobUrl.value) {
-        setStatus('No Blob URL to copy');
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(el.blobUrl.value);
-        setStatus('Blob URL copied');
-      } catch (e) {
-        setStatus('Clipboard error');
-      }
-    }
-    function downloadHTML() {
-      const doc = buildDocument({ html: state.html, css: state.css, js: state.js });
-      const blob = new Blob([doc], { type: 'text/html' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `${state.name || 'index'}.html`;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        URL.revokeObjectURL(a.href);
-        document.body.removeChild(a);
-      }, 0);
-      setStatus('Downloaded');
-    }
+      // Cleanup blob URL on unload
+      window.addEventListener('beforeunload', revokeBlobUrl);
 
-    // Presets
-    const starterHTML = `<main class="container">
-  <h1>こんにちは 👋</h1>
-  <p>HTML/CSS/JS を編集して右側の Output で確認できます。</p>
-  <button id="clickme">Click me</button>
-</main>`;
-    const starterCSS = `:root { color-scheme: light dark; }
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-  margin: 0; padding: 24px; background: #f8fafc; color: #0f172a;
-}
-.container {
-  max-width: 720px; margin: 0 auto; background: white; border: 1px solid #e5e7eb; border-radius: 12px;
-  padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-}
-button {
-  appearance: none; border: none; background: #3b82f6; color: white; padding: 10px 14px; border-radius: 10px; cursor: pointer;
-}`;
-    const starterJS = `const btn = document.getElementById('clickme');
-btn?.addEventListener('click', () => alert('やあ！'));`;
-
-    const canvasHTML = `<canvas id="c"></canvas>`;
-    const canvasCSS = `html, body, canvas { margin:0; height:100%; width:100%; display:block; background:#0b1020; }`;
-    const canvasJS = `const c = document.getElementById('c');
-const ctx = c.getContext('2d');
-function resize(){ c.width = innerWidth; c.height = innerHeight; }
-addEventListener('resize', resize); resize();
-let t=0;
-(function loop(){
-  t+=0.01;
-  ctx.fillStyle='rgba(11,16,32,0.2)'; ctx.fillRect(0,0,c.width,c.height);
-  for(let i=0;i<200;i++){
-    const x = c.width/2 + Math.sin(t+i*0.1)*200;
-    const y = c.height/2 + Math.cos(t+i*0.08)*200;
-    ctx.fillStyle = \`hsl(\${(t*100+i)%360},70%,60%)\`;
-    ctx.fillRect(x,y,2,2);
-  }
-  requestAnimationFrame(loop);
-})();`;
-
-    const tailwindHTML = `<div class="min-h-screen flex items-center justify-center bg-slate-900">
-  <div class="max-w-md w-full bg-white/5 backdrop-blur rounded-xl border border-white/10 p-6 text-white">
-    <h1 class="text-2xl font-bold">Tailwind CDN</h1>
-    <p class="mt-2 text-sm text-slate-300">CDN読み込みで簡単にユーティリティクラスが使えます。</p>
-    <button class="mt-4 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400">Button</button>
-  </div>
-</div>`;
-    const tailwindCSS = ``;
-    const tailwindJS = `// Tailwind CDN is injected automatically below`;
-    function applyPreset(name) {
-      if (name === 'starter') {
-        state.html = starterHTML; state.css = starterCSS; state.js = starterJS;
-      } else if (name === 'canvas') {
-        state.html = canvasHTML; state.css = canvasCSS; state.js = canvasJS;
-      } else if (name === 'tailwind') {
-        state.html = \`<script src="https://cdn.tailwindcss.com"></script>\\n\${tailwindHTML}\`;
-        state.css = tailwindCSS;
-        state.js = tailwindJS;
-      } else return;
-      el.html.value = state.html;
-      el.css.value = state.css;
-      el.js.value = state.js;
-      setStatus('Preset applied');
-      if (state.autoCompile) compileAndRender();
-    }
-
-    // Theme
-    function toggleTheme() {
-      const root = document.documentElement;
-      const isLight = root.classList.toggle('light');
-      setStatus(isLight ? 'Theme: Light' : 'Theme: Dark');
-    }
-
-    // Events
-    el.html.addEventListener('input', () => { state.html = el.html.value; debouncedCompile(); });
-    el.css.addEventListener('input', () => { state.css = el.css.value; debouncedCompile(); });
-    el.js.addEventListener('input', () => { state.js = el.js.value; debouncedCompile(); });
-
-    el.run.addEventListener('click', compileAndRender);
-    el.blob.addEventListener('click', generateBlobLink);
-    el.download.addEventListener('click', downloadHTML);
-    el.theme.addEventListener('click', toggleTheme);
-    el.rename.addEventListener('click', renameProject);
-    el.save.addEventListener('click', saveProject);
-    el.saveAs.addEventListener('click', saveProjectAs);
-    el.clearHistory.addEventListener('click', () => { saveHistory([]); renderHistory([]); setStatus('History cleared'); });
-    el.auto.addEventListener('click', () => {
-      state.autoCompile = !state.autoCompile;
-      el.auto.textContent = `Auto Compile: ${state.autoCompile ? 'On' : 'Off'}`;
-      setStatus(`Auto Compile ${state.autoCompile ? 'enabled' : 'disabled'}`);
-    });
-    el.format.addEventListener('click', formatAll);
-    el.resetLayout.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setStatus('Layout reset');
-    });
-    el.copyBlob.addEventListener('click', copyBlobLink);
-    el.revokeBlob.addEventListener('click', revokeBlobLink);
-    el.newProject.addEventListener('click', newProject);
-    el.preset.addEventListener('change', e => applyPreset(e.target.value));
-    el.searchHistory.addEventListener('input', e => renderHistory(loadHistory(), e.target.value));
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      const isSave = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's';
-      const isRun = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
-      if (isSave) { e.preventDefault(); saveProject(); }
-      if (isRun) { e.preventDefault(); compileAndRender(); }
-    });
-
-    // Init
-    function init() {
-      // Load last entry if exists
-      const entries = loadHistory();
-      if (entries.length > 0) {
-        loadProject(entries[0]);
-      } else {
-        newProject();
-      }
-      renderHistory(entries);
-    }
-    init();
+      // Initial load
+      loadInitial();
+    })();
   </script>
 </body>
 </html>
+```
