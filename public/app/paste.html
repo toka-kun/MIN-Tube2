@@ -1,631 +1,609 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>HTML コンパイラ — Single File</title>
-<style>
-  :root{
-    --bg:#0f1720; --panel:#0b1220; --muted:#94a3b8; --accent:#7c3aed; --card:#0b1726;
-    --editor-bg:#071126; --editor-fg:#e6eef6;
-    --glass: rgba(255,255,255,0.03);
-    --success:#16a34a; --danger:#ef4444;
-    --shadow: 0 6px 24px rgba(2,6,23,0.8);
-  }
-  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
-  body{background:linear-gradient(180deg,#071023 0%, #071026 50%, #071226 100%); color:var(--editor-fg); display:flex; flex-direction:column; gap:12px; padding:16px;}
-  .topbar{display:flex;align-items:center;gap:12px;}
-  .brand{display:flex;align-items:center;gap:12px;font-weight:600;}
-  .brand .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700;color:white;box-shadow:var(--shadow);}
-  .controls{margin-left:auto;display:flex;gap:8px;align-items:center;}
-  button, .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:var(--editor-fg);cursor:pointer;font-weight:600;}
-  button.primary{background:linear-gradient(90deg,var(--accent),#06b6d4);color:white;border:none;box-shadow:0 6px 18px rgba(124,58,237,0.16);}
-  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);}
-  .workspace{display:grid;grid-template-columns:260px 1fr 480px;gap:12px;flex:1;min-height:60vh;}
-  .panel{background:var(--panel);border-radius:12px;padding:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px;}
-  .files{overflow:auto;padding:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:8px;}
-  .file-item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;cursor:pointer;color:var(--muted);border:1px solid transparent;}
-  .file-item.active{background:linear-gradient(90deg,rgba(124,58,237,0.08),rgba(6,182,212,0.04));color:var(--editor-fg);border-color:rgba(124,58,237,0.08);}
-  .file-item:hover{background:var(--glass);color:var(--editor-fg);}
-  .file-actions{display:flex;gap:6px;align-items:center;}
-  .editor{display:flex;flex-direction:column;height:100%;}
-  .editor-header{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);}
-  .editor-area{flex:1;display:flex;min-height:0;overflow:hidden;border-radius:10px;margin-top:8px;}
-  textarea.code{flex:1;width:100%;resize:none;background:var(--editor-bg);color:var(--editor-fg);padding:18px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;font-size:13px;line-height:1.4;border:none;outline:none;border-radius:10px;}
-  .preview{display:flex;flex-direction:column;height:100%;}
-  .preview-header{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);}
-  .iframe-wrap{flex:1;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);background:white;}
-  iframe.preview-frame{width:100%;height:100%;border:0;background:white;}
-  .muted{color:var(--muted);font-size:13px;}
-  .small{font-size:12px;padding:6px 8px;}
-  .history-list{max-height:200px;overflow:auto;padding:6px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:8px;}
-  .history-item{padding:8px;border-radius:8px;border:1px solid transparent;color:var(--muted);display:flex;align-items:center;justify-content:space-between;}
-  .history-item:hover{background:var(--glass);color:var(--editor-fg);}
-  .info-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;padding-top:6px;}
-  input[type="text"]{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;color:var(--editor-fg);}
-  .tag{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.02);font-size:12px;}
-  .danger{color:var(--danger);}
-  .success{color:var(--success);}
-  /* responsive */
-  @media (max-width:1100px){
-    .workspace{grid-template-columns:220px 1fr;grid-template-rows:1fr 360px;}
-    .preview{grid-column:1 / span 2;grid-row:2;}
-  }
-  @media (max-width:720px){
-    body{padding:8px;}
-    .workspace{grid-template-columns:1fr;grid-template-rows:auto 1fr 360px;}
-    .preview{grid-row:3;}
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clipboard Visualizer — あらゆる形式を安全に可視化</title>
+  <style>
+    :root {
+      --bg: #0f1320;
+      --panel: #161b2e;
+      --soft: #212946;
+      --accent: #6ea8fe;
+      --accent-2: #9ad0ff;
+      --text: #e6ebff;
+      --muted: #a7b1d1;
+      --ok: #3bd671;
+      --warn: #ffb86b;
+      --danger: #ff6b6b;
+      --code-bg: #0a0d17;
+      --border: #2b335c;
+      --shadow: 0 8px 28px rgba(0,0,0,0.35);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: linear-gradient(120deg, #0f1320 0%, #0f1320 40%, #111634 100%);
+      color: var(--text);
+      font: 16px/1.65 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+    }
+    a { color: var(--accent) }
+    header {
+      position: sticky; top: 0; z-index: 5;
+      backdrop-filter: saturate(160%) blur(10px);
+      background: rgba(15,19,32,0.55);
+      border-bottom: 1px solid var(--border);
+    }
+    .bar {
+      max-width: 1100px; margin: 0 auto; padding: 14px 20px;
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+    }
+    .title {
+      font-weight: 700; letter-spacing: 0.3px; display: flex; gap: 10px; align-items: center;
+    }
+    .badge {
+      font-size: 12px; color: var(--muted); border: 1px solid var(--border);
+      padding: 2px 8px; border-radius: 999px; background: rgba(33,41,70,0.4);
+    }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap }
+    button, .btn {
+      all: unset; display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(180deg, #1c2444 0%, #18203b 100%);
+      color: var(--text); border: 1px solid var(--border); padding: 10px 14px;
+      border-radius: 12px; cursor: pointer; box-shadow: var(--shadow); transition: transform .05s ease;
+    }
+    button:hover { transform: translateY(-1px) }
+    button:active { transform: translateY(0) scale(0.98) }
+    .btn-ghost {
+      background: rgba(22,27,46,0.6);
+    }
+    .btn-ok { border-color: #2f9a55; }
+    main { max-width: 1100px; margin: 24px auto; padding: 0 20px 60px }
+    .hero {
+      background: radial-gradient(1200px 400px at 20% 0%, rgba(110,168,254,0.15) 0%, transparent 60%),
+                  radial-gradient(1000px 400px at 80% 0%, rgba(154,208,255,0.12) 0%, transparent 60%),
+                  var(--panel);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px;
+    }
+    .dropzone {
+      border: 2px dashed #3c4b85; border-radius: 12px;
+      padding: 18px; background: rgba(23,29,50,0.7);
+      min-height: 150px; display: grid; place-items: center; text-align: center;
+      transition: border-color .2s ease, background .2s ease;
+    }
+    .dropzone.highlight { border-color: var(--accent); background: rgba(23,29,50,0.9) }
+    .hint { color: var(--muted); font-size: 14px }
+    .stat {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    .card {
+      background: var(--soft); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px; box-shadow: var(--shadow);
+    }
+    .grid {
+      margin-top: 24px; display: grid; gap: 14px;
+    }
+    .item {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden; box-shadow: var(--shadow);
+    }
+    .item-head {
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+      padding: 12px 14px; background: linear-gradient(180deg,#1a2040,#171c36);
+      border-bottom: 1px solid var(--border);
+    }
+    .type-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(110,168,254,0.14); border: 1px solid #3c5aa8; color: #cfe3ff;
+      padding: 6px 10px; border-radius: 999px; font-size: 13px;
+    }
+    .meta { color: var(--muted); font-size: 13px; display: flex; gap: 12px; flex-wrap: wrap }
+    .item-actions { display: flex; gap: 10px; flex-wrap: wrap }
+    .item-body { padding: 12px 14px; display: grid; gap: 12px }
+    .section-title { font-weight: 700; color: #cfe3ff; font-size: 14px }
+    pre, code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: var(--code-bg); color: #d7e0ff; border: 1px solid #222843;
+      border-radius: 10px; padding: 10px; overflow: auto;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace }
+    .kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; }
+    .kv b { color: #cfe3ff }
+    .preview-frame {
+      width: 100%; min-height: 160px; border: 1px solid var(--border); border-radius: 8px; background: #0b1024;
+    }
+    .media { max-width: 100%; border-radius: 10px; border: 1px solid var(--border); background: #0b1024 }
+    .pill { display:inline-block; font-size:12px; color:#cfe3ff; background:#26325f; padding:3px 8px; border:1px solid #3a4a84; border-radius:999px; }
+    .footer-note { color: var(--muted); font-size: 13px; margin-top: 10px }
+    .empty {
+      text-align: center; color: var(--muted); border: 1px dashed var(--border);
+      border-radius: 12px; padding: 18px; background: rgba(22,27,46,0.5);
+    }
+    .wrap { word-break: break-word; white-space: pre-wrap }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+    .spacer { height: 10px }
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      .stat { grid-template-columns: 1fr; }
+      .bar { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo">C</div>
-      <div>
-        <div style="font-size:14px">HTML コンパイラ</div>
-        <div class="muted" style="font-size:12px">Single-file IDE — Blob / Download / History</div>
+  <header>
+    <div class="bar">
+      <div class="title">
+        <span>📋 Clipboard Visualizer</span>
+        <span class="badge">Paste/Read any MIME safely</span>
+      </div>
+      <div class="actions">
+        <button id="readClipboardBtn" class="btn btn-ok" title="ブラウザ許可が必要です">クリップボードから読み取る</button>
+        <button id="clearBtn" class="btn btn-ghost">クリア</button>
       </div>
     </div>
+  </header>
 
-    <div class="controls">
-      <button id="new-file" class="small">＋ New File</button>
-      <button id="save-snapshot" class="small">✓ Snapshot</button>
-      <button id="export-package" class="primary small">Export Package (.html)</button>
-      <button id="gen-blob" class="small">Blobリンク生成</button>
-      <button id="open-blob" class="small">Open Preview</button>
-    </div>
-  </div>
-
-  <div class="workspace">
-    <div class="panel" style="min-height:420px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div><strong>Files</strong> <span class="muted">project</span></div>
-        <div class="muted small">Autosave</div>
-      </div>
-      <div class="files" id="file-list" role="list" aria-label="files"></div>
-
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <input id="file-name-input" type="text" placeholder="filename.ext" style="flex:1" />
-        <button id="rename-btn" class="small">Rename</button>
-      </div>
-
-      <div style="margin-top:8px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div><strong>History</strong></div>
-          <div class="muted small">local</div>
-        </div>
-        <div class="history-list" id="history-list"></div>
-      </div>
-    </div>
-
-    <div class="panel editor" style="min-height:420px;">
-      <div class="editor-header">
-        <div id="current-file-label"><strong>—</strong></div>
-        <div class="muted" id="current-file-type" style="margin-left:8px">file type</div>
-        <div style="margin-left:auto" class="info-row">
-          <div class="tag" id="cursor-pos">Ln 1, Col 1</div>
-          <button id="format-btn" class="small">Format</button>
-          <button id="download-file" class="small">Download File</button>
-          <button id="delete-file" class="small danger">Delete</button>
+  <main>
+    <section class="hero">
+      <div id="dropzone" class="dropzone" contenteditable="true">
+        <div>
+          <div style="font-weight:700;font-size:18px">ここにペースト（Cmd/Ctrl+V）</div>
+          <div class="hint">テキスト・HTML・画像・動画・CSV・JSON・RTF・XML・任意のMIMEに対応。ドラッグ&ドロップや右クリック貼り付けもOK。</div>
+          <div class="spacer"></div>
+          <div class="row">
+            <span class="pill">貼り付けイベントで捕捉</span>
+            <span class="pill">Clipboard APIで直接読み取り</span>
+            <span class="pill">オリジナルBlobを保持・ダウンロード</span>
+            <span class="pill">HTMLはiframeで安全にプレビュー</span>
+          </div>
         </div>
       </div>
-
-      <div class="editor-area">
-        <textarea id="code-editor" class="code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Create or open a file to start editing..."></textarea>
-      </div>
-    </div>
-
-    <div class="panel preview" style="min-height:420px;">
-      <div class="preview-header">
-        <div><strong>Live Preview</strong></div>
-        <div class="muted" style="margin-left:8px">sandboxed</div>
-        <div style="margin-left:auto;display:flex;gap:8px;">
-          <button id="refresh-preview" class="small">Refresh</button>
-          <button id="open-in-new" class="small">Open in new tab</button>
+      <div class="stat">
+        <div class="card">
+          <div class="section-title">使い方</div>
+          <ul style="margin:8px 0 0 18px">
+            <li><b>ペースト:</b> フォーカスを当てて Cmd/Ctrl+V</li>
+            <li><b>ドラッグ&ドロップ:</b> 画像やファイルをここに</li>
+            <li><b>直接読み取り:</b> 上部ボタンで許可後に取得</li>
+            <li><b>保存:</b> 各アイテムの「ダウンロード」で元データ</li>
+          </ul>
+          <div class="footer-note">注: 一部ブラウザでは特殊フォーマットのテキスト化が制限されます。ファイルとして保持・保存は可能です。</div>
+        </div>
+        <div class="card">
+          <div class="section-title">検出・プレビュー</div>
+          <ul style="margin:8px 0 0 18px">
+            <li><b>テキスト:</b> プレーン/RTF/CSV/JSON/XMLを整形</li>
+            <li><b>HTML:</b> サンドボックスiframeで安全レンダ</li>
+            <li><b>画像/動画/音声:</b> そのままプレビュー</li>
+            <li><b>バイナリ:</b> サイズ、Hex/Base64、ダウンロード</li>
+          </ul>
         </div>
       </div>
-      <div class="iframe-wrap" id="iframe-wrap">
-        <iframe id="preview-frame" class="preview-frame" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
-      </div>
+    </section>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-        <div class="muted">Tip: Add index.html and open Blobリンクで外部で確認できます</div>
-        <div class="muted">Status: <span id="status-dot" class="success">ready</span></div>
-      </div>
-    </div>
-  </div>
+    <section class="grid" id="items">
+      <div class="empty">まだ何もありません。何かをペーストするとここに表示されます。</div>
+    </section>
+  </main>
 
-  <footer>
-    <div class="muted">Local project runtime — no server required</div>
-    <div class="muted">Saved in browser storage</div>
-  </footer>
-
-<script>
-/* Single-file IDE core
-   - Virtual FS stored as { path: content }
-   - localStorage keys: 's_ide_fs' (current), 's_ide_history' (array of snapshots)
-   - Export package: generate an HTML that includes files JSON and a loader to restore
-   - Blob preview: map file paths to blob URLs; rewrite internal links to blob urls
-*/
-
-(() => {
-  // Utilities
-  const $ = id => document.getElementById(id);
-  const nowISO = () => new Date().toISOString();
-  const STORAGE_KEY = 's_ide_fs_v1';
-  const HISTORY_KEY = 's_ide_history_v1';
-
-  // default initial FS (empty)
-  let fs = loadFS() || {}; // virtual file system: { "index.html": "<!doctype...>" }
-  let currentFile = Object.keys(fs)[0] || null;
-  let history = loadHistory() || [];
-
-  // elements
-  const fileListEl = $('file-list');
-  const editorEl = $('code-editor');
-  const currentFileLabel = $('current-file-label');
-  const currentFileType = $('current-file-type');
-  const cursorPos = $('cursor-pos');
-  const historyListEl = $('history-list');
-  const previewFrame = $('preview-frame');
-  const statusDot = $('status-dot');
-
-  // init UI
-  function init(){
-    // create default index.html if none
-    if (!currentFile) {
-      const defaultName = 'index.html';
-      fs[defaultName] = '<!doctype html>\\n<html>\\n  <head>\\n    <meta charset=\"utf-8\">\\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\\n    <title>Project</title>\\n  </head>\\n  <body>\\n    <h1>Hello</h1>\\n  </body>\\n</html>';
-      currentFile = defaultName;
-      saveFS();
-    }
-    renderFileList();
-    renderHistory();
-    openFile(currentFile);
-    bindEvents();
-    scheduleAutosave();
-    renderPreview();
-  }
-
-  // Storage
-  function saveFS(){
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(fs));
-    } catch (e) {
-      console.error('saveFS failed', e);
-    }
-  }
-  function loadFS(){
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
-  }
-  function saveHistorySnapshot(name = null){
-    const snapshot = { id: nowISO(), name: name || ('snap ' + new Date().toLocaleString()), fs: JSON.parse(JSON.stringify(fs)) };
-    history.unshift(snapshot);
-    if (history.length > 50) history.pop();
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-    renderHistory();
-  }
-  function loadHistory(){
-    try {
-      const raw = localStorage.getItem(HISTORY_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) { return []; }
-  }
-  function scheduleAutosave(){
-    setInterval(() => { saveFS(); }, 2000);
-  }
-
-  // UI: Files
-  function renderFileList(){
-    fileListEl.innerHTML = '';
-    const paths = Object.keys(fs).sort((a,b)=> (a> b?1:-1));
-    for (const p of paths){
-      const div = document.createElement('div');
-      div.className = 'file-item' + (p === currentFile ? ' active' : '');
-      div.title = p;
-      const left = document.createElement('div');
-      left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
-      const ico = document.createElement('div');
-      ico.textContent = p.split('.').pop();
-      ico.style.fontSize='12px'; ico.style.opacity='0.9';
-      left.appendChild(ico);
-      const name = document.createElement('div');
-      name.textContent = p;
-      left.appendChild(name);
-      div.appendChild(left);
-
-      const actions = document.createElement('div');
-      actions.className = 'file-actions';
-      const dup = document.createElement('button'); dup.textContent='⤢'; dup.title='Duplicate'; dup.className='small';
-      dup.onclick = (e)=>{ e.stopPropagation(); duplicateFile(p); };
-      const dl = document.createElement('button'); dl.textContent='⬇'; dl.title='Download'; dl.className='small';
-      dl.onclick = (e)=>{ e.stopPropagation(); downloadSingleFile(p); };
-      const open = document.createElement('button'); open.textContent='✎'; open.title='Open'; open.className='small';
-      open.onclick = (e)=>{ e.stopPropagation(); openFile(p); };
-      actions.appendChild(open);
-      actions.appendChild(dup);
-      actions.appendChild(dl);
-      div.appendChild(actions);
-
-      div.onclick = ()=> openFile(p);
-      fileListEl.appendChild(div);
-    }
-  }
-
-  function addNewFile(){
-    let base = 'file';
-    let ext = 'txt';
-    // simple prompt flow
-    const name = prompt('新しいファイル名を入力してください（例: index.html, style.css）', 'untitled.html');
-    if (!name) return;
-    if (fs[name]){ alert('そのファイル名は既に存在します'); return; }
-    fs[name] = '';
-    currentFile = name;
-    saveFS();
-    renderFileList();
-    openFile(name);
-  }
-
-  function deleteFile(name){
-    if (!fs[name]) return;
-    if (!confirm('Delete ' + name + '?')) return;
-    delete fs[name];
-    if (currentFile === name) {
-      currentFile = Object.keys(fs)[0] || null;
-    }
-    saveFS();
-    renderFileList();
-    openFile(currentFile);
-  }
-
-  function downloadSingleFile(name){
-    const content = fs[name] || '';
-    const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=> URL.revokeObjectURL(url), 5000);
-  }
-
-  function duplicateFile(name){
-    let i=1;
-    let base = name;
-    while (fs[base + '.copy' + (i>1?i:'')]) i++;
-    const newName = name + '.copy' + (i>1?i:'');
-    fs[newName] = fs[name];
-    saveFS();
-    renderFileList();
-    openFile(newName);
-  }
-
-  // Editor
-  function openFile(name){
-    if (!name) {
-      editorEl.value = '';
-      currentFile = null;
-      currentFileLabel.innerHTML = '<strong>—</strong>';
-      currentFileType.textContent = '';
-      renderFileList();
-      return;
-    }
-    currentFile = name;
-    editorEl.value = fs[name] || '';
-    currentFileLabel.innerHTML = '<strong>' + name + '</strong>';
-    const type = name.split('.').pop() || 'txt';
-    currentFileType.textContent = type;
-    renderFileList();
-    editorEl.focus();
-    updateCursorPos();
-  }
-
-  // Editor events
-  function bindEvents(){
-    $('new-file').onclick = addNewFile;
-    $('save-snapshot').onclick = ()=> { saveHistorySnapshot(); alert('Snapshot saved'); };
-    $('export-package').onclick = exportPackage;
-    $('gen-blob').onclick = ()=> { const url = generatePreviewBlobURL(true); prompt('Blob URL (copy & open in new tab):', url); };
-    $('open-blob').onclick = ()=> { window.open(generatePreviewBlobURL(true), '_blank'); };
-    $('refresh-preview').onclick = renderPreview;
-    $('open-in-new').onclick = ()=> { window.open(generatePreviewBlobURL(false), '_blank'); };
-    $('rename-btn').onclick = renameSelected;
-    $('delete-file').onclick = ()=> { if (currentFile) deleteFile(currentFile); };
-    $('download-file').onclick = ()=> { if (currentFile) downloadSingleFile(currentFile); };
-    $('format-btn').onclick = formatCurrent;
-    editorEl.addEventListener('input', onEditorInput);
-    editorEl.addEventListener('keyup', updateCursorPos);
-    editorEl.addEventListener('click', updateCursorPos);
-
-    // history actions delegated
-    historyListEl.addEventListener('click', (e)=>{
-      const id = e.target.closest('[data-history-id]')?.dataset.historyId;
-      if (!id) return;
-      const action = e.target.dataset.action;
-      const snap = history.find(h=>h.id===id);
-      if (!snap) return;
-      if (action === 'restore') {
-        if (confirm('Restore snapshot "'+snap.name+'"? This will replace current project.')) {
-          fs = JSON.parse(JSON.stringify(snap.fs));
-          saveFS();
-          renderFileList();
-          renderPreview();
-          openFile(Object.keys(fs)[0]);
-          renderHistory();
-        }
-      } else if (action === 'delete') {
-        if (confirm('Delete snapshot "'+snap.name+'"?')) {
-          history = history.filter(h=>h.id!==id);
-          localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-          renderHistory();
-        }
-      } else if (action === 'download'){
-        // export snapshot as package
-        const blob = new Blob([packageHTML(snap.fs)], {type:'text/html;charset=utf-8'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href=url; a.download = 'project-' + snap.id + '.html'; document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(()=>URL.revokeObjectURL(url),5000);
-      }
-    });
-  }
-
-  function onEditorInput(){
-    if (!currentFile) return;
-    fs[currentFile] = editorEl.value;
-    saveFS();
-    // update preview related to file type
-    if (currentFile.endsWith('.css') || currentFile.endsWith('.js') || currentFile.endsWith('.html')) {
-      renderPreviewDebounced();
-    }
-  }
-
-  function updateCursorPos(){
-    const start = editorEl.selectionStart || 0;
-    const upTo = editorEl.value.slice(0, start);
-    const ln = (upTo.match(/\n/g) || []).length + 1;
-    const col = start - (upTo.lastIndexOf('\n') + 1) + 1;
-    cursorPos.textContent = 'Ln ' + ln + ', Col ' + col;
-  }
-
-  // Formatting (very basic)
-  function formatCurrent(){
-    if (!currentFile) return;
-    const ext = currentFile.split('.').pop();
-    if (ext === 'html'){
-      editorEl.value = prettyHTML(editorEl.value);
-    } else if (ext === 'css'){
-      editorEl.value = prettyCSS(editorEl.value);
-    } else if (ext === 'js'){
-      editorEl.value = prettyJS(editorEl.value);
-    } else {
-      alert('Format: unsupported file type');
-      return;
-    }
-    fs[currentFile] = editorEl.value;
-    saveFS();
-    renderPreview();
-  }
-
-  function prettyHTML(s){
-    // minimal indentation: split by tags
-    try{
-      s = s.replace(/>\\s+</g, '><').trim();
-      const indentSize=2;
-      const out=[]; let pad=0;
-      s.replace(/(<!DOCTYPE[^>]*>|<!--[^>]*-->|<[^>]+>[^<]*|[^<]+)/g, (m)=>{
-        if (/^<\\//.test(m)){ pad = Math.max(pad-1,0); }
-        out.push(' '.repeat(pad*indentSize)+m.trim());
-        if (/^<(?!\\/)/.test(m) && !/\\/|\\/>$/.test(m) && !/^<!(?:DOCTYPE|--)*/.test(m) && !/\\/.test(m)){
-          if (!/\\/>$/.test(m) && !/^<script|^<style/i.test(m)) pad++;
-        }
-        if (/^<script|^<style/i.test(m) && /<\\/(script|style)>/i.test(m)){
-          // do nothing special
-        }
+  <script>
+    // Utility: create element
+    const el = (tag, props = {}, children = []) => {
+      const node = document.createElement(tag);
+      Object.entries(props).forEach(([k,v]) => {
+        if (k === 'class') node.className = v;
+        else if (k === 'style') Object.assign(node.style, v);
+        else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+        else if (k === 'dataset') Object.assign(node.dataset, v);
+        else node.setAttribute(k, v);
       });
-      return out.join('\\n');
-    }catch(e){ return s; }
-  }
+      [].concat(children).filter(Boolean).forEach(c => {
+        if (typeof c === 'string') node.appendChild(document.createTextNode(c));
+        else node.appendChild(c);
+      });
+      return node;
+    };
 
-  function prettyCSS(s){
-    try{
-      return s.replace(/\\s+/g,' ').replace(/\\s*([{}:;,])\\s*/g,'$1\\n  ').replace(/;\\n  \\}/g,'\\n}').replace(/\\n\\s+/g,'\\n').trim();
-    }catch(e){ return s; }
-  }
-  function prettyJS(s){ try{ return s.replace(/\\t/g,'  '); }catch(e){ return s; } }
+    // State
+    const itemsContainer = document.getElementById('items');
+    const dropzone = document.getElementById('dropzone');
+    const readClipboardBtn = document.getElementById('readClipboardBtn');
+    const clearBtn = document.getElementById('clearBtn');
 
-  // History
-  function renderHistory(){
-    historyListEl.innerHTML = '';
-    for (const h of history){
-      const div = document.createElement('div');
-      div.className = 'history-item';
-      div.dataset.historyId = h.id;
-      const left = document.createElement('div');
-      left.innerHTML = '<div style="font-weight:600">'+h.name+'</div><div class="muted small">'+new Date(h.id).toLocaleString()+'</div>';
-      const right = document.createElement('div');
-      right.style.display='flex'; right.style.gap='6px';
-      const restore = document.createElement('button'); restore.textContent='Restore'; restore.className='small'; restore.dataset.action='restore';
-      const dl = document.createElement('button'); dl.textContent='Export'; dl.className='small'; dl.dataset.action='download';
-      const del = document.createElement('button'); del.textContent='✖'; del.className='small danger'; del.dataset.action='delete';
-      right.appendChild(restore); right.appendChild(dl); right.appendChild(del);
-      div.appendChild(left); div.appendChild(right);
-      historyListEl.appendChild(div);
-    }
-  }
+    let itemCount = 0;
 
-  // Preview: build an entry HTML (index.html if present) and map other files
-  function buildProjectEntry(){
-    // prefer index.html, else pick first html, else error page
-    const keys = Object.keys(fs);
-    let entry = 'index.html';
-    if (!fs[entry]){
-      const found = keys.find(k=>k.endsWith('.html'));
-      if (found) entry = found;
-      else entry = keys[0];
-    }
-    return { entry, files: JSON.parse(JSON.stringify(fs)) };
-  }
+    // Helpers
+    const prettyBytes = (n) => {
+      if (n < 1024) return n + ' B';
+      const units = ['KB','MB','GB','TB'];
+      let i = -1; do { n /= 1024; i++; } while (n >= 1024 && i < units.length - 1);
+      return n.toFixed(n >= 100 ? 0 : n >= 10 ? 1 : 2) + ' ' + units[i];
+    };
 
-  // Map virtual files to blob URLs and return an object with mapping and entry blob url
-  function createBlobURLs(files){
-    const map = {};
-    for (const path in files){
-      const content = files[path];
-      let type = 'text/plain';
-      if (path.endsWith('.html')) type = 'text/html';
-      else if (path.endsWith('.css')) type = 'text/css';
-      else if (path.endsWith('.js')) type = 'application/javascript';
-      else if (path.endsWith('.json')) type = 'application/json';
-      const blob = new Blob([content], {type: type + ';charset=utf-8'});
-      const url = URL.createObjectURL(blob);
-      map[path] = { url, type };
-    }
-    return map;
-  }
-
-  // Rewrites HTML content: replace references to local paths with blob urls for known files
-  function rewriteHTMLWithBlobs(html, map){
-    // base approach: replace href/src attributes, import maps, forms, a[href], link[href], script[src], img[src], source[src], video[src]
-    // also rewrite relative links like "./file.html" or "/file.html" or "sub/one.html"
-    // naive but effective for local projects
-    return html.replace(/(href|src)=["']([^"']+)["']/g, (m, attr, val) => {
-      // skip absolute URLs and data: and mailto: and javascript:
-      if (/^(https?:|\/\/|data:|mailto:|javascript:)/i.test(val)) return m;
-      // normalize remove leading ./
-      const norm = val.replace(/^\\.\\//,'').replace(/^\\//,'');
-      if (map[norm]) return attr + '="' + map[norm].url + '"';
-      // attempt path as-is
-      if (map[val]) return attr + '="' + map[val].url + '"';
-      return m;
-    });
-  }
-
-  // create a preview blob URL for the project; if inline=true then returns blob URL string
-  function generatePreviewBlobURL(returnURL = true){
-    const {entry, files} = buildProjectEntry();
-    const map = createBlobURLs(files);
-    const entryContent = files[entry] || '';
-    const rewritten = rewriteHTMLWithBlobs(entryContent, map);
-    const blob = new Blob([rewritten], {type:'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    // revoke previous blobs after small timeout to avoid leaks
-    setTimeout(()=> {
-      for (const k in map) try{ URL.revokeObjectURL(map[k].url); }catch(e){}
-    }, 3500);
-    return url;
-  }
-
-  // render into iframe
-  let previewTimer = 0;
-  function renderPreview(){
-    statusDot.textContent = 'rendering';
-    statusDot.className = '';
-    try {
-      const url = generatePreviewBlobURL(false);
-      previewFrame.src = url;
-      // revoke after some time (but keep until navigation)
-      setTimeout(()=> {
-        try{ URL.revokeObjectURL(url); }catch(e){}
-      }, 5000);
-      statusDot.textContent = 'ready';
-      statusDot.className = 'success';
-    } catch (e){
-      console.error(e);
-      statusDot.textContent = 'error';
-      statusDot.className = 'danger';
-    }
-  }
-  function renderPreviewDebounced(){
-    clearTimeout(previewTimer);
-    previewTimer = setTimeout(renderPreview, 300);
-  }
-
-  // Export package: generate a full HTML that contains files JSON and loader that reconstructs project
-  function packageHTML(files){
-    const filesJSON = JSON.stringify(files).replace(/</g,'\\u003c');
-    const loader = `
-<!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exported Project</title></head><body>
-<script>
-  (function(){
-    const files = ${filesJSON};
-    // simple file server: create blob urls and map by pathname
-    const map = {};
-    for (const p in files){
-      const t = p.endsWith('.html') ? 'text/html' : p.endsWith('.css') ? 'text/css' : p.endsWith('.js') ? 'application/javascript' : 'text/plain';
-      map['/' + p] = URL.createObjectURL(new Blob([files[p]], {type: t + ';charset=utf-8'}));
-      map[p] = map['/' + p];
-    }
-    function getPath(href){
-      try{
-        const u = new URL(href, location.href);
-        return u.pathname.replace(/^\\//,'');
-      }catch(e){
-        return href;
+    const detectKind = (type, name = '') => {
+      const t = (type || '').toLowerCase();
+      if (t.startsWith('text/')) return 'text';
+      if (t === 'text/html') return 'html';
+      if (t === 'text/rtf' || name.toLowerCase().endsWith('.rtf')) return 'rtf';
+      if (t === 'application/json' || /\.json$/i.test(name)) return 'json';
+      if (t === 'text/csv' || /\.csv$/i.test(name)) return 'csv';
+      if (/xml/.test(t) || /\.xml$/i.test(name)) return 'xml';
+      if (/^image\//.test(t)) return 'image';
+      if (/^video\//.test(t)) return 'video';
+      if (/^audio\//.test(t)) return 'audio';
+      if (/pdf$/.test(t) || /\.pdf$/i.test(name)) return 'pdf';
+      if (!t && name) {
+        if (/\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(name)) return 'image';
+        if (/\.(mp4|webm|mov|mkv)$/i.test(name)) return 'video';
+        if (/\.(mp3|wav|ogg|m4a)$/i.test(name)) return 'audio';
       }
-    }
-    // If opened directly, show index
-    const entry = files['index.html'] ? 'index.html' : Object.keys(files)[0];
-    if (!entry) { document.body.innerText = 'No files in package'; return; }
-    // If attachment requested via ?file=path, load that file
-    const params = new URLSearchParams(location.search);
-    const requested = params.get('file');
-    const path = requested ? requested : entry;
-    const blobUrl = map[path] || map['/' + path] || null;
-    if (blobUrl){
-      // if path is html, navigate to blob
-      location.href = blobUrl;
-    } else {
-      document.body.innerText = 'Requested file not found: ' + path;
-    }
-  })();
-<\/script>
-</body></html>
-`.trim();
-    return loader;
-  }
+      return 'binary';
+    };
 
-  function exportPackage(){
-    const pkg = packageHTML(fs);
-    const blob = new Blob([pkg], {type:'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'project-export.html';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=> URL.revokeObjectURL(url), 5000);
-  }
+    const sanitizeSrcDoc = (html) => {
+      // Minimal neutralization: remove scripts and event handlers
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('script, iframe, object, embed').forEach(n => n.remove());
+      // Remove inline event handlers
+      doc.querySelectorAll('*').forEach(n => {
+        [...n.attributes].forEach(a => {
+          if (/^on/i.test(a.name)) n.removeAttribute(a.name);
+        });
+      });
+      // Return cleaned HTML string
+      return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    };
 
-  // Rename selected file
-  function renameSelected(){
-    if (!currentFile) return alert('No file selected');
-    const name = $('file-name-input').value.trim();
-    if (!name) return alert('Enter file name in the field');
-    if (fs[name]) return alert('File exists: choose another name');
-    fs[name] = fs[currentFile];
-    delete fs[currentFile];
-    currentFile = name;
-    saveFS();
-    renderFileList();
-    openFile(name);
-  }
+    const blobFromString = (str, type='text/plain') => new Blob([str], { type });
 
-  // Simple format / lint helpers covered above
+    const toHexDump = async (blob, maxBytes = 4096) => {
+      const buf = await blob.arrayBuffer();
+      const view = new Uint8Array(buf.slice(0, Math.min(buf.byteLength, maxBytes)));
+      let out = '';
+      for (let i = 0; i < view.length; i += 16) {
+        const slice = view.slice(i, i + 16);
+        const hex = [...slice].map(b => b.toString(16).padStart(2, '0')).join(' ');
+        const ascii = [...slice].map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.').join('');
+        out += i.toString(16).padStart(8, '0') + '  ' + hex.padEnd(16*3 - 1, ' ') + '  |' + ascii + '|\n';
+      }
+      if (buf.byteLength > maxBytes) {
+        out += '\n… ' + (buf.byteLength - maxBytes) + ' bytes truncated';
+      }
+      return out;
+    };
 
-  // Initial load
-  init();
+    const toBase64 = (blob) => new Promise(resolve => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result).split(',')[1] || '');
+      fr.readAsDataURL(blob);
+    });
 
-  // Expose some globals for debug (optional)
-  window.__SINGLE_IDE = { getFS: ()=>JSON.parse(JSON.stringify(fs)), saveSnapshot: ()=>saveHistorySnapshot() };
+    const prettyMaybe = (str, kind) => {
+      try {
+        if (kind === 'json') {
+          return JSON.stringify(JSON.parse(str), null, 2);
+        }
+        if (kind === 'csv') {
+          // Simple CSV to table
+          const rows = str.trim().split(/\r?\n/).map(r => r.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/));
+          const table = el('table', { style: { width: '100%', borderCollapse: 'collapse' }});
+          rows.forEach((row, i) => {
+            const tr = el('tr', { });
+            row.forEach(cell => {
+              const td = el(i===0 ? 'th' : 'td', { style: {
+                border: '1px solid #2b335c', padding: '6px 8px', background: i===0 ? '#1a2244' : '#0b1024', color: '#d7e0ff'
+              }}, [cell.replace(/^"|"$/g,'')]);
+              tr.appendChild(td);
+            });
+            table.appendChild(tr);
+          });
+          return table;
+        }
+        if (kind === 'xml') {
+          const xmlDoc = new DOMParser().parseFromString(str, 'application/xml');
+          const parseError = xmlDoc.querySelector('parsererror');
+          if (parseError) return str;
+          const serializer = new XMLSerializer();
+          const pretty = serializer.serializeToString(xmlDoc);
+          return pretty;
+        }
+        if (kind === 'rtf') {
+          // RTF raw view only (safe): don’t attempt full render to preserve fidelity
+          return str;
+        }
+        return str;
+      } catch {
+        return str;
+      }
+    };
 
-})();
-</script>
+    const clearItems = () => {
+      itemsContainer.innerHTML = '';
+      itemsContainer.appendChild(el('div', { class: 'empty' }, ['まだ何もありません。何かをペーストするとここに表示されます。']));
+      itemCount = 0;
+    };
+
+    clearBtn.addEventListener('click', clearItems);
+
+    // Build UI card
+    const renderItem = async ({ type, name, blob, textValue }) => {
+      itemCount++;
+      // Determine kind
+      const kind = detectKind(type, name);
+      const size = blob ? blob.size : (textValue ? new TextEncoder().encode(textValue).length : 0);
+      const url = blob ? URL.createObjectURL(blob) : null;
+
+      const headLeft = el('div', {}, [
+        el('div', { class: 'row' }, [
+          el('span', { class: 'type-pill' }, [kind.toUpperCase(), ' — ', type || '(unknown)']),
+          name ? el('span', { class: 'pill' }, ['name: ', name]) : null
+        ]),
+        el('div', { class: 'meta' }, [
+          el('span', {}, ['サイズ: ', prettyBytes(size)]),
+          el('span', {}, ['アイテム#: ', String(itemCount)]),
+          el('span', {}, [url ? 'URL: blob://' + url.split('/').pop() : 'URL: (text)'])
+        ])
+      ]);
+
+      const downloadBtn = el('button', { class: 'btn' }, ['ダウンロード']);
+      downloadBtn.addEventListener('click', () => {
+        const a = document.createElement('a');
+        a.href = url || URL.createObjectURL(blobFromString(textValue || '', type || 'text/plain'));
+        a.download = (name && name.trim()) || (kind + '-' + String(itemCount) + (type ? '.' + (type.split('/')[1] || 'dat') : '.dat'));
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      });
+
+      const copyMimeBtn = el('button', { class: 'btn btn-ghost' }, ['MIMEをコピー']);
+      copyMimeBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(type || '');
+          copyMimeBtn.textContent = 'コピーしました';
+          setTimeout(() => copyMimeBtn.textContent = 'MIMEをコピー', 1500);
+        } catch {}
+      });
+
+      const headRight = el('div', { class: 'item-actions' }, [downloadBtn, copyMimeBtn]);
+
+      const head = el('div', { class: 'item-head' }, [headLeft, headRight]);
+      const body = el('div', { class: 'item-body' });
+
+      // Raw section
+      const rawSection = el('div', {}, [
+        el('div', { class: 'section-title' }, ['Raw（生データ表示）']),
+      ]);
+
+      // Preview section
+      const previewSection = el('div', {}, [
+        el('div', { class: 'section-title' }, ['Preview（プレビュー）']),
+      ]);
+
+      // Fill sections according to kind
+      if (blob) {
+        // Binary raw views
+        const hex = await toHexDump(blob);
+        const base64 = await toBase64(blob);
+
+        const rawTabs = el('div', { class: 'row' }, [
+          el('span', { class: 'pill' }, ['Hex']),
+          el('span', { class: 'pill' }, ['Base64'])
+        ]);
+        rawSection.appendChild(rawTabs);
+
+        const hexPre = el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [hex]);
+        const b64Pre = el('pre', { class: 'mono', style: { maxHeight: '180px' }}, [base64]);
+        rawSection.appendChild(hexPre);
+        rawSection.appendChild(b64Pre);
+
+        // Previews
+        if (kind === 'image') {
+          const img = el('img', { class: 'media', src: url, alt: name || type || 'image' });
+          previewSection.appendChild(img);
+        } else if (kind === 'video') {
+          const vid = el('video', { class: 'media', controls: 'true' });
+          vid.src = url;
+          previewSection.appendChild(vid);
+        } else if (kind === 'audio') {
+          const aud = el('audio', { class: 'media', controls: 'true' });
+          aud.src = url;
+          previewSection.appendChild(aud);
+        } else if (kind === 'pdf') {
+          const iframe = el('iframe', { class: 'preview-frame', src: url });
+          previewSection.appendChild(iframe);
+        } else if (kind === 'html') {
+          const text = await blob.text().catch(() => '');
+          const cleaned = sanitizeSrcDoc(text);
+          const iframe = el('iframe', { class: 'preview-frame', sandbox: 'allow-forms allow-pointer-lock allow-same-origin' });
+          iframe.srcdoc = cleaned;
+          previewSection.appendChild(iframe);
+
+          const plainPre = el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [text]);
+          rawSection.appendChild(plainPre);
+        } else if (kind === 'text' || kind === 'json' || kind === 'csv' || kind === 'xml' || kind === 'rtf') {
+          const text = await blob.text().catch(() => '');
+          const pretty = prettyMaybe(text, kind);
+          if (pretty instanceof HTMLElement) {
+            previewSection.appendChild(pretty);
+            rawSection.appendChild(el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [text]));
+          } else {
+            previewSection.appendChild(el('pre', { class: 'mono wrap', style: { maxHeight: '240px' }}, [pretty]));
+            rawSection.appendChild(el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [text]));
+          }
+        } else {
+          previewSection.appendChild(el('div', { class: 'hint' }, ['このMIMEは直接プレビューできません。Rawとダウンロードをご利用ください。']));
+        }
+      } else if (typeof textValue === 'string') {
+        const kindGuess = detectKind(type || 'text/plain', name);
+        const pretty = prettyMaybe(textValue, kindGuess);
+        previewSection.appendChild(
+          pretty instanceof HTMLElement
+            ? pretty
+            : el('pre', { class: 'mono wrap', style: { maxHeight: '240px' }}, [pretty])
+        );
+        rawSection.appendChild(el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [textValue]));
+      }
+
+      // Info section
+      const info = el('div', { class: 'kv' }, [
+        el('b', {}, ['MIME']),
+        el('span', {}, [type || '(unknown)']),
+        el('b', {}, ['名前']),
+        el('span', {}, [name || '(none)']),
+        el('b', {}, ['サイズ']),
+        el('span', {}, [prettyBytes(size)]),
+      ]);
+
+      body.appendChild(info);
+      body.appendChild(previewSection);
+      body.appendChild(rawSection);
+
+      const card = el('div', { class: 'item' }, [head, body]);
+      itemsContainer.querySelector('.empty')?.remove();
+      itemsContainer.appendChild(card);
+    };
+
+    // Handle paste via clipboardData
+    const handlePasteEvent = async (e) => {
+      e.preventDefault(); // prevent native insert to keep zone clean
+      const dt = e.clipboardData;
+      if (!dt) return;
+
+      // Collect as much as possible
+      const types = dt.types || [];
+      const added = [];
+
+      // 1) Try items API for files and string types
+      if (dt.items && dt.items.length) {
+        for (const it of dt.items) {
+          try {
+            const type = it.type || '';
+            if (it.kind === 'file') {
+              const file = it.getAsFile();
+              if (file) {
+                await renderItem({ type: file.type || type || '', name: file.name || '', blob: file });
+                added.push(true);
+              }
+            } else if (it.kind === 'string') {
+              // getAsString preserves provided MIME when available
+              await new Promise(res => it.getAsString(async (str) => {
+                const t = type || 'text/plain';
+                await renderItem({ type: t, name: '', textValue: str });
+                res();
+              }));
+              added.push(true);
+            }
+          } catch {}
+        }
+      }
+
+      // 2) Fallback: use getData for known types to catch Safari quirks
+      const known = ['text/plain','text/html','text/rtf','text/uri-list','application/json','text/csv','application/xml','text/xml'];
+      for (const t of known) {
+        try {
+          const data = dt.getData(t);
+          if (data) {
+            await renderItem({ type: t, name: '', textValue: data });
+          }
+        } catch {}
+      }
+
+      // 3) Files via DataTransfer.files (e.g., screenshots)
+      if (dt.files && dt.files.length) {
+        for (const file of dt.files) {
+          await renderItem({ type: file.type || '', name: file.name || '', blob: file });
+        }
+      }
+
+      // Visual feedback
+      dropzone.classList.add('highlight');
+      setTimeout(() => dropzone.classList.remove('highlight'), 200);
+    };
+
+    // Handle drag & drop files
+    const handleDrop = async (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('highlight');
+      const dt = e.dataTransfer;
+      if (!dt) return;
+      if (dt.files && dt.files.length) {
+        for (const file of dt.files) {
+          await renderItem({ type: file.type || '', name: file.name || '', blob: file });
+        }
+      }
+    };
+    const handleDragOver = (e) => { e.preventDefault(); dropzone.classList.add('highlight'); };
+    const handleDragLeave = (e) => { dropzone.classList.remove('highlight'); };
+
+    // Clipboard API direct read
+    const readClipboard = async () => {
+      if (!navigator.clipboard || !navigator.clipboard.read) {
+        // Fallback: try readText
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            await renderItem({ type: 'text/plain', name: '', textValue: text });
+            return;
+          }
+        } catch {}
+        alert('このブラウザはClipboard.read()に対応していません。ペーストやドラッグ&ドロップをご利用ください。');
+        return;
+      }
+      try {
+        const items = await navigator.clipboard.read();
+        for (const ci of items) {
+          // ci.types: list of MIME strings
+          for (const t of ci.types) {
+            try {
+              const blob = await ci.getType(t);
+              // Heuristic filename
+              const name = t.replace(/[^\w.-]+/g,'_') + '-' + Date.now();
+              await renderItem({ type: t, name, blob });
+            } catch {
+              // Try as text if blob failed
+              if (t.startsWith('text/')) {
+                try {
+                  const txtBlob = await ci.getType(t);
+                  const text = await txtBlob.text();
+                  await renderItem({ type: t, name: '', textValue: text });
+                } catch {}
+              }
+            }
+          }
+        }
+      } catch (err) {
+        alert('クリップボードの読み取りが拒否されました。ブラウザの設定で許可してください。');
+      }
+    };
+
+    // Bind events
+    dropzone.addEventListener('paste', handlePasteEvent);
+    dropzone.addEventListener('dragover', handleDragOver);
+    dropzone.addEventListener('dragleave', handleDragLeave);
+    dropzone.addEventListener('drop', handleDrop);
+
+    readClipboardBtn.addEventListener('click', readClipboard);
+
+    // Accessibility: focusable zone
+    dropzone.setAttribute('tabindex', '0');
+
+    // Global paste as backup (e.g., if user pastes without focusing zone)
+    window.addEventListener('paste', (e) => {
+      if (document.activeElement !== dropzone) {
+        handlePasteEvent(e);
+      }
+    });
+
+    // Cleanup blob URLs when leaving
+    window.addEventListener('beforeunload', () => {
+      document.querySelectorAll('img,video,audio,iframe').forEach(elm => {
+        const src = elm.src || elm.getAttribute('srcdoc');
+        if (src && src.startsWith('blob:')) URL.revokeObjectURL(src);
+      });
+    });
+  </script>
 </body>
 </html>
