@@ -2,608 +2,1154 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clipboard Visualizer — あらゆる形式を安全に可視化</title>
+  <title>HTML Compiler - Multi-file Sandbox</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg: #0f1320;
-      --panel: #161b2e;
-      --soft: #212946;
-      --accent: #6ea8fe;
-      --accent-2: #9ad0ff;
-      --text: #e6ebff;
-      --muted: #a7b1d1;
-      --ok: #3bd671;
-      --warn: #ffb86b;
-      --danger: #ff6b6b;
-      --code-bg: #0a0d17;
-      --border: #2b335c;
-      --shadow: 0 8px 28px rgba(0,0,0,0.35);
-      --radius: 14px;
+      --bg: #0f1318;
+      --panel: #121820;
+      --surface: #161d26;
+      --hover: #1b2430;
+      --border: #263244;
+      --text: #e6edf3;
+      --muted: #94a3b8;
+      --accent: #51a6ff;
+      --accent-2: #7c5cff;
+      --danger: #ff5c7b;
+      --success: #39d98a;
+      --warning: #f0b429;
+      --code: #0b1117;
+      --green: #12b886;
+      --orange: #f59f00;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
-    * { box-sizing: border-box }
+
     html, body {
-      margin: 0;
       height: 100%;
-      background: linear-gradient(120deg, #0f1320 0%, #0f1320 40%, #111634 100%);
+      margin: 0;
+      background: var(--bg);
       color: var(--text);
-      font: 16px/1.65 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+      font-family: var(--font);
     }
-    a { color: var(--accent) }
-    header {
-      position: sticky; top: 0; z-index: 5;
-      backdrop-filter: saturate(160%) blur(10px);
-      background: rgba(15,19,32,0.55);
+
+    /* Top bar */
+    .topbar {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #141b23, var(--panel));
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+    .brand-badge {
+      width: 26px; height: 26px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid; place-items: center;
+      box-shadow: 0 4px 12px rgba(81,166,255,0.35);
+    }
+    .brand-badge span {
+      font-size: 14px;
+      font-weight: 800;
+      color: white;
+    }
+    .muted {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn:hover {
+      background: var(--hover);
+      border-color: #2f3d52;
+    }
+    .btn.primary {
+      background: linear-gradient(180deg, #1f2a38, #253140);
+      border-color: #32435a;
+    }
+    .btn.accent {
+      background: linear-gradient(135deg, #2781ff, #7c5cff);
+      border: none;
+      color: white;
+      box-shadow: 0 6px 18px rgba(81,166,255,0.35);
+    }
+    .btn.success {
+      background: linear-gradient(135deg, #19c37d, #12b886);
+      border: none;
+      color: white;
+      box-shadow: 0 6px 18px rgba(25,195,125,0.35);
+    }
+    .btn.danger {
+      background: linear-gradient(135deg, #ff4d6d, #ff5c7b);
+      border: none;
+      color: white;
+      box-shadow: 0 6px 18px rgba(255,92,123,0.35);
+    }
+    .btn.ghost {
+      background: transparent;
+      border-color: var(--border);
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr 38%;
+      grid-template-rows: calc(100vh - 48px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .sidebar .section {
+      padding: 10px;
       border-bottom: 1px solid var(--border);
     }
-    .bar {
-      max-width: 1100px; margin: 0 auto; padding: 14px 20px;
-      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+    .sidebar .section h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
     }
-    .title {
-      font-weight: 700; letter-spacing: 0.3px; display: flex; gap: 10px; align-items: center;
+
+    .project-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
-    .badge {
-      font-size: 12px; color: var(--muted); border: 1px solid var(--border);
-      padding: 2px 8px; border-radius: 999px; background: rgba(33,41,70,0.4);
+    .project-name {
+      font-weight: 600;
+      font-size: 14px;
     }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap }
-    button, .btn {
-      all: unset; display: inline-flex; align-items: center; gap: 8px;
-      background: linear-gradient(180deg, #1c2444 0%, #18203b 100%);
-      color: var(--text); border: 1px solid var(--border); padding: 10px 14px;
-      border-radius: 12px; cursor: pointer; box-shadow: var(--shadow); transition: transform .05s ease;
+
+    .file-tree {
+      flex: 1;
+      overflow: auto;
+      padding: 8px;
     }
-    button:hover { transform: translateY(-1px) }
-    button:active { transform: translateY(0) scale(0.98) }
-    .btn-ghost {
-      background: rgba(22,27,46,0.6);
+    .node {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
     }
-    .btn-ok { border-color: #2f9a55; }
-    main { max-width: 1100px; margin: 24px auto; padding: 0 20px 60px }
-    .hero {
-      background: radial-gradient(1200px 400px at 20% 0%, rgba(110,168,254,0.15) 0%, transparent 60%),
-                  radial-gradient(1000px 400px at 80% 0%, rgba(154,208,255,0.12) 0%, transparent 60%),
-                  var(--panel);
-      border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 18px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px;
+    .node:hover { background: var(--hover); }
+    .node.active { background: #1f2937; border: 1px solid #2f3d52; }
+    .node .icon {
+      width: 18px; height: 18px;
+      display: grid; place-items: center;
+      border-radius: 4px;
+      background: #1b2430;
+      border: 1px solid #2a384c;
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
     }
-    .dropzone {
-      border: 2px dashed #3c4b85; border-radius: 12px;
-      padding: 18px; background: rgba(23,29,50,0.7);
-      min-height: 150px; display: grid; place-items: center; text-align: center;
-      transition: border-color .2s ease, background .2s ease;
+    .node .label {
+      font-size: 13px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
-    .dropzone.highlight { border-color: var(--accent); background: rgba(23,29,50,0.9) }
-    .hint { color: var(--muted); font-size: 14px }
-    .stat {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+
+    .tree-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
-    .card {
-      background: var(--soft); border: 1px solid var(--border); border-radius: 12px;
-      padding: 12px; box-shadow: var(--shadow);
+
+    /* Editor */
+    .editor {
+      background: var(--surface);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
     }
-    .grid {
-      margin-top: 24px; display: grid; gap: 14px;
-    }
-    .item {
-      background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-      overflow: hidden; box-shadow: var(--shadow);
-    }
-    .item-head {
-      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
-      padding: 12px 14px; background: linear-gradient(180deg,#1a2040,#171c36);
+    .editorbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px;
       border-bottom: 1px solid var(--border);
+      background: #141b23;
     }
-    .type-pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(110,168,254,0.14); border: 1px solid #3c5aa8; color: #cfe3ff;
-      padding: 6px 10px; border-radius: 999px; font-size: 13px;
+    .filepath {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
     }
-    .meta { color: var(--muted); font-size: 13px; display: flex; gap: 12px; flex-wrap: wrap }
-    .item-actions { display: flex; gap: 10px; flex-wrap: wrap }
-    .item-body { padding: 12px 14px; display: grid; gap: 12px }
-    .section-title { font-weight: 700; color: #cfe3ff; font-size: 14px }
-    pre, code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      background: var(--code-bg); color: #d7e0ff; border: 1px solid #222843;
-      border-radius: 10px; padding: 10px; overflow: auto;
+    .textarea-wrap {
+      position: relative;
+      height: 100%;
+      display: grid;
     }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace }
-    .kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; }
-    .kv b { color: #cfe3ff }
-    .preview-frame {
-      width: 100%; min-height: 160px; border: 1px solid var(--border); border-radius: 8px; background: #0b1024;
+    textarea#editor {
+      width: 100%;
+      height: 100%;
+      border: none;
+      outline: none;
+      background: var(--code);
+      color: #cfe4ff;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 12px 14px 28px;
+      resize: none;
     }
-    .media { max-width: 100%; border-radius: 10px; border: 1px solid var(--border); background: #0b1024 }
-    .pill { display:inline-block; font-size:12px; color:#cfe3ff; background:#26325f; padding:3px 8px; border:1px solid #3a4a84; border-radius:999px; }
-    .footer-note { color: var(--muted); font-size: 13px; margin-top: 10px }
-    .empty {
-      text-align: center; color: var(--muted); border: 1px dashed var(--border);
-      border-radius: 12px; padding: 18px; background: rgba(22,27,46,0.5);
+    .editor-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      border-top: 1px solid var(--border);
+      background: #141b23;
+      font-size: 12px;
     }
-    .wrap { word-break: break-word; white-space: pre-wrap }
-    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap }
-    .spacer { height: 10px }
-    @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; }
-      .stat { grid-template-columns: 1fr; }
-      .bar { grid-template-columns: 1fr; }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background: var(--muted);
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .status-dot.ok { background: var(--success); }
+    .status-dot.warn { background: var(--warning); }
+
+    /* Preview */
+    .preview {
+      border-left: 1px solid var(--border);
+      background: var(--panel);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    .previewbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+      background: #141b23;
+    }
+    iframe#preview {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: white;
+    }
+    .preview-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      border-top: 1px solid var(--border);
+      background: #141b23;
+      font-size: 12px;
+    }
+
+    /* Modals and inputs */
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.5);
+      z-index: 50;
+    }
+    .modal.show { display: flex; }
+    .modal-card {
+      width: 520px;
+      max-width: 92vw;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+    .modal-header, .modal-footer {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      background: #141b23;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-body {
+      padding: 12px;
+    }
+    .input {
+      width: 100%;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      padding: 0 10px;
+      font-size: 14px;
+      outline: none;
+    }
+    .input::placeholder { color: var(--muted); }
+
+    .help {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* History list */
+    .history-list {
+      display: grid;
+      gap: 8px;
+      max-height: 220px;
+      overflow: auto;
+      padding: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #10161d;
+      border: 1px solid #243246;
+    }
+    .history-item .meta {
+      display: flex; gap: 10px; align-items: center;
+      font-size: 12px; color: var(--muted);
+    }
+
+    /* Blob list */
+    .blob-list {
+      display: grid; gap: 8px;
+      max-height: 160px; overflow: auto;
+      padding: 8px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 8px;
+    }
+    .blob-row {
+      display: flex; gap: 8px; align-items: center; justify-content: space-between;
+      padding: 8px; border-radius: 8px; background: #10161d; border: 1px solid #243246;
+      font-size: 12px;
+    }
+    .blob-row .path { font-family: var(--mono); color: #cfe4ff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .blob-row .url { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Utility */
+    .spacer { flex: 1; }
+    .vr { width: 1px; height: 20px; background: var(--border); }
+    .kbd {
+      border: 1px solid var(--border);
+      background: #0c1218;
+      padding: 0 6px;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 1280px) {
+      .container { grid-template-columns: 240px 1fr 42%; }
+    }
+    @media (max-width: 980px) {
+      .container { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+      .preview { grid-row: 3; height: 50vh; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="bar">
-      <div class="title">
-        <span>📋 Clipboard Visualizer</span>
-        <span class="badge">Paste/Read any MIME safely</span>
-      </div>
-      <div class="actions">
-        <button id="readClipboardBtn" class="btn btn-ok" title="ブラウザ許可が必要です">クリップボードから読み取る</button>
-        <button id="clearBtn" class="btn btn-ghost">クリア</button>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-badge"><span>SB</span></div>
+      <div>
+        <div>HTML Compiler Sandbox</div>
+        <div class="muted" style="font-size:12px;">Multi-file • Blob preview • History • Safe UI</div>
       </div>
     </div>
-  </header>
+    <div class="actions">
+      <button class="btn accent" id="btn-run">Run / Preview</button>
+      <button class="btn success" id="btn-save">Save</button>
+      <button class="btn" id="btn-export">Export Project</button>
+      <button class="btn" id="btn-import">Import Project</button>
+      <button class="btn danger" id="btn-clear">Reset</button>
+    </div>
+  </div>
 
-  <main>
-    <section class="hero">
-      <div id="dropzone" class="dropzone" contenteditable="true">
-        <div>
-          <div style="font-weight:700;font-size:18px">ここにペースト（Cmd/Ctrl+V）</div>
-          <div class="hint">テキスト・HTML・画像・動画・CSV・JSON・RTF・XML・任意のMIMEに対応。ドラッグ&ドロップや右クリック貼り付けもOK。</div>
-          <div class="spacer"></div>
-          <div class="row">
-            <span class="pill">貼り付けイベントで捕捉</span>
-            <span class="pill">Clipboard APIで直接読み取り</span>
-            <span class="pill">オリジナルBlobを保持・ダウンロード</span>
-            <span class="pill">HTMLはiframeで安全にプレビュー</span>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="section">
+        <div class="project-header">
+          <div class="project-name" id="project-name">My Sandbox</div>
+          <div class="actions">
+            <button class="btn" id="btn-rename-project">Rename</button>
           </div>
         </div>
       </div>
-      <div class="stat">
-        <div class="card">
-          <div class="section-title">使い方</div>
-          <ul style="margin:8px 0 0 18px">
-            <li><b>ペースト:</b> フォーカスを当てて Cmd/Ctrl+V</li>
-            <li><b>ドラッグ&ドロップ:</b> 画像やファイルをここに</li>
-            <li><b>直接読み取り:</b> 上部ボタンで許可後に取得</li>
-            <li><b>保存:</b> 各アイテムの「ダウンロード」で元データ</li>
-          </ul>
-          <div class="footer-note">注: 一部ブラウザでは特殊フォーマットのテキスト化が制限されます。ファイルとして保持・保存は可能です。</div>
+
+      <div class="section">
+        <h3>Files</h3>
+        <div class="tree-actions">
+          <button class="btn" id="btn-new-file">New file</button>
+          <button class="btn" id="btn-new-folder">New folder</button>
         </div>
-        <div class="card">
-          <div class="section-title">検出・プレビュー</div>
-          <ul style="margin:8px 0 0 18px">
-            <li><b>テキスト:</b> プレーン/RTF/CSV/JSON/XMLを整形</li>
-            <li><b>HTML:</b> サンドボックスiframeで安全レンダ</li>
-            <li><b>画像/動画/音声:</b> そのままプレビュー</li>
-            <li><b>バイナリ:</b> サイズ、Hex/Base64、ダウンロード</li>
-          </ul>
+        <div class="file-tree" id="file-tree"></div>
+        <div class="actions" style="padding:8px; gap:8px;">
+          <button class="btn" id="btn-rename">Rename</button>
+          <button class="btn danger" id="btn-delete">Delete</button>
         </div>
       </div>
-    </section>
 
-    <section class="grid" id="items">
-      <div class="empty">まだ何もありません。何かをペーストするとここに表示されます。</div>
+      <div class="section">
+        <h3>History</h3>
+        <div class="history-list" id="history-list"></div>
+        <div class="actions" style="margin-top:8px;">
+          <button class="btn" id="btn-snapshot">Snapshot</button>
+          <button class="btn" id="btn-history-clear">Clear history</button>
+        </div>
+        <div class="help">履歴はローカルに保存されます。スナップショットから復元できます。</div>
+      </div>
+    </aside>
+
+    <!-- Editor -->
+    <main class="editor">
+      <div class="editorbar">
+        <div class="filepath" id="filepath">No file selected</div>
+        <div class="actions">
+          <button class="btn" id="btn-download-file">Download file</button>
+          <button class="btn" id="btn-blob-file">Blob link</button>
+          <span class="vr"></span>
+          <div class="muted">Tab size: <span class="kbd">2</span></div>
+        </div>
+      </div>
+      <div class="textarea-wrap">
+        <textarea id="editor" spellcheck="false" placeholder="ここにコードを書いてください。左のファイルツリーからファイルを選択すると編集できます。"></textarea>
+      </div>
+      <div class="editor-footer">
+        <div><span class="status-dot" id="status-dot"></span><span id="status-text">Idle</span></div>
+        <div class="muted">保存は <span class="kbd">Ctrl/Cmd + S</span> でも可能です。</div>
+      </div>
+    </main>
+
+    <!-- Preview -->
+    <section class="preview">
+      <div class="previewbar">
+        <div class="muted">Preview (index.html)</div>
+        <div class="actions">
+          <button class="btn" id="btn-open-preview">Open in window</button>
+          <button class="btn" id="btn-blobs-all">Generate Blob links</button>
+        </div>
+      </div>
+      <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+      <div class="preview-footer">
+        <div class="muted">Blob links</div>
+        <div class="spacer"></div>
+      </div>
+      <div class="blob-list" id="blob-list"></div>
     </section>
-  </main>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal" id="modal-input">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div id="modal-title">Input</div>
+        <button class="btn ghost" id="modal-close">Close</button>
+      </div>
+      <div class="modal-body">
+        <input class="input" id="modal-value" placeholder="path or name..." />
+        <div class="help" id="modal-help"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn success" id="modal-ok">OK</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    // Utility: create element
-    const el = (tag, props = {}, children = []) => {
-      const node = document.createElement(tag);
-      Object.entries(props).forEach(([k,v]) => {
-        if (k === 'class') node.className = v;
-        else if (k === 'style') Object.assign(node.style, v);
-        else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
-        else if (k === 'dataset') Object.assign(node.dataset, v);
-        else node.setAttribute(k, v);
-      });
-      [].concat(children).filter(Boolean).forEach(c => {
-        if (typeof c === 'string') node.appendChild(document.createTextNode(c));
-        else node.appendChild(c);
-      });
-      return node;
+    // --- Utilities ---
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+    const nowIso = () => new Date().toISOString();
+    const STORAGE_KEY = "html-compiler-sandbox-project";
+    const HISTORY_KEY = "html-compiler-sandbox-history";
+
+    const DEFAULT_PROJECT = {
+      name: "My Sandbox",
+      files: {
+        "index.html": [
+          "<!DOCTYPE html>",
+          "<html>",
+          "<head>",
+          "  <meta charset='utf-8' />",
+          "  <meta name='viewport' content='width=device-width, initial-scale=1' />",
+          "  <title>Sandbox</title>",
+          "  <link rel='stylesheet' href='example.css' />",
+          "</head>",
+          "<body>",
+          "  <h1>Hello Sandbox</h1>",
+          "  <img src='assets/logo.svg' alt='Logo' />",
+          "  <script src='index.js'></script>",
+          "</body>",
+          "</html>"
+        ].join("\n"),
+        "index.js": [
+          "console.log('Sandbox JS loaded');",
+          "document.body.insertAdjacentHTML('beforeend', '<p>JS says hi 👋</p>');"
+        ].join("\n"),
+        "example.css": [
+          "body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }",
+          "h1 { color: #2563eb; }",
+          "img { width: 120px; }"
+        ].join("\n"),
+        "assets/logo.svg": [
+          "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'>",
+          "  <defs>",
+          "    <linearGradient id='g' x1='0' x2='1' y1='0' y2='1'>",
+          "      <stop offset='0%' stop-color='#2781ff'/>",
+          "      <stop offset='100%' stop-color='#7c5cff'/>",
+          "    </linearGradient>",
+          "  </defs>",
+          "  <rect width='120' height='120' rx='18' fill='url(#g)'/>",
+          "  <text x='60' y='68' font-size='48' text-anchor='middle' fill='white' font-family='monospace'>SB</text>",
+          "</svg>"
+        ].join("\n")
+      },
+      selectedPath: "index.html",
+      updatedAt: nowIso()
     };
 
-    // State
-    const itemsContainer = document.getElementById('items');
-    const dropzone = document.getElementById('dropzone');
-    const readClipboardBtn = document.getElementById('readClipboardBtn');
-    const clearBtn = document.getElementById('clearBtn');
+    let project = loadProject() || DEFAULT_PROJECT;
+    let blobs = {}; // path -> objectURL
+    let dirty = false;
 
-    let itemCount = 0;
-
-    // Helpers
-    const prettyBytes = (n) => {
-      if (n < 1024) return n + ' B';
-      const units = ['KB','MB','GB','TB'];
-      let i = -1; do { n /= 1024; i++; } while (n >= 1024 && i < units.length - 1);
-      return n.toFixed(n >= 100 ? 0 : n >= 10 ? 1 : 2) + ' ' + units[i];
-    };
-
-    const detectKind = (type, name = '') => {
-      const t = (type || '').toLowerCase();
-      if (t.startsWith('text/')) return 'text';
-      if (t === 'text/html') return 'html';
-      if (t === 'text/rtf' || name.toLowerCase().endsWith('.rtf')) return 'rtf';
-      if (t === 'application/json' || /\.json$/i.test(name)) return 'json';
-      if (t === 'text/csv' || /\.csv$/i.test(name)) return 'csv';
-      if (/xml/.test(t) || /\.xml$/i.test(name)) return 'xml';
-      if (/^image\//.test(t)) return 'image';
-      if (/^video\//.test(t)) return 'video';
-      if (/^audio\//.test(t)) return 'audio';
-      if (/pdf$/.test(t) || /\.pdf$/i.test(name)) return 'pdf';
-      if (!t && name) {
-        if (/\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(name)) return 'image';
-        if (/\.(mp4|webm|mov|mkv)$/i.test(name)) return 'video';
-        if (/\.(mp3|wav|ogg|m4a)$/i.test(name)) return 'audio';
-      }
-      return 'binary';
-    };
-
-    const sanitizeSrcDoc = (html) => {
-      // Minimal neutralization: remove scripts and event handlers
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('script, iframe, object, embed').forEach(n => n.remove());
-      // Remove inline event handlers
-      doc.querySelectorAll('*').forEach(n => {
-        [...n.attributes].forEach(a => {
-          if (/^on/i.test(a.name)) n.removeAttribute(a.name);
-        });
-      });
-      // Return cleaned HTML string
-      return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
-    };
-
-    const blobFromString = (str, type='text/plain') => new Blob([str], { type });
-
-    const toHexDump = async (blob, maxBytes = 4096) => {
-      const buf = await blob.arrayBuffer();
-      const view = new Uint8Array(buf.slice(0, Math.min(buf.byteLength, maxBytes)));
-      let out = '';
-      for (let i = 0; i < view.length; i += 16) {
-        const slice = view.slice(i, i + 16);
-        const hex = [...slice].map(b => b.toString(16).padStart(2, '0')).join(' ');
-        const ascii = [...slice].map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.').join('');
-        out += i.toString(16).padStart(8, '0') + '  ' + hex.padEnd(16*3 - 1, ' ') + '  |' + ascii + '|\n';
-      }
-      if (buf.byteLength > maxBytes) {
-        out += '\n… ' + (buf.byteLength - maxBytes) + ' bytes truncated';
-      }
-      return out;
-    };
-
-    const toBase64 = (blob) => new Promise(resolve => {
-      const fr = new FileReader();
-      fr.onload = () => resolve(String(fr.result).split(',')[1] || '');
-      fr.readAsDataURL(blob);
-    });
-
-    const prettyMaybe = (str, kind) => {
+    function loadProject() {
       try {
-        if (kind === 'json') {
-          return JSON.stringify(JSON.parse(str), null, 2);
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { console.warn(e); return null; }
+    }
+    function saveProject() {
+      project.updatedAt = nowIso();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+      dirty = false;
+      setStatus("Saved", "ok");
+      renderHistory(false);
+    }
+    function resetProject() {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(HISTORY_KEY);
+      project = JSON.parse(JSON.stringify(DEFAULT_PROJECT));
+      blobsReset();
+      renderAll();
+      setStatus("Reset to default", "warn");
+    }
+
+    function getFileContent(path) {
+      return project.files[path] ?? "";
+    }
+    function setFileContent(path, content) {
+      project.files[path] = content;
+      project.updatedAt = nowIso();
+      dirty = true;
+      setStatus("Unsaved changes", null);
+    }
+
+    function ensureFolder(path) {
+      return path;
+    }
+    function isFolder(path) {
+      return path.endsWith("/");
+    }
+    function pathJoin(a, b) {
+      if (!a) return b;
+      if (!b) return a;
+      return (a.endsWith("/") ? a : a + "/") + b;
+    }
+
+    // --- UI Rendering ---
+    function renderAll() {
+      $("#project-name").textContent = project.name;
+      renderTree();
+      renderEditor();
+      renderHistory(true);
+      updateBlobsList();
+    }
+
+    function renderTree() {
+      const treeEl = $("#file-tree");
+      treeEl.innerHTML = "";
+
+      const root = {};
+      for (const path of Object.keys(project.files)) {
+        const parts = path.split("/");
+        let cur = root;
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          const isLast = i === parts.length - 1;
+          if (!cur[part]) cur[part] = { __children__: {}, __file__: false };
+          if (isLast) cur[part].__file__ = true;
+          cur = cur[part].__children__;
         }
-        if (kind === 'csv') {
-          // Simple CSV to table
-          const rows = str.trim().split(/\r?\n/).map(r => r.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/));
-          const table = el('table', { style: { width: '100%', borderCollapse: 'collapse' }});
-          rows.forEach((row, i) => {
-            const tr = el('tr', { });
-            row.forEach(cell => {
-              const td = el(i===0 ? 'th' : 'td', { style: {
-                border: '1px solid #2b335c', padding: '6px 8px', background: i===0 ? '#1a2244' : '#0b1024', color: '#d7e0ff'
-              }}, [cell.replace(/^"|"$/g,'')]);
-              tr.appendChild(td);
-            });
-            table.appendChild(tr);
-          });
-          return table;
-        }
-        if (kind === 'xml') {
-          const xmlDoc = new DOMParser().parseFromString(str, 'application/xml');
-          const parseError = xmlDoc.querySelector('parsererror');
-          if (parseError) return str;
-          const serializer = new XMLSerializer();
-          const pretty = serializer.serializeToString(xmlDoc);
-          return pretty;
-        }
-        if (kind === 'rtf') {
-          // RTF raw view only (safe): don’t attempt full render to preserve fidelity
-          return str;
-        }
-        return str;
-      } catch {
-        return str;
-      }
-    };
-
-    const clearItems = () => {
-      itemsContainer.innerHTML = '';
-      itemsContainer.appendChild(el('div', { class: 'empty' }, ['まだ何もありません。何かをペーストするとここに表示されます。']));
-      itemCount = 0;
-    };
-
-    clearBtn.addEventListener('click', clearItems);
-
-    // Build UI card
-    const renderItem = async ({ type, name, blob, textValue }) => {
-      itemCount++;
-      // Determine kind
-      const kind = detectKind(type, name);
-      const size = blob ? blob.size : (textValue ? new TextEncoder().encode(textValue).length : 0);
-      const url = blob ? URL.createObjectURL(blob) : null;
-
-      const headLeft = el('div', {}, [
-        el('div', { class: 'row' }, [
-          el('span', { class: 'type-pill' }, [kind.toUpperCase(), ' — ', type || '(unknown)']),
-          name ? el('span', { class: 'pill' }, ['name: ', name]) : null
-        ]),
-        el('div', { class: 'meta' }, [
-          el('span', {}, ['サイズ: ', prettyBytes(size)]),
-          el('span', {}, ['アイテム#: ', String(itemCount)]),
-          el('span', {}, [url ? 'URL: blob://' + url.split('/').pop() : 'URL: (text)'])
-        ])
-      ]);
-
-      const downloadBtn = el('button', { class: 'btn' }, ['ダウンロード']);
-      downloadBtn.addEventListener('click', () => {
-        const a = document.createElement('a');
-        a.href = url || URL.createObjectURL(blobFromString(textValue || '', type || 'text/plain'));
-        a.download = (name && name.trim()) || (kind + '-' + String(itemCount) + (type ? '.' + (type.split('/')[1] || 'dat') : '.dat'));
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      });
-
-      const copyMimeBtn = el('button', { class: 'btn btn-ghost' }, ['MIMEをコピー']);
-      copyMimeBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(type || '');
-          copyMimeBtn.textContent = 'コピーしました';
-          setTimeout(() => copyMimeBtn.textContent = 'MIMEをコピー', 1500);
-        } catch {}
-      });
-
-      const headRight = el('div', { class: 'item-actions' }, [downloadBtn, copyMimeBtn]);
-
-      const head = el('div', { class: 'item-head' }, [headLeft, headRight]);
-      const body = el('div', { class: 'item-body' });
-
-      // Raw section
-      const rawSection = el('div', {}, [
-        el('div', { class: 'section-title' }, ['Raw（生データ表示）']),
-      ]);
-
-      // Preview section
-      const previewSection = el('div', {}, [
-        el('div', { class: 'section-title' }, ['Preview（プレビュー）']),
-      ]);
-
-      // Fill sections according to kind
-      if (blob) {
-        // Binary raw views
-        const hex = await toHexDump(blob);
-        const base64 = await toBase64(blob);
-
-        const rawTabs = el('div', { class: 'row' }, [
-          el('span', { class: 'pill' }, ['Hex']),
-          el('span', { class: 'pill' }, ['Base64'])
-        ]);
-        rawSection.appendChild(rawTabs);
-
-        const hexPre = el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [hex]);
-        const b64Pre = el('pre', { class: 'mono', style: { maxHeight: '180px' }}, [base64]);
-        rawSection.appendChild(hexPre);
-        rawSection.appendChild(b64Pre);
-
-        // Previews
-        if (kind === 'image') {
-          const img = el('img', { class: 'media', src: url, alt: name || type || 'image' });
-          previewSection.appendChild(img);
-        } else if (kind === 'video') {
-          const vid = el('video', { class: 'media', controls: 'true' });
-          vid.src = url;
-          previewSection.appendChild(vid);
-        } else if (kind === 'audio') {
-          const aud = el('audio', { class: 'media', controls: 'true' });
-          aud.src = url;
-          previewSection.appendChild(aud);
-        } else if (kind === 'pdf') {
-          const iframe = el('iframe', { class: 'preview-frame', src: url });
-          previewSection.appendChild(iframe);
-        } else if (kind === 'html') {
-          const text = await blob.text().catch(() => '');
-          const cleaned = sanitizeSrcDoc(text);
-          const iframe = el('iframe', { class: 'preview-frame', sandbox: 'allow-forms allow-pointer-lock allow-same-origin' });
-          iframe.srcdoc = cleaned;
-          previewSection.appendChild(iframe);
-
-          const plainPre = el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [text]);
-          rawSection.appendChild(plainPre);
-        } else if (kind === 'text' || kind === 'json' || kind === 'csv' || kind === 'xml' || kind === 'rtf') {
-          const text = await blob.text().catch(() => '');
-          const pretty = prettyMaybe(text, kind);
-          if (pretty instanceof HTMLElement) {
-            previewSection.appendChild(pretty);
-            rawSection.appendChild(el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [text]));
-          } else {
-            previewSection.appendChild(el('pre', { class: 'mono wrap', style: { maxHeight: '240px' }}, [pretty]));
-            rawSection.appendChild(el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [text]));
-          }
-        } else {
-          previewSection.appendChild(el('div', { class: 'hint' }, ['このMIMEは直接プレビューできません。Rawとダウンロードをご利用ください。']));
-        }
-      } else if (typeof textValue === 'string') {
-        const kindGuess = detectKind(type || 'text/plain', name);
-        const pretty = prettyMaybe(textValue, kindGuess);
-        previewSection.appendChild(
-          pretty instanceof HTMLElement
-            ? pretty
-            : el('pre', { class: 'mono wrap', style: { maxHeight: '240px' }}, [pretty])
-        );
-        rawSection.appendChild(el('pre', { class: 'mono', style: { maxHeight: '240px' }}, [textValue]));
       }
 
-      // Info section
-      const info = el('div', { class: 'kv' }, [
-        el('b', {}, ['MIME']),
-        el('span', {}, [type || '(unknown)']),
-        el('b', {}, ['名前']),
-        el('span', {}, [name || '(none)']),
-        el('b', {}, ['サイズ']),
-        el('span', {}, [prettyBytes(size)]),
-      ]);
+      function addNode(container, obj, basePath = "") {
+        for (const key of Object.keys(obj)) {
+          const nodeData = obj[key];
+          const fullPath = basePath ? basePath + "/" + key : key;
+          const isFile = nodeData.__file__;
+          const children = nodeData.__children__;
 
-      body.appendChild(info);
-      body.appendChild(previewSection);
-      body.appendChild(rawSection);
+          const node = document.createElement("div");
+          node.className = "node" + (project.selectedPath === fullPath ? " active" : "");
+          const icon = document.createElement("div");
+          icon.className = "icon";
+          icon.textContent = isFile ? "F" : "D";
+          const label = document.createElement("div");
+          label.className = "label";
+          label.textContent = key;
 
-      const card = el('div', { class: 'item' }, [head, body]);
-      itemsContainer.querySelector('.empty')?.remove();
-      itemsContainer.appendChild(card);
-    };
-
-    // Handle paste via clipboardData
-    const handlePasteEvent = async (e) => {
-      e.preventDefault(); // prevent native insert to keep zone clean
-      const dt = e.clipboardData;
-      if (!dt) return;
-
-      // Collect as much as possible
-      const types = dt.types || [];
-      const added = [];
-
-      // 1) Try items API for files and string types
-      if (dt.items && dt.items.length) {
-        for (const it of dt.items) {
-          try {
-            const type = it.type || '';
-            if (it.kind === 'file') {
-              const file = it.getAsFile();
-              if (file) {
-                await renderItem({ type: file.type || type || '', name: file.name || '', blob: file });
-                added.push(true);
-              }
-            } else if (it.kind === 'string') {
-              // getAsString preserves provided MIME when available
-              await new Promise(res => it.getAsString(async (str) => {
-                const t = type || 'text/plain';
-                await renderItem({ type: t, name: '', textValue: str });
-                res();
-              }));
-              added.push(true);
+          node.appendChild(icon);
+          node.appendChild(label);
+          node.addEventListener("click", () => {
+            if (isFile) {
+              selectFile(fullPath);
             }
-          } catch {}
-        }
-      }
+          });
 
-      // 2) Fallback: use getData for known types to catch Safari quirks
-      const known = ['text/plain','text/html','text/rtf','text/uri-list','application/json','text/csv','application/xml','text/xml'];
-      for (const t of known) {
-        try {
-          const data = dt.getData(t);
-          if (data) {
-            await renderItem({ type: t, name: '', textValue: data });
+          container.appendChild(node);
+
+          if (!isFile) {
+            const sub = document.createElement("div");
+            sub.style.marginLeft = "16px";
+            addNode(sub, children, fullPath);
+            container.appendChild(sub);
           }
-        } catch {}
-      }
-
-      // 3) Files via DataTransfer.files (e.g., screenshots)
-      if (dt.files && dt.files.length) {
-        for (const file of dt.files) {
-          await renderItem({ type: file.type || '', name: file.name || '', blob: file });
         }
       }
 
-      // Visual feedback
-      dropzone.classList.add('highlight');
-      setTimeout(() => dropzone.classList.remove('highlight'), 200);
-    };
+      addNode(treeEl, root, "");
+    }
 
-    // Handle drag & drop files
-    const handleDrop = async (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('highlight');
-      const dt = e.dataTransfer;
-      if (!dt) return;
-      if (dt.files && dt.files.length) {
-        for (const file of dt.files) {
-          await renderItem({ type: file.type || '', name: file.name || '', blob: file });
-        }
+    function renderEditor() {
+      const path = project.selectedPath;
+      $("#filepath").textContent = path ?? "No file selected";
+      const editor = $("#editor");
+      editor.value = path ? getFileContent(path) : "";
+    }
+
+    function selectFile(path) {
+      project.selectedPath = path;
+      renderTree();
+      renderEditor();
+    }
+
+    // --- History ---
+    function pushHistory(tag = "Snapshot") {
+      const snapshot = {
+        tag,
+        at: nowIso(),
+        project: project
+      };
+      const copy = JSON.parse(JSON.stringify(snapshot));
+      const list = loadHistory();
+      list.unshift(copy);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 200)));
+      renderHistory(false);
+    }
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) { return []; }
+    }
+    function renderHistory(initial) {
+      const listEl = $("#history-list");
+      const list = loadHistory();
+      if (initial && list.length === 0) {
+        pushHistory("Initial");
       }
-    };
-    const handleDragOver = (e) => { e.preventDefault(); dropzone.classList.add('highlight'); };
-    const handleDragLeave = (e) => { dropzone.classList.remove('highlight'); };
+      const latest = loadHistory();
+      listEl.innerHTML = "";
+      latest.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "history-item";
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.innerHTML = `
+          <span>${item.tag}</span>
+          <span>•</span>
+          <span>${new Date(item.at).toLocaleString()}</span>
+          <span>•</span>
+          <span>${Object.keys(item.project.files).length} files</span>
+        `;
+        const actions = document.createElement("div");
+        const btnRestore = document.createElement("button");
+        btnRestore.className = "btn";
+        btnRestore.textContent = "Restore";
+        btnRestore.addEventListener("click", () => {
+          project = JSON.parse(JSON.stringify(item.project));
+          saveProject();
+          blobsReset();
+          renderAll();
+          setStatus("Restored snapshot", "ok");
+        });
+        actions.appendChild(btnRestore);
+        row.appendChild(meta);
+        row.appendChild(actions);
+        listEl.appendChild(row);
+      });
+    }
 
-    // Clipboard API direct read
-    const readClipboard = async () => {
-      if (!navigator.clipboard || !navigator.clipboard.read) {
-        // Fallback: try readText
+    // --- Blobs ---
+    function blobsReset() {
+      for (const p in blobs) {
+        URL.revokeObjectURL(blobs[p]);
+      }
+      blobs = {};
+      updateBlobsList();
+    }
+    function generateBlobs() {
+      blobsReset();
+      for (const path of Object.keys(project.files)) {
+        const content = project.files[path];
+        const type = guessMime(path);
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        blobs[path] = url;
+      }
+      updateBlobsList();
+      setStatus("Blob links generated", "ok");
+    }
+    function updateBlobsList() {
+      const list = $("#blob-list");
+      list.innerHTML = "";
+      for (const path of Object.keys(blobs)) {
+        const row = document.createElement("div");
+        row.className = "blob-row";
+        const left = document.createElement("div");
+        left.className = "path";
+        left.textContent = path;
+        const right = document.createElement("div");
+        right.className = "url";
+        right.textContent = blobs[path];
+        const actions = document.createElement("div");
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "btn";
+        copyBtn.textContent = "Copy URL";
+        copyBtn.addEventListener("click", async () => {
+          await navigator.clipboard.writeText(blobs[path]);
+          setStatus("Blob URL copied", "ok");
+        });
+        const dlBtn = document.createElement("button");
+        dlBtn.className = "btn";
+        dlBtn.textContent = "Download";
+        dlBtn.addEventListener("click", () => downloadFile(path));
+        actions.appendChild(copyBtn);
+        actions.appendChild(dlBtn);
+        row.appendChild(left);
+        row.appendChild(right);
+        row.appendChild(actions);
+        list.appendChild(row);
+      }
+    }
+    function guessMime(path) {
+      const ext = (path.split(".").pop() || "").toLowerCase();
+      switch (ext) {
+        case "html": return "text/html";
+        case "js": return "text/javascript";
+        case "css": return "text/css";
+        case "svg": return "image/svg+xml";
+        case "png": return "image/png";
+        case "jpg":
+        case "jpeg": return "image/jpeg";
+        case "gif": return "image/gif";
+        case "json": return "application/json";
+        case "txt": return "text/plain";
+        default: return "application/octet-stream";
+      }
+    }
+
+    // --- Download ---
+    function downloadFile(path) {
+      const content = getFileContent(path);
+      const blob = new Blob([content], { type: guessMime(path) });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = path.split("/").pop();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setStatus("File downloaded", "ok");
+    }
+    function exportProject() {
+      const payload = JSON.stringify(project, null, 2);
+      const blob = new Blob([payload], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = (project.name.replace(/\s+/g,"_")) + ".project.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setStatus("Project exported (.json)", "ok");
+    }
+    async function importProject() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+        const text = await file.text();
         try {
-          const text = await navigator.clipboard.readText();
-          if (text) {
-            await renderItem({ type: 'text/plain', name: '', textValue: text });
+          const data = JSON.parse(text);
+          if (!data || !data.files || typeof data.files !== "object") {
+            alert("Invalid project file.");
             return;
           }
-        } catch {}
-        alert('このブラウザはClipboard.read()に対応していません。ペーストやドラッグ&ドロップをご利用ください。');
+          project = data;
+          saveProject();
+          blobsReset();
+          renderAll();
+          setStatus("Project imported", "ok");
+        } catch (e) {
+          alert("Failed to import: " + e.message);
+        }
+      };
+      input.click();
+    }
+
+    // --- Modal ---
+    const modal = $("#modal-input");
+    const modalTitle = $("#modal-title");
+    const modalValue = $("#modal-value");
+    const modalHelp = $("#modal-help");
+    const modalOk = $("#modal-ok");
+    const modalClose = $("#modal-close");
+
+    let modalResolver = null;
+    function askInput(title, help, placeholder = "", initial = "") {
+      modalTitle.textContent = title;
+      modalHelp.textContent = help;
+      modalValue.placeholder = placeholder;
+      modalValue.value = initial;
+      modal.classList.add("show");
+      return new Promise((resolve) => {
+        modalResolver = resolve;
+        modalValue.focus();
+      });
+    }
+    function closeModal() {
+      modal.classList.remove("show");
+      if (modalResolver) {
+        modalResolver(null);
+        modalResolver = null;
+      }
+    }
+    modalOk.addEventListener("click", () => {
+      if (modalResolver) {
+        const val = modalValue.value.trim();
+        modal.classList.remove("show");
+        modalResolver(val || null);
+        modalResolver = null;
+      }
+    });
+    modalClose.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // --- Editor interactions ---
+    $("#editor").addEventListener("input", (e) => {
+      const path = project.selectedPath;
+      if (!path) return;
+      setFileContent(path, e.target.value);
+    });
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        saveProject();
+        pushHistory("Manual Save");
+      }
+    });
+
+    // --- Buttons ---
+    $("#btn-save").addEventListener("click", () => { saveProject(); pushHistory("Manual Save"); });
+    $("#btn-clear").addEventListener("click", resetProject);
+    $("#btn-export").addEventListener("click", exportProject);
+    $("#btn-import").addEventListener("click", importProject);
+    $("#btn-open-preview").addEventListener("click", openPreviewWindow);
+
+    $("#btn-new-file").addEventListener("click", async () => {
+      const val = await askInput("New file", "例: index.html / scripts/app.js / styles/main.css", "path/to/file.ext");
+      if (!val) return;
+      if (project.files[val]) { alert("File already exists."); return; }
+      ensureFolder(val.split("/").slice(0,-1).join("/"));
+      project.files[val] = "";
+      project.selectedPath = val;
+      renderAll();
+      setStatus("File created", "ok");
+    });
+
+    $("#btn-new-folder").addEventListener("click", async () => {
+      const val = await askInput("New folder", "例: assets / scripts / styles", "folder/");
+      if (!val) return;
+      const path = val.endsWith("/") ? val : (val + "/");
+      const keep = path + ".keep";
+      if (!project.files[keep]) project.files[keep] = "";
+      renderAll();
+      setStatus("Folder created", "ok");
+    });
+
+    $("#btn-rename").addEventListener("click", async () => {
+      const path = project.selectedPath;
+      if (!path) { alert("Select a file first."); return; }
+      const val = await askInput("Rename", "新しいパスを入力してください。", "", path);
+      if (!val || val === path) return;
+      if (project.files[val]) { alert("Target path already exists."); return; }
+      project.files[val] = project.files[path];
+      delete project.files[path];
+      project.selectedPath = val;
+      renderAll();
+      saveProject();
+      setStatus("Renamed", "ok");
+    });
+
+    $("#btn-delete").addEventListener("click", () => {
+      const path = project.selectedPath;
+      if (!path) { alert("Select a file first."); return; }
+      if (!confirm('Delete "' + path + '"?')) return;
+      delete project.files[path];
+      project.selectedPath = Object.keys(project.files)[0] || null;
+      renderAll();
+      saveProject();
+      setStatus("Deleted", "warn");
+    });
+
+    $("#btn-rename-project").addEventListener("click", async () => {
+      const val = await askInput("Rename project", "プロジェクト名を入力してください。", "My Sandbox", project.name);
+      if (!val) return;
+      project.name = val;
+      saveProject();
+      renderAll();
+    });
+
+    $("#btn-download-file").addEventListener("click", () => {
+      const path = project.selectedPath;
+      if (!path) { alert("Select a file first."); return; }
+      downloadFile(path);
+    });
+
+    $("#btn-blob-file").addEventListener("click", () => {
+      const path = project.selectedPath;
+      if (!path) { alert("Select a file first."); return; }
+      const blob = new Blob([getFileContent(path)], { type: guessMime(path) });
+      const url = URL.createObjectURL(blob);
+      blobs[path] = url;
+      updateBlobsList();
+      setStatus("Blob created for file", "ok");
+    });
+
+    $("#btn-blobs-all").addEventListener("click", generateBlobs);
+
+    $("#btn-run").addEventListener("click", () => {
+      runPreview();
+    });
+
+    $("#btn-history-clear").addEventListener("click", () => {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory(false);
+      setStatus("History cleared", "warn");
+    });
+
+    $("#btn-snapshot").addEventListener("click", () => {
+      pushHistory("Snapshot");
+      setStatus("Snapshot saved", "ok");
+    });
+
+    // --- Status ---
+    function setStatus(text, kind) {
+      $("#status-text").textContent = text;
+      const dot = $("#status-dot");
+      dot.className = "status-dot";
+      if (kind === "ok") dot.classList.add("ok");
+      else if (kind === "warn") dot.classList.add("warn");
+    }
+
+    // --- Preview logic ---
+    function runPreview() {
+      generateBlobs();
+
+      const index = project.files["index.html"];
+      if (!index) {
+        $("#preview").srcdoc = "<!DOCTYPE html><html><body><p style='font-family:sans-serif'>index.html not found</p></body></html>";
         return;
       }
-      try {
-        const items = await navigator.clipboard.read();
-        for (const ci of items) {
-          // ci.types: list of MIME strings
-          for (const t of ci.types) {
-            try {
-              const blob = await ci.getType(t);
-              // Heuristic filename
-              const name = t.replace(/[^\w.-]+/g,'_') + '-' + Date.now();
-              await renderItem({ type: t, name, blob });
-            } catch {
-              // Try as text if blob failed
-              if (t.startsWith('text/')) {
-                try {
-                  const txtBlob = await ci.getType(t);
-                  const text = await txtBlob.text();
-                  await renderItem({ type: t, name: '', textValue: text });
-                } catch {}
-              }
-            }
-          }
-        }
-      } catch (err) {
-        alert('クリップボードの読み取りが拒否されました。ブラウザの設定で許可してください。');
-      }
-    };
+      const rewritten = rewriteHtmlForBlobs(index, blobs);
 
-    // Bind events
-    dropzone.addEventListener('paste', handlePasteEvent);
-    dropzone.addEventListener('dragover', handleDragOver);
-    dropzone.addEventListener('dragleave', handleDragLeave);
-    dropzone.addEventListener('drop', handleDrop);
+      $("#preview").srcdoc = rewritten;
+      setStatus("Preview rendered", "ok");
+    }
 
-    readClipboardBtn.addEventListener('click', readClipboard);
-
-    // Accessibility: focusable zone
-    dropzone.setAttribute('tabindex', '0');
-
-    // Global paste as backup (e.g., if user pastes without focusing zone)
-    window.addEventListener('paste', (e) => {
-      if (document.activeElement !== dropzone) {
-        handlePasteEvent(e);
-      }
-    });
-
-    // Cleanup blob URLs when leaving
-    window.addEventListener('beforeunload', () => {
-      document.querySelectorAll('img,video,audio,iframe').forEach(elm => {
-        const src = elm.src || elm.getAttribute('srcdoc');
-        if (src && src.startsWith('blob:')) URL.revokeObjectURL(src);
+    function rewriteHtmlForBlobs(html, blobMap) {
+      const attrPattern = /(src|href|poster|data)\s*=\s*(['"])(.*?)\2/gi;
+      const replaced = html.replace(attrPattern, function(m, attr, quote, url) {
+        const mapped = mapUrl(url, blobMap);
+        return attr + "=" + quote + mapped + quote;
       });
-    });
+
+      // パッチャー（テンプレート内のバッククォートと ${} を使わない）
+      const patcher =
+"<script>" +
+"(function(){" +
+"  const MAP = " + JSON.stringify(blobMap) + ";" +
+"  function mapUrl(u){" +
+"    if (!u) return u;" +
+"    if (Object.prototype.hasOwnProperty.call(MAP, u)) return MAP[u];" +
+"    var u2 = String(u).replace(/^\\.\\//,'');" +
+"    if (Object.prototype.hasOwnProperty.call(MAP, u2)) return MAP[u2];" +
+"    return u;" +
+"  }" +
+"  document.addEventListener('DOMContentLoaded', function(){" +
+"    var attrs = ['src','href','poster','data'];" +
+"    var all = document.querySelectorAll('*');" +
+"    for (var i=0;i<all.length;i++) {" +
+"      var el = all[i];" +
+"      for (var j=0;j<attrs.length;j++) {" +
+"        var a = attrs[j];" +
+"        if (el.hasAttribute(a)) {" +
+"          var val = el.getAttribute(a);" +
+"          var mapped = mapUrl(val);" +
+"          if (mapped !== val) el.setAttribute(a, mapped);" +
+"        }" +
+"      }" +
+"    }" +
+"  });" +
+"  var origFetch = window.fetch.bind(window);" +
+"  window.fetch = function(input, init) {" +
+"    try {" +
+"      var u = (typeof input === 'string') ? input : input.url;" +
+"      var mapped = mapUrl(u);" +
+"      if (typeof input === 'string') return origFetch(mapped, init);" +
+"      var req = new Request(mapped, input);" +
+"      return origFetch(req, init);" +
+"    } catch (e) {" +
+"      return origFetch(input, init);" +
+"    }" +
+"  };" +
+"  function rewriteCssText(cssText) {" +
+"    return cssText.replace(/url\\(\\s*(['\"]?)(.*?)\\1\\s*\\)/g, function(m, q, url) {" +
+"      var mapped = mapUrl(url);" +
+"      return 'url(' + q + mapped + q + ')';" +
+"    });" +
+"  }" +
+"  function tryRewriteStyleSheet(sheet) {" +
+"    try {" +
+"      var rules = sheet.cssRules;" +
+"      if (!rules) return;" +
+"      var combined = '';" +
+"      for (var i=0;i<rules.length;i++) {" +
+"        combined += rules[i].cssText + '\\n';" +
+"      }" +
+"      var rewritten = rewriteCssText(combined);" +
+"      var blob = new Blob([rewritten], { type: 'text/css' });" +
+"      var url = URL.createObjectURL(blob);" +
+"      var owner = sheet.ownerNode;" +
+"      if (owner && owner.tagName === 'STYLE') {" +
+"        owner.textContent = rewritten;" +
+"      } else if (owner && owner.tagName === 'LINK') {" +
+"        owner.href = url;" +
+"      }" +
+"    } catch (e) { /* ignore cross-origin */ }" +
+"  }" +
+"  window.addEventListener('load', function(){" +
+"    var list = Array.prototype.slice.call(document.styleSheets);" +
+"    for (var i=0;i<list.length;i++) {" +
+"      tryRewriteStyleSheet(list[i]);" +
+"    }" +
+"  });" +
+"})();" +
+"</script>";
+
+      if (/<head[^>]*>/i.test(replaced)) {
+        return replaced.replace(/<head[^>]*>/i, function(m) { return m + patcher; });
+      }
+      if (/<\/body>/i.test(replaced)) {
+        return replaced.replace(/<\/body>/i, patcher + "</body>");
+      }
+      return replaced + patcher;
+    }
+
+    function mapUrl(u, blobMap) {
+      if (!u) return u;
+      if (Object.prototype.hasOwnProperty.call(blobMap, u)) return blobMap[u];
+      const u2 = String(u).replace(/^\.\//,'');
+      if (Object.prototype.hasOwnProperty.call(blobMap, u2)) return blobMap[u2];
+      return u;
+    }
+
+    function openPreviewWindow() {
+      generateBlobs();
+      const index = project.files["index.html"];
+      if (!index) { alert("index.html not found"); return; }
+      const rewritten = rewriteHtmlForBlobs(index, blobs);
+      const blob = new Blob([rewritten], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setStatus("Preview opened in new window", "ok");
+    }
+
+    // --- Init ---
+    renderAll();
+    setStatus("Ready", "ok");
   </script>
 </body>
 </html>
