@@ -1,806 +1,952 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>In-Browser HTML Compiler — CodeSandbox/Glitch Style</title>
+  <title>HTML Compiler — Virtual Filesystem Sandbox</title>
   <style>
     :root{
-      --bg:#0f1220;
-      --panel:#151a2f;
-      --panel-2:#1b2140;
-      --accent:#6ce4ff;
-      --accent-2:#9b8cff;
-      --text:#e9ecf6;
-      --muted:#9aa1b5;
-      --danger:#ff6c6c;
-      --ok:#78e08f;
-      --warn:#ffcf6c;
-      --border:rgba(255,255,255,0.08);
-      --shadow:0 8px 24px rgba(0,0,0,0.35);
-      --radius:12px;
-      --radius-sm:8px;
+      --bg:#0f1320;
+      --panel:#141826;
+      --panel-2:#1a1f2e;
+      --border:#252a3a;
+      --text:#dfe7ff;
+      --muted:#9aa7c7;
+      --accent:#7aa2ff;
+      --accent-2:#67e8f9;
+      --danger:#ff7a7a;
+      --good:#7aff9a;
+      --warn:#ffd27a;
+      --shadow:0 10px 30px rgba(0,0,0,0.35);
+      --radius:10px;
+      --radius-sm:7px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      --sans: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
     }
-    *{ box-sizing:border-box }
-    html,body{ height:100%; background:var(--bg); color:var(--text); margin:0; font-family:var(--sans); }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg, #0c1020 0%, #0f1320 100%);
+      color:var(--text);
+      font-family:var(--sans);
+    }
     .app{
       display:grid;
-      grid-template-columns: 280px 1fr 38%;
-      grid-template-rows: auto 1fr auto;
-      grid-template-areas:
-        "topbar topbar topbar"
-        "sidebar editor preview"
-        "status status status";
-      gap:16px;
-      padding:16px;
+      grid-template-rows:auto 1fr auto;
+      height:100%;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px 16px;
+      background:var(--panel);
+      border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:10;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:600; letter-spacing:0.2px;
+    }
+    .brand .logo{
+      width:28px; height:28px; border-radius:7px;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow:0 6px 18px rgba(122,162,255,0.35);
+    }
+    .topbar .spacer{flex:1}
+    .btn{
+      appearance:none; border:none; outline:none;
+      background:var(--panel-2);
+      color:var(--text);
+      padding:8px 12px; border-radius:8px;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      font-weight:600; letter-spacing:0.1px;
+      transition:transform 0.05s ease, background 0.2s ease, border-color 0.2s ease;
+      cursor:pointer;
+    }
+    .btn:hover{transform:translateY(-1px); background:#20263a}
+    .btn:active{transform:translateY(0)}
+    .btn.primary{background:linear-gradient(135deg, #1c2450, #16203f); border-color:#2b3760}
+    .btn.good{border-color:#2c5c40}
+    .btn.warn{border-color:#5c4c2c}
+    .btn.danger{border-color:#5c2c2c}
+    .btn.small{padding:6px 10px; font-size:13px}
+    .toolbar{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .main{
+      display:grid;
+      grid-template-columns:280px 1fr 38%;
+      gap:12px;
+      padding:12px;
     }
     .panel{
-      background:linear-gradient(180deg, var(--panel), var(--panel-2));
+      background:var(--panel);
       border:1px solid var(--border);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex; flex-direction:column;
+      min-height:0;
     }
-    .topbar{
-      grid-area:topbar;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:12px 16px;
+    .panel .header{
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
     }
-    .brand{
-      display:flex; align-items:center; gap:12px; font-weight:600; letter-spacing:0.2px;
+    .panel .header h2{
+      margin:0; font-size:14px; color:var(--muted); font-weight:700; letter-spacing:0.3px; text-transform:uppercase;
     }
-    .brand-badge{
-      width:28px; height:28px; border-radius:8px;
-      background: conic-gradient(from 180deg, var(--accent), var(--accent-2), var(--accent), var(--accent-2));
-      box-shadow:0 0 0 2px rgba(255,255,255,0.08), 0 8px 20px rgba(108,228,255,0.35);
+    .panel .content{
+      padding:8px; overflow:auto; min-height:0; flex:1;
     }
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
-    .btn{
-      appearance:none; border:1px solid var(--border); color:var(--text);
-      background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
-      transition:transform .06s ease, box-shadow .12s ease, border-color .12s ease;
+    /* File tree */
+    .tree{
+      font-family:var(--mono);
+      font-size:13px;
+      user-select:none;
     }
-    .btn:hover{ transform:translateY(-1px); border-color:rgba(255,255,255,0.16); box-shadow:0 6px 18px rgba(0,0,0,0.28); }
-    .btn:active{ transform:translateY(0px) scale(0.98); }
-    .btn-primary{ border-color: rgba(108,228,255,0.45); color:#001017; background: linear-gradient(180deg, var(--accent), #4ac5e8); }
-    .btn-outline{ border-color: rgba(155,140,255,0.45); color: var(--accent-2); }
-    .btn-danger{ border-color: rgba(255,108,108,0.45); color: #240b0b; background: linear-gradient(180deg, var(--danger), #f05c5c); }
-    .btn-ok{ border-color: rgba(120,224,143,0.45); color: #062113; background: linear-gradient(180deg, var(--ok), #57c983); }
-    .btn-warn{ border-color: rgba(255,207,108,0.45); color: #241b06; background: linear-gradient(180deg, var(--warn), #f1b44f); }
-
-    .sidebar{
-      grid-area:sidebar; display:flex; flex-direction:column; overflow:hidden;
+    .tree .node{
+      display:flex; align-items:center; gap:8px; padding:6px 6px; border-radius:7px; cursor:pointer;
     }
-    .sidebar .header{ padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
-    .filetree{
-      padding:8px; overflow:auto; height:100%;
+    .tree .node:hover{background:#1b2133}
+    .tree .node.active{background:#1f2840; border:1px solid #2a3458}
+    .tree .node .icon{
+      width:18px; height:18px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center;
+      color:#cfe1ff; font-size:11px; background:#273154; border:1px solid #303a62;
     }
-    .node{ display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:10px; cursor:pointer; }
-    .node:hover{ background:rgba(255,255,255,0.04); }
-    .node.active{ background:rgba(108,228,255,0.12); border:1px solid rgba(108,228,255,0.25); }
-    .node .icon{
-      width:18px; height:18px; border-radius:4px; flex-shrink:0;
-      background: radial-gradient(circle at 30% 30%, var(--accent-2), var(--accent));
-      box-shadow:0 2px 8px rgba(0,0,0,0.35);
+    .tree .children{padding-left:14px}
+    .tree .empty{color:var(--muted); padding:8px; font-style:italic}
+    .tree .actions{display:flex; gap:6px; padding:8px}
+    .input{
+      width:100%;
+      background:#101425; color:var(--text);
+      border:1px solid var(--border);
+      border-radius:8px; padding:8px 10px; box-shadow:var(--shadow);
     }
-    .node.folder .icon{ background: radial-gradient(circle at 30% 30%, #ffd66c, #f6a04e); }
-    .node.asset .icon{ background: radial-gradient(circle at 30% 30%, #6cffb0, #2fd786); }
-
+    /* Editor */
     .editor{
-      grid-area:editor; display:flex; flex-direction:column;
+      display:flex; flex-direction:column; gap:8px; height:100%;
     }
-    .editor .header{
+    .editor .filename{
+      font-family:var(--mono); font-size:12px; color:var(--muted);
+    }
+    .editor textarea{
+      flex:1; width:100%; resize:none;
+      background:#0b1022; color:#e8f0ff;
+      border:1px solid #273154;
+      border-radius:10px;
+      padding:12px; font-family:var(--mono);
+      line-height:1.5; font-size:13px;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03), var(--shadow);
+    }
+    .editor .footer{
+      display:flex; gap:8px; align-items:center; justify-content:flex-end;
+    }
+    .editor .status{
+      color:var(--muted); font-size:12px; margin-right:auto;
+    }
+    /* Preview */
+    .preview{
+      display:flex; flex-direction:column; gap:8px; height:100%;
+    }
+    .preview .frame{
+      flex:1; border:1px solid #273154; border-radius:10px; overflow:hidden; background:#0b1022;
+      box-shadow:var(--shadow);
+    }
+    .preview iframe{
+      width:100%; height:100%; border:0; background:white;
+    }
+    /* History */
+    .history-list{
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .history-item{
+      padding:8px; border:1px solid var(--border); border-radius:8px; background:#12172a;
+      display:flex; align-items:center; gap:8px;
+    }
+    .history-item .meta{flex:1}
+    .history-item .meta .time{color:var(--muted); font-size:12px}
+    .history-item .badge{
+      font-size:12px; padding:2px 6px; border-radius:999px; border:1px solid #31406e; background:#1b2240; color:#cfe1ff;
+    }
+    /* Modals & toasts */
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,0.45);
+      display:none; align-items:center; justify-content:center; z-index:100;
+    }
+    .modal{
+      width:min(700px, 92vw); max-height:80vh; overflow:auto;
+      background:var(--panel); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow);
+    }
+    .modal .header{
       padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;
     }
-    .filename{
-      font-weight:700; color:var(--accent);
+    .modal .body{padding:12px 16px}
+    .modal .footer{padding:12px 16px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px}
+    .kv{display:grid; grid-template-columns:160px 1fr; gap:8px; align-items:center}
+    .kv .key{color:var(--muted); font-size:13px}
+    .kv .val{font-family:var(--mono); font-size:13px}
+    .toast{
+      position:fixed; bottom:14px; right:14px; background:#16203f; border:1px solid #2a3458;
+      color:#cfe1ff; padding:10px 12px; border-radius:9px; box-shadow:var(--shadow);
+      display:none; z-index:101;
     }
-    .textarea-wrap{
-      flex:1; padding:12px; overflow:auto;
+    @media (max-width: 1100px){
+      .main{grid-template-columns:280px 1fr}
+      .preview{grid-column:1 / -1}
     }
-    textarea{
-      width:100%; height:100%; resize:none; outline:none; border:none;
-      background:linear-gradient(180deg, #0c101e, #0b0f19);
-      color:var(--text); font-family:var(--mono); font-size:13.5px; line-height:1.55;
-      padding:16px; border-radius:var(--radius); box-shadow:inset 0 0 0 1px var(--border), var(--shadow);
-    }
-    .textarea-footer{
-      display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-top:1px solid var(--border);
-      color:var(--muted); font-size:12px;
-    }
-
-    .preview{
-      grid-area:preview; display:flex; flex-direction:column;
-    }
-    .preview .header{
-      padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; justify-content:space-between;
-    }
-    iframe{
-      flex:1; border:none; background:#0a0d16; border-radius: var(--radius); margin:12px; box-shadow:var(--shadow);
-    }
-
-    .status{
-      grid-area:status; display:flex; align-items:center; justify-content:space-between;
-      padding:10px 16px; color:var(--muted); font-size:12px;
-    }
-    .pill{
-      padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid var(--border);
-    }
-
-    .divider{ height:1px; background:var(--border); margin:8px 0; }
-
-    .small{
-      font-size:12px; color:var(--muted);
-    }
-
-    .input, .select{
-      width:auto; min-width:180px; padding:8px 10px; border-radius:10px; border:1px solid var(--border);
-      background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); color:var(--text);
-      outline:none;
-    }
-    .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .grow{ flex:1 }
-    .hidden{ display:none }
-
-    /* Scrollbars */
-    ::-webkit-scrollbar{ width:10px; height:10px }
-    ::-webkit-scrollbar-thumb{
-      background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08));
-      border:2px solid rgba(0,0,0,0.25); border-radius:999px;
-    }
-    ::-webkit-scrollbar-track{ background:transparent }
-
-    /* Tooltip-ish title style overrides */
-    .btn[title]{ position:relative }
   </style>
 </head>
 <body>
   <div class="app">
-    <div class="panel topbar">
+    <div class="topbar">
       <div class="brand">
-        <div class="brand-badge"></div>
-        <div>HTML Compiler — Sandbox Style</div>
+        <div class="logo" aria-hidden="true"></div>
+        <div>HTML Compiler — Sandbox</div>
       </div>
-      <div class="actions">
-        <button class="btn btn-primary" id="runBtn" title="プレビューを再生成">Run</button>
-        <button class="btn btn-outline" id="blobBtn" title="現在ファイルのBlob URLを生成">Blob URL</button>
-        <button class="btn" id="downloadBtn" title="現在ファイルをダウンロード">Download</button>
-        <button class="btn btn-ok" id="saveBtn" title="履歴に保存">Save</button>
-        <button class="btn btn-warn" id="historyBtn" title="履歴から復元">History</button>
-        <button class="btn btn-danger" id="resetBtn" title="初期プロジェクトに戻す">Reset</button>
-      </div>
-    </div>
-
-    <div class="panel sidebar">
-      <div class="header">
-        <div class="row grow">
-          <input id="newPath" class="input grow" placeholder="例: /index.html や /about/page.html や /assets/logo.png" />
-          <select id="newType" class="select">
-            <option value="text/html">text/html</option>
-            <option value="text/css">text/css</option>
-            <option value="application/javascript">application/javascript</option>
-            <option value="image/png">image/png</option>
-            <option value="image/svg+xml">image/svg+xml</option>
-            <option value="text/plain">text/plain</option>
-            <option value="application/json">application/json</option>
-          </select>
-        </div>
-        <div class="row">
-          <button class="btn" id="addFileBtn">Add file</button>
-          <button class="btn" id="addFolderBtn">Add folder</button>
-          <button class="btn" id="deleteBtn">Delete</button>
-        </div>
-      </div>
-      <div class="filetree" id="fileTree"></div>
-    </div>
-
-    <div class="panel editor">
-      <div class="header">
-        <div>
-          <span class="filename" id="filenameLabel">/index.html</span>
-          <span class="small" id="mimeLabel">text/html</span>
-        </div>
-        <div class="row">
-          <label class="small">Tabs:</label>
-          <select id="tabSize" class="select">
-            <option>2</option>
-            <option selected>4</option>
-            <option>8</option>
-          </select>
-          <label class="small">Wrap:</label>
-          <select id="wrapMode" class="select">
-            <option value="soft">soft</option>
-            <option value="off">off</option>
-          </select>
-        </div>
-      </div>
-      <div class="textarea-wrap">
-        <textarea id="editor" spellcheck="false"></textarea>
-      </div>
-      <div class="textarea-footer">
-        <div class="row">
-          <div class="pill" id="statusText">Ready</div>
-        </div>
-        <div class="row">
-          <div class="small">保存は自動（ローカル）。履歴に複数スナップショット可能。</div>
-        </div>
+      <div class="spacer"></div>
+      <div class="toolbar">
+        <button class="btn primary" id="runBtn">Run</button>
+        <button class="btn" id="blobLinkBtn">Open blob link</button>
+        <button class="btn" id="downloadBtn">Download project (.tar)</button>
+        <button class="btn" id="saveSnapshotBtn">Save snapshot</button>
+        <button class="btn" id="resetBtn">Reset</button>
       </div>
     </div>
 
-    <div class="panel preview">
-      <div class="header">
-        <div class="row">
-          <div class="pill">Preview</div>
-          <div class="small">リンク/CSS/JSは自動でインライン化。画像やアセットはBlob化。</div>
+    <div class="main">
+      <div class="panel" id="filesPanel">
+        <div class="header">
+          <h2>Files</h2>
+          <div class="toolbar">
+            <button class="btn small" id="addFileBtn">+ File</button>
+            <button class="btn small" id="addFolderBtn">+ Folder</button>
+            <button class="btn small" id="renameBtn">Rename</button>
+            <button class="btn small danger" id="deleteBtn">Delete</button>
+          </div>
         </div>
-        <div class="row">
-          <select id="entrySelect" class="select"></select>
-          <button class="btn" id="refreshBtn">Refresh</button>
-          <button class="btn" id="openNewBtn">Open in new tab</button>
+        <div class="content">
+          <div class="tree" id="tree"></div>
         </div>
       </div>
-      <iframe id="preview"></iframe>
+
+      <div class="panel">
+        <div class="header">
+          <h2>Editor</h2>
+          <div class="filename" id="filenameLabel"></div>
+        </div>
+        <div class="content editor">
+          <textarea id="editor" placeholder="Type here..."></textarea>
+          <div class="footer">
+            <div class="status" id="status">Ready</div>
+            <button class="btn" id="formatBtn">Format</button>
+            <button class="btn good" id="saveBtn">Save file</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="header">
+          <h2>Preview</h2>
+          <div class="toolbar">
+            <button class="btn small" id="refreshPreviewBtn">Refresh</button>
+          </div>
+        </div>
+        <div class="content preview">
+          <div class="frame">
+            <iframe id="previewFrame" title="Preview"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="grid-column: 1 / -1;">
+        <div class="header">
+          <h2>History</h2>
+          <div class="toolbar">
+            <button class="btn small" id="clearHistoryBtn">Clear history</button>
+          </div>
+        </div>
+        <div class="content">
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </div>
     </div>
 
-    <div class="panel status">
-      <div class="row">
-        <div class="pill">ローカル保存: localStorage</div>
-        <div class="pill">履歴スナップショット: 複数保存/復元</div>
-        <div class="pill">Blob生成/ダウンロード: 個別ファイル</div>
-      </div>
-      <div class="row">
-        <div class="small">Theme: CodeSandbox/Glitch inspired • Single big editor • Simple inline bundler</div>
+    <div class="toast" id="toast"></div>
+
+    <!-- Generic modal -->
+    <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="header">
+          <div id="modalTitle"></div>
+          <button class="btn small" id="modalCloseBtn">Close</button>
+        </div>
+        <div class="body" id="modalBody"></div>
+        <div class="footer" id="modalFooter"></div>
       </div>
     </div>
   </div>
 
   <script>
-    // --- Utility and State ---
-    const LS_KEY = "html-compiler-project-v1";
-    const LS_HISTORY = "html-compiler-history-v1";
+    // --- Utilities ---
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const safeName = name => name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_{2,}/g,'_').trim();
+    const joinPath = (a,b) => (a ? (a.replace(/\/+$/,'') + '/' + b.replace(/^\/+/,'') ) : b).replace(/\/{2,}/g,'/');
+    const dirname = p => p.split('/').slice(0,-1).join('/');
+    const basename = p => p.split('/').pop();
+    const nowIso = () => new Date().toISOString();
 
-    /** Virtual file system: { path: {mime, content(bytes or text), isBinary(bool)} } */
-    let VFS = {};
-    let currentPath = "/index.html";
-    let tabSize = 4;
-    let wrapMode = "soft";
+    function showToast(msg){
+      const t = $('#toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(()=>{ t.style.display='none'; }, 2000);
+    }
 
-    // --- Defaults ---
-    function defaultProject(){
-      return {
-        "/index.html": {
-          mime: "text/html",
-          isBinary: false,
-          content:
-`<!DOCTYPE html>
+    function showModal(title, bodyNode, footerButtons = []){
+      $('#modalTitle').textContent = title;
+      const body = $('#modalBody');
+      body.innerHTML = '';
+      body.appendChild(bodyNode);
+      const foot = $('#modalFooter');
+      foot.innerHTML = '';
+      footerButtons.forEach(({label, className='btn', onClick})=>{
+        const b = document.createElement('button');
+        b.className = className;
+        b.textContent = label;
+        b.addEventListener('click', onClick);
+        foot.appendChild(b);
+      });
+      const mb = $('#modalBackdrop');
+      mb.style.display = 'flex';
+    }
+    function closeModal(){ $('#modalBackdrop').style.display='none'; }
+    $('#modalCloseBtn').addEventListener('click', closeModal);
+    $('#modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+
+    // --- Virtual filesystem model ---
+    const STORAGE_KEY = 'html-compiler-vfs';
+    const HISTORY_KEY = 'html-compiler-history';
+
+    const defaultFiles = {
+      'index.html': `<!DOCTYPE html>
 <html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>サンプル — ルート付き</title>
-  <link rel="stylesheet" href="/styles/example.css" />
-</head>
-<body>
-  <header>
-    <h1>ようこそ！</h1>
-    <nav>
-      <a href="/index.html">Home</a>
-      <a href="/about/index.html">About</a>
-    </nav>
-  </header>
-  <main>
-    <p>これはブラウザ内で動く小さな「HTMLコンパイラ」です。</p>
-    <img src="/assets/logo.svg" alt="logo" width="120" />
-    <p>ボタンから Run でプレビューを更新、ファイル追加でルート風構成を作れます。</p>
-    <script src="/scripts/index.js"></script>
-  </main>
-</body>
-</html>`
-        },
-        "/styles/example.css": {
-          mime: "text/css",
-          isBinary: false,
-          content:
-`body{ font-family: system-ui, sans-serif; margin:0; padding:20px; background:#0b111d; color:#e9ecf6 }
-header{ display:flex; align-items:center; gap:20px; margin-bottom:20px }
-nav a{ color:#6ce4ff; text-decoration:none; margin-right:12px }
-nav a:hover{ text-decoration:underline }
-main{ background:#0e1528; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:20px }
-img{ filter: drop-shadow(0 6px 14px rgba(108,228,255,0.35)) }`
-        },
-        "/scripts/index.js": {
-          mime: "application/javascript",
-          isBinary: false,
-          content:
-`console.log("Hello from /scripts/index.js");
-document.querySelector("h1").style.color = "#9b8cff";`
-        },
-        "/about/index.html": {
-          mime: "text/html",
-          isBinary: false,
-          content:
-`<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>About</title>
-  <link rel="stylesheet" href="/styles/example.css" />
-</head>
-<body>
-  <header>
-    <h1>このプロジェクトについて</h1>
-    <nav>
-      <a href="/index.html">Home</a>
-      <a href="/about/index.html">About</a>
-    </nav>
-  </header>
-  <main>
-    <p>ファイルは仮想的に保存され、プレビューではインライン化して実行します。</p>
-  </main>
-</body>
-</html>`
-        },
-        "/assets/logo.svg": {
-          mime: "image/svg+xml",
-          isBinary: false,
-          content:
-`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#6ce4ff"/>
-      <stop offset="1" stop-color="#9b8cff"/>
-    </linearGradient>
-  </defs>
-  <rect x="16" y="16" width="224" height="224" rx="42" fill="url(#g)"/>
-  <circle cx="128" cy="128" r="58" fill="#0f1220"/>
-  <path d="M96 112h64v32H96z" fill="#6ce4ff"/>
-</svg>`
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sandbox App</title>
+    <link rel="stylesheet" href="/example.css" />
+  </head>
+  <body>
+    <main>
+      <h1>こんにちは Sandbox</h1>
+      <p>これは仮想ファイルシステムから提供されています。</p>
+      <button id="countBtn">Count: <span id="count">0</span></button>
+    </main>
+    <script src="/index.js"></script>
+  </body>
+</html>`,
+      'index.js': `let count = 0;
+const btn = document.getElementById('countBtn');
+const span = document.getElementById('count');
+btn?.addEventListener('click', ()=>{
+  count++;
+  span.textContent = String(count);
+});`,
+      'example.css': `:root{
+  --bg: #101622;
+  --text: #1b2740;
+  --primary: #2a5fff;
+}
+*{box-sizing:border-box}
+body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#f6f8ff}
+main{
+  max-width: 720px; margin: 60px auto; padding: 24px;
+  background:white; border:1px solid #e3e8ff; border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(42,95,255,0.12);
+}
+h1{color:#2a5fff; margin-top:0}
+button{
+  border:1px solid #cfe1ff; border-radius:10px; padding:10px 12px;
+  background:#f0f5ff; color:#1b2740; font-weight:600; cursor:pointer;
+}
+button:hover{background:#e7f0ff}
+`
+    };
+
+    let vfs = loadVfs();
+    let activePath = Object.keys(vfs.files)[0] || 'index.html';
+
+    function loadVfs(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          if(parsed && parsed.files && typeof parsed.files === 'object'){
+            return parsed;
+          }
         }
-      };
+      }catch(e){}
+      return { files: {...defaultFiles} };
+    }
+    function saveVfs(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(vfs));
+      refreshServiceWorkerCache();
     }
 
-    // --- Persistence ---
-    function saveVFS(){
-      const serial = {};
-      for(const [path, file] of Object.entries(VFS)){
-        serial[path] = {
-          mime: file.mime,
-          isBinary: file.isBinary,
-          content: file.isBinary ? Array.from(file.content) : file.content
-        };
-      }
-      localStorage.setItem(LS_KEY, JSON.stringify(serial));
-      setStatus("Saved");
+    // --- History snapshots ---
+    function loadHistory(){
+      try{
+        const raw = localStorage.getItem(HISTORY_KEY);
+        if(raw) return JSON.parse(raw);
+      }catch(e){}
+      return [];
     }
-    function loadVFS(){
-      const raw = localStorage.getItem(LS_KEY);
-      if(!raw){
-        VFS = defaultProject();
-        saveVFS();
+    function saveHistory(history){
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    }
+    let history = loadHistory();
+
+    function addSnapshot(note='snapshot'){
+      const snap = {
+        id: crypto.randomUUID(),
+        time: nowIso(),
+        note,
+        files: vfs.files
+      };
+      history.unshift(snap);
+      saveHistory(history);
+      renderHistory();
+      showToast('Snapshot saved');
+    }
+
+    function renderHistory(){
+      const list = $('#historyList');
+      list.innerHTML = '';
+      if(history.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'tree empty';
+        empty.textContent = 'No history yet.';
+        list.appendChild(empty);
         return;
       }
-      const parsed = JSON.parse(raw);
-      const restored = {};
-      for(const [path, file] of Object.entries(parsed)){
-        restored[path] = {
-          mime: file.mime,
-          isBinary: file.isBinary,
-          content: file.isBinary ? new Uint8Array(file.content) : file.content
-        };
-      }
-      VFS = restored;
-    }
-    function saveHistory(){
-      const snap = {
-        ts: new Date().toISOString(),
-        data: localStorage.getItem(LS_KEY)
-      };
-      const list = JSON.parse(localStorage.getItem(LS_HISTORY) || "[]");
-      list.unshift(snap);
-      localStorage.setItem(LS_HISTORY, JSON.stringify(list.slice(0, 50))); // keep last 50
-      setStatus("Snapshot saved");
-    }
-    function showHistory(){
-      const list = JSON.parse(localStorage.getItem(LS_HISTORY) || "[]");
-      if(list.length === 0){ alert("履歴はまだありません"); return; }
-      const items = list.map((x,i)=> `${i+1}. ${x.ts}`).join("\n");
-      const pick = prompt(`復元する番号を選んでください:\n${items}\n\n番号を入力（1-${list.length})`);
-      if(!pick) return;
-      const idx = parseInt(pick, 10) - 1;
-      if(isNaN(idx) || idx < 0 || idx >= list.length){ alert("不正な番号です"); return; }
-      const data = JSON.parse(list[idx].data);
-      const restored = {};
-      for(const [path, file] of Object.entries(data)){
-        restored[path] = {
-          mime: file.mime,
-          isBinary: file.isBinary,
-          content: file.isBinary ? new Uint8Array(file.content) : file.content
-        };
-      }
-      VFS = restored;
-      saveVFS();
-      refreshFileTree();
-      selectFile(Object.keys(VFS).includes(currentPath) ? currentPath : "/index.html");
-      buildPreview();
-      setStatus("履歴から復元しました");
-    }
-
-    // --- UI helpers ---
-    function setStatus(msg){ document.getElementById("statusText").textContent = msg; }
-
-    function pathParts(p){
-      return p.split("/").filter(Boolean);
-    }
-    function ensureFolder(p){
-      const parts = pathParts(p);
-      // folder paths end without extension
-      return parts.length && !parts[parts.length-1].includes(".");
-    }
-
-    function refreshFileTree(){
-      const treeEl = document.getElementById("fileTree");
-      treeEl.innerHTML = "";
-      // Build hierarchical tree
-      const root = {};
-      for(const path of Object.keys(VFS)){
-        const parts = pathParts(path);
-        let node = root;
-        for(let i=0;i<parts.length;i++){
-          const key = parts[i];
-          node.children ??= {};
-          node.children[key] ??= { children: {}, isFolder: true };
-          if(i === parts.length-1){
-            node.children[key].isFolder = false;
-            node.children[key].path = path;
-          }
-          node = node.children[key];
-        }
-      }
-      function render(node, base=""){
-        const frag = document.createDocumentFragment();
-        const entries = Object.entries(node.children||{}).sort((a,b)=>{
-          const A = a[1].isFolder ? 0 : 1;
-          const B = b[1].isFolder ? 0 : 1;
-          if(A !== B) return A - B;
-          return a[0].localeCompare(b[0]);
+      history.forEach(snap=>{
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const title = document.createElement('div');
+        title.textContent = snap.note || '(no note)';
+        const time = document.createElement('div');
+        time.className = 'time';
+        time.textContent = new Date(snap.time).toLocaleString();
+        meta.appendChild(title);
+        meta.appendChild(time);
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = Object.keys(snap.files).length + ' files';
+        const restoreBtn = document.createElement('button');
+        restoreBtn.className = 'btn small';
+        restoreBtn.textContent = 'Restore';
+        restoreBtn.addEventListener('click', ()=>{
+          vfs.files = JSON.parse(JSON.stringify(snap.files));
+          saveVfs();
+          renderTree();
+          openFile(Object.keys(vfs.files)[0] || 'index.html');
+          refreshPreview();
+          showToast('Restored snapshot');
         });
-        for(const [name, child] of entries){
-          const el = document.createElement("div");
-          el.className = "node" + (child.isFolder ? " folder" : (isAsset(child.path) ? " asset" : ""));
-          if(!child.isFolder && child.path === currentPath) el.classList.add("active");
-          const icon = document.createElement("div");
-          icon.className = "icon";
-          const label = document.createElement("div");
-          label.textContent = name + (child.isFolder ? "/" : "");
-          el.appendChild(icon);
-          el.appendChild(label);
-          el.addEventListener("click", ()=>{
-            if(child.isFolder) return; // select file only
-            selectFile(child.path);
+        const diffBtn = document.createElement('button');
+        diffBtn.className = 'btn small';
+        diffBtn.textContent = 'Diff';
+        diffBtn.addEventListener('click', ()=>{
+          const diffBody = document.createElement('div');
+          diffBody.style.display='grid';
+          diffBody.style.gap='8px';
+          const currentFiles = vfs.files;
+          const fileSet = new Set([...Object.keys(currentFiles), ...Object.keys(snap.files)]);
+          fileSet.forEach(path=>{
+            const a = currentFiles[path] ?? '';
+            const b = snap.files[path] ?? '';
+            const changed = a !== b;
+            const row = document.createElement('div');
+            row.style.border='1px solid var(--border)';
+            row.style.borderRadius='8px';
+            row.style.padding='8px';
+            const h = document.createElement('div');
+            h.style.display='flex'; h.style.justifyContent='space-between';
+            h.innerHTML = `<strong>${path}</strong> <span style="color:${changed?'#ffd27a':'#9aa7c7'}">${changed?'changed':'same'}</span>`;
+            row.appendChild(h);
+            if(changed){
+              const pre = document.createElement('pre');
+              pre.style.whiteSpace='pre-wrap'; pre.style.fontFamily='var(--mono)';
+              pre.textContent = makeUnifiedDiff(a,b);
+              row.appendChild(pre);
+            }
+            diffBody.appendChild(row);
           });
-          frag.appendChild(el);
-          if(child.isFolder){
-            const inner = render(child, base + "/" + name);
-            const wrap = document.createElement("div");
-            wrap.style.marginLeft = "16px";
-            wrap.appendChild(inner);
-            frag.appendChild(wrap);
-          }
-        }
-        return frag;
-      }
-      const title = document.createElement("div");
-      title.className = "small";
-      title.textContent = "プロジェクト";
-      treeEl.appendChild(title);
-      treeEl.appendChild(render(root));
-      // Update entry selector
-      const entry = document.getElementById("entrySelect");
-      entry.innerHTML = "";
-      const htmlFiles = Object.keys(VFS).filter(p=> VFS[p].mime === "text/html").sort();
-      for(const p of htmlFiles){
-        const opt = document.createElement("option");
-        opt.value = p; opt.textContent = p;
-        entry.appendChild(opt);
-      }
-      if(htmlFiles.length){
-        if(!htmlFiles.includes(currentEntry)) currentEntry = htmlFiles[0];
-        entry.value = currentEntry;
-      }
-    }
-
-    function selectFile(path){
-      currentPath = path;
-      const file = VFS[path];
-      document.getElementById("filenameLabel").textContent = path;
-      document.getElementById("mimeLabel").textContent = file.mime;
-      const editor = document.getElementById("editor");
-      if(file.isBinary){
-        editor.value = "// バイナリファイル（編集不可）";
-        editor.disabled = true;
-      }else{
-        editor.disabled = false;
-        editor.value = file.content;
-      }
-      refreshFileTree();
-      setStatus(`Selected ${path}`);
-    }
-
-    function isAsset(path){
-      const mime = VFS[path]?.mime || "";
-      return mime.startsWith("image/") || mime === "application/octet-stream";
-    }
-
-    // --- File operations ---
-    function addFile(path, mime){
-      if(!path.startsWith("/")) path = "/" + path;
-      if(VFS[path]){ alert("同名のファイルが既に存在します"); return; }
-      const isBin = mime.startsWith("image/") || mime === "application/octet-stream";
-      VFS[path] = { mime, isBinary: isBin, content: isBin ? new Uint8Array([]) : getDefaultContentFor(path, mime) };
-      saveVFS();
-      refreshFileTree();
-      selectFile(path);
-    }
-    function addFolder(path){
-      if(!path.startsWith("/")) path = "/" + path;
-      if(!ensureFolder(path)){ alert("フォルダ名は拡張子なしで指定してください（例: /about）"); return; }
-      // folders are implicit; create a placeholder readme.txt so it becomes visible
-      const placeholder = path.endsWith("/") ? path + "README.txt" : path + "/README.txt";
-      if(VFS[placeholder]){ alert("同名のフォルダ/ファイルが既に存在します"); return; }
-      VFS[placeholder] = { mime:"text/plain", isBinary:false, content:`This folder: ${path}` };
-      saveVFS();
-      refreshFileTree();
-      selectFile(placeholder);
-    }
-    function deleteCurrent(){
-      if(!VFS[currentPath]) return;
-      if(!confirm(`削除しますか？\n${currentPath}`)) return;
-      delete VFS[currentPath];
-      saveVFS();
-      const next = Object.keys(VFS).sort()[0] || "/index.html";
-      if(VFS[next]) selectFile(next); else {
-        VFS = defaultProject(); saveVFS(); refreshFileTree(); selectFile("/index.html");
-      }
-    }
-
-    function getDefaultContentFor(path, mime){
-      if(mime === "text/html"){
-        return `<!DOCTYPE html>
-<html lang="ja">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${path}</title></head>
-<body>
-  <h1>${path}</h1>
-  <p>ここにコンテンツを追加してください。</p>
-</body>
-</html>`;
-      }
-      if(mime === "text/css"){
-        return `/* ${path} */\n:root{ --c:#6ce4ff }\n*{ box-sizing:border-box }\nbody{ font-family:system-ui,sans-serif }`;
-      }
-      if(mime === "application/javascript"){
-        return `// ${path}\nconsole.log("Loaded: ${path}");`;
-      }
-      if(mime === "application/json"){
-        return `{\n  "name": "${path.split("/").pop()}",\n  "ok": true\n}`;
-      }
-      return `/* ${path} */\n`;
-    }
-
-    // --- Editor bindings ---
-    document.getElementById("editor").addEventListener("input", (e)=>{
-      const file = VFS[currentPath];
-      if(!file || file.isBinary) return;
-      file.content = e.target.value;
-      saveVFS();
-    });
-    document.getElementById("tabSize").addEventListener("change", (e)=>{
-      tabSize = parseInt(e.target.value,10) || 4;
-      document.getElementById("editor").style.tabSize = tabSize;
-      setStatus("Tab size: "+tabSize);
-    });
-    document.getElementById("wrapMode").addEventListener("change",(e)=>{
-      wrapMode = e.target.value;
-      document.getElementById("editor").style.whiteSpace = (wrapMode==="off"?"pre":"pre-wrap");
-      setStatus("Wrap: "+wrapMode);
-    });
-
-    // --- Sidebar buttons ---
-    document.getElementById("addFileBtn").addEventListener("click", ()=>{
-      const p = document.getElementById("newPath").value.trim();
-      const mime = document.getElementById("newType").value;
-      if(!p){ alert("パスを入力してください"); return; }
-      addFile(p, mime);
-      document.getElementById("newPath").value = "";
-    });
-    document.getElementById("addFolderBtn").addEventListener("click", ()=>{
-      const p = document.getElementById("newPath").value.trim();
-      if(!p){ alert("フォルダパスを入力してください"); return; }
-      addFolder(p);
-      document.getElementById("newPath").value = "";
-    });
-    document.getElementById("deleteBtn").addEventListener("click", deleteCurrent);
-
-    // --- Topbar buttons ---
-    document.getElementById("runBtn").addEventListener("click", ()=>{ buildPreview(); });
-    document.getElementById("blobBtn").addEventListener("click", ()=>{
-      const file = VFS[currentPath];
-      if(!file){ alert("ファイルがありません"); return; }
-      const blob = file.isBinary ? new Blob([file.content], {type:file.mime}) : new Blob([file.content], {type:file.mime+";charset=utf-8"});
-      const url = URL.createObjectURL(blob);
-      navigator.clipboard?.writeText(url).then(()=> setStatus("Blob URL copied")).catch(()=>{});
-      alert("Blob URLを生成しました:\n\n"+url+"\n\n（クリップボードにコピーを試みました）");
-    });
-    document.getElementById("downloadBtn").addEventListener("click", ()=>{
-      const file = VFS[currentPath];
-      if(!file){ alert("ファイルがありません"); return; }
-      const blob = file.isBinary ? new Blob([file.content], {type:file.mime}) : new Blob([file.content], {type:file.mime+";charset=utf-8"});
-      const a = document.createElement("a");
-      a.download = currentPath.split("/").pop();
-      a.href = URL.createObjectURL(blob);
-      document.body.appendChild(a); a.click(); a.remove();
-      setStatus("Downloaded "+currentPath);
-    });
-    document.getElementById("saveBtn").addEventListener("click", saveHistory);
-    document.getElementById("historyBtn").addEventListener("click", showHistory);
-    document.getElementById("resetBtn").addEventListener("click", ()=>{
-      if(!confirm("初期プロジェクトに戻しますか？")) return;
-      VFS = defaultProject();
-      saveVFS();
-      refreshFileTree();
-      selectFile("/index.html");
-      buildPreview();
-      setStatus("Reset to defaults");
-    });
-
-    // --- Preview ---
-    let currentEntry = "/index.html";
-    document.getElementById("entrySelect").addEventListener("change",(e)=>{
-      currentEntry = e.target.value;
-      buildPreview();
-    });
-    document.getElementById("refreshBtn").addEventListener("click", ()=> buildPreview());
-    document.getElementById("openNewBtn").addEventListener("click", ()=>{
-      const html = bundleHTML(currentEntry);
-      const blob = new Blob([html], {type:"text/html;charset=utf-8"});
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank", "noopener");
-    });
-
-    function resolvePath(base, rel){
-      if(rel.startsWith("http://") || rel.startsWith("https://") || rel.startsWith("data:")) return rel;
-      const u = new URL(rel, "https://local.project" + base);
-      return u.pathname; // normalized path like /about/index.html
-    }
-
-    function fileToBlobURL(path){
-      const f = VFS[path];
-      if(!f) return null;
-      const blob = f.isBinary ? new Blob([f.content], {type:f.mime}) : new Blob([f.content], {type: f.mime+";charset=utf-8"});
-      return URL.createObjectURL(blob);
-    }
-
-    function inlineAssetsInHTML(html, basePath){
-      // Inline <link rel="stylesheet" href="...">, <script src="..."></script>, replace <img src="...">, <source src>, <video poster>
-      const doc = new DOMParser().parseFromString(html, "text/html");
-
-      // LINK stylesheet
-      doc.querySelectorAll('link[rel="stylesheet"][href]').forEach(link=>{
-        const href = resolvePath(basePath, link.getAttribute("href"));
-        const f = VFS[href];
-        if(f && f.mime==="text/css" && !f.isBinary){
-          const style = doc.createElement("style");
-          style.textContent = f.content;
-          link.replaceWith(style);
-        }
-      });
-
-      // SCRIPT src
-      doc.querySelectorAll('script[src]').forEach(script=>{
-        const src = resolvePath(basePath, script.getAttribute("src"));
-        const f = VFS[src];
-        if(f && f.mime==="application/javascript" && !f.isBinary){
-          const inline = doc.createElement("script");
-          inline.textContent = f.content;
-          script.replaceWith(inline);
-        }
-      });
-
-      // IMG SRC and other assets
-      const assetSelectors = [
-        ["img","src"],
-        ["source","src"],
-        ["video","poster"],
-        ["audio","src"],
-        ["link[rel=\"icon\"]","href"]
-      ];
-      assetSelectors.forEach(([sel, attr])=>{
-        doc.querySelectorAll(sel).forEach(el=>{
-          const val = el.getAttribute(attr);
-          if(!val) return;
-          const p = resolvePath(basePath, val);
-          const url = fileToBlobURL(p);
-          if(url) el.setAttribute(attr, url);
+          showModal('Snapshot diff', diffBody, [
+            {label:'Close', className:'btn', onClick: closeModal}
+          ]);
         });
+
+        item.appendChild(meta);
+        item.appendChild(badge);
+        item.appendChild(diffBtn);
+        item.appendChild(restoreBtn);
+        list.appendChild(item);
       });
-
-      // Anchor href normalization: prevent navigation outside
-      doc.querySelectorAll('a[href]').forEach(a=>{
-        const href = a.getAttribute("href");
-        if(!href) return;
-        if(href.startsWith("http")) return;
-        const path = resolvePath(basePath, href);
-        // Replace with onclick to swap document content (simple router)
-        a.setAttribute("href", "#");
-        a.setAttribute("data-path", path);
-        a.addEventListener("click", (ev)=>{ ev.preventDefault(); });
-      });
-
-      // Inject lightweight router script to swap to another HTML in VFS
-      const router = doc.createElement("script");
-      router.textContent = `
-        (function(){
-          document.addEventListener("click", function(e){
-            const a = e.target.closest("a[data-path]");
-            if(!a) return;
-            e.preventDefault();
-            const path = a.getAttribute("data-path");
-            const msg = { type:"__navigate__", path: path };
-            window.parent.postMessage(msg, "*");
-          });
-        })();
-      `;
-      doc.body.appendChild(router);
-
-      // Serialize back
-      const doctype = "<!DOCTYPE html>\n";
-      return doctype + doc.documentElement.outerHTML;
     }
 
-    function bundleHTML(entryPath){
-      const entry = VFS[entryPath];
-      if(!entry || entry.mime!=="text/html") return `<!DOCTYPE html><html><body><h1>エントリHTMLが見つかりません: ${entryPath}</h1></body></html>`;
-      return inlineAssetsInHTML(entry.content, entryPath);
-    }
-
-    function buildPreview(){
-      const html = bundleHTML(currentEntry);
-      const iframe = document.getElementById("preview");
-      iframe.srcdoc = html;
-      setStatus("Preview updated");
-    }
-
-    window.addEventListener("message", (ev)=>{
-      const data = ev.data || {};
-      if(data.type === "__navigate__"){
-        const path = data.path;
-        if(VFS[path] && VFS[path].mime === "text/html"){
-          const html = bundleHTML(path);
-          const iframe = document.getElementById("preview");
-          iframe.srcdoc = html;
-          currentEntry = path;
-          document.getElementById("entrySelect").value = path;
-          setStatus("Navigated to "+path);
+    function makeUnifiedDiff(a,b){
+      // Simple line diff (not perfect, but robust and readable)
+      const la = a.split('\n'), lb = b.split('\n');
+      const max = Math.max(la.length, lb.length);
+      let out = '';
+      for(let i=0;i<max;i++){
+        const aa = la[i] ?? '';
+        const bb = lb[i] ?? '';
+        if(aa === bb){
+          out += '  ' + aa + '\n';
         }else{
-          alert("HTMLが見つかりません: "+path);
+          if(aa) out += '- ' + aa + '\n';
+          if(bb) out += '+ ' + bb + '\n';
         }
       }
+      return out.trim();
+    }
+
+    // --- File tree rendering ---
+    function buildTreeStructure(files){
+      // Convert flat paths to nested tree
+      const root = { name:'/', type:'folder', children:{}, path:'' };
+      for(const p of Object.keys(files)){
+        const parts = p.split('/').filter(Boolean);
+        let cur = root;
+        parts.forEach((part, idx)=>{
+          const isLast = idx === parts.length-1;
+          if(isLast){
+            cur.children[part] = { name:part, type:'file', path: (cur.path ? cur.path + '/' : '') + part };
+          }else{
+            const nextPath = (cur.path ? cur.path + '/' : '') + part;
+            cur.children[part] = cur.children[part] || { name:part, type:'folder', children:{}, path: nextPath };
+            cur = cur.children[part];
+          }
+        });
+      }
+      return root;
+    }
+
+    function renderTree(){
+      const treeEl = $('#tree');
+      treeEl.innerHTML = '';
+      const root = buildTreeStructure(vfs.files);
+      const rootChildren = Object.values(root.children);
+      if(rootChildren.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'No files. Add one using + File.';
+        treeEl.appendChild(empty);
+        return;
+      }
+      rootChildren.sort((a,b)=>{
+        if(a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+      rootChildren.forEach(node=>{
+        treeEl.appendChild(renderNode(node, 0));
+      });
+    }
+
+    function renderNode(node, depth){
+      const container = document.createElement('div');
+      const row = document.createElement('div');
+      row.className = 'node' + (activePath === node.path ? ' active' : '');
+      const icon = document.createElement('div');
+      icon.className='icon';
+      icon.textContent = node.type === 'folder' ? 'F' : '●';
+      const label = document.createElement('div');
+      label.textContent = node.name;
+      row.style.paddingLeft = (6 + depth*12) + 'px';
+      row.appendChild(icon); row.appendChild(label);
+      row.addEventListener('click', ()=>{
+        if(node.type === 'file'){
+          openFile(node.path);
+        }
+      });
+      container.appendChild(row);
+      if(node.type === 'folder'){
+        const childrenWrap = document.createElement('div');
+        childrenWrap.className = 'children';
+        const children = Object.values(node.children).sort((a,b)=>{
+          if(a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+        children.forEach(child=>{
+          childrenWrap.appendChild(renderNode(child, depth+1));
+        });
+        container.appendChild(childrenWrap);
+      }
+      return container;
+    }
+
+    function openFile(path){
+      if(!(path in vfs.files)) return;
+      activePath = path;
+      $('#filenameLabel').textContent = path;
+      $('#editor').value = vfs.files[path];
+      $('#status').textContent = 'Editing ' + path;
+      renderTree();
+    }
+
+    // --- Editing actions ---
+    $('#saveBtn').addEventListener('click', ()=>{
+      vfs.files[activePath] = $('#editor').value;
+      saveVfs();
+      refreshPreview();
+      showToast('File saved and preview updated');
+    });
+    $('#formatBtn').addEventListener('click', ()=>{
+      const content = $('#editor').value;
+      const ext = (activePath.split('.').pop() || '').toLowerCase();
+      let formatted = content;
+      if(ext === 'json'){
+        try{ formatted = JSON.stringify(JSON.parse(content), null, 2); }catch(e){}
+      }else if(ext === 'css'){
+        formatted = content.replace(/;\s+/g, ';\n').replace(/\{\s+/g, '{\n').replace(/\}\s*/g, '\n}\n');
+      }else if(ext === 'js'){
+        formatted = content.replace(/;\s+/g, ';\n').replace(/\{\s+/g, '{\n').replace(/\}\s*/g, '\n}\n');
+      }else if(ext === 'html'){
+        formatted = content.replace(/>\s+</g, '>\n<');
+      }
+      $('#editor').value = formatted;
+      showToast('Formatted');
+    });
+
+    // --- File management ---
+    $('#addFileBtn').addEventListener('click', ()=>{
+      const body = document.createElement('div');
+      body.className='kv';
+      const key1 = document.createElement('div'); key1.className='key'; key1.textContent = 'Path (e.g. pages/about.html)';
+      const val1 = document.createElement('input'); val1.className='input'; val1.placeholder='path/filename.ext';
+      body.appendChild(key1); body.appendChild(val1);
+      showModal('Add file', body, [
+        {label:'Cancel', className:'btn', onClick: closeModal},
+        {label:'Add', className:'btn good', onClick: ()=>{
+          const p = val1.value.trim();
+          const clean = p.split('/').map(safeName).join('/');
+          if(!clean || !/\./.test(clean)){ showToast('Please include an extension'); return; }
+          if(vfs.files[clean]){ showToast('File already exists'); return; }
+          vfs.files[clean] = '';
+          saveVfs(); renderTree(); openFile(clean); closeModal();
+          showToast('File added');
+        }}
+      ]);
+    });
+
+    $('#addFolderBtn').addEventListener('click', ()=>{
+      const body = document.createElement('div');
+      body.className='kv';
+      const key1 = document.createElement('div'); key1.className='key'; key1.textContent = 'Folder path (e.g. assets/images)';
+      const val1 = document.createElement('input'); val1.className='input'; val1.placeholder='folder/subfolder';
+      body.appendChild(key1); body.appendChild(val1);
+      showModal('Add folder', body, [
+        {label:'Cancel', className:'btn', onClick: closeModal},
+        {label:'Create', className:'btn good', onClick: ()=>{
+          const p = val1.value.trim();
+          const clean = p.split('/').map(safeName).join('/');
+          if(!clean){ showToast('Invalid folder name'); return; }
+          // Create placeholder .keep file to represent folder existence
+          const keep = joinPath(clean, '.keep');
+          if(!vfs.files[keep]) vfs.files[keep] = '';
+          saveVfs(); renderTree(); closeModal();
+          showToast('Folder created');
+        }}
+      ]);
+    });
+
+    $('#renameBtn').addEventListener('click', ()=>{
+      const body = document.createElement('div');
+      body.className='kv';
+      const key1 = document.createElement('div'); key1.className='key'; key1.textContent = 'Current';
+      const val1 = document.createElement('div'); val1.className='val'; val1.textContent = activePath;
+      const key2 = document.createElement('div'); key2.className='key'; key2.textContent = 'New path';
+      const val2 = document.createElement('input'); val2.className='input'; val2.placeholder='new/path/name.ext';
+      body.appendChild(key1); body.appendChild(val1);
+      body.appendChild(key2); body.appendChild(val2);
+      showModal('Rename file', body, [
+        {label:'Cancel', className:'btn', onClick: closeModal},
+        {label:'Rename', className:'btn warn', onClick: ()=>{
+          const np = val2.value.trim();
+          const clean = np.split('/').map(safeName).join('/');
+          if(!clean || !/\./.test(clean)){ showToast('Please include an extension'); return; }
+          if(vfs.files[clean]){ showToast('Target exists'); return; }
+          vfs.files[clean] = vfs.files[activePath];
+          delete vfs.files[activePath];
+          saveVfs(); renderTree(); openFile(clean); closeModal();
+          showToast('Renamed');
+        }}
+      ]);
+    });
+
+    $('#deleteBtn').addEventListener('click', ()=>{
+      const body = document.createElement('div');
+      body.innerHTML = '<p>Delete <strong>' + activePath + '</strong> ?</p>';
+      showModal('Delete file', body, [
+        {label:'Cancel', className:'btn', onClick: closeModal},
+        {label:'Delete', className:'btn danger', onClick: ()=>{
+          delete vfs.files[activePath];
+          saveVfs(); renderTree();
+          const first = Object.keys(vfs.files)[0];
+          if(first){ openFile(first); } else { $('#editor').value=''; $('#filenameLabel').textContent=''; }
+          closeModal();
+          showToast('Deleted');
+        }}
+      ]);
+    });
+
+    // --- Service Worker: serve VFS at /vfs/*
+    let swReady = false;
+    async function registerVfsServiceWorker(){
+      if(!('serviceWorker' in navigator)) return;
+      const swCode = `
+        let files = {};
+        self.addEventListener('message', (e)=>{
+          const {type, payload} = e.data || {};
+          if(type === 'vfs-update'){
+            files = payload.files || {};
+          }
+        });
+        function matchPath(url){
+          try{
+            const u = new URL(url);
+            if(u.pathname.startsWith('/vfs/')){
+              const rel = u.pathname.replace(/^\\/vfs\\//,'');
+              return rel || 'index.html';
+            }
+          }catch(e){}
+          return null;
+        }
+        self.addEventListener('fetch', (event)=>{
+          const p = matchPath(event.request.url);
+          if(p){
+            event.respondWith((async ()=>{
+              let content = files[p];
+              if(content === undefined){
+                // Try directory index
+                if(files[p + '/index.html'] !== undefined){
+                  content = files[p + '/index.html'];
+                }
+              }
+              if(content === undefined){
+                return new Response('Not Found: ' + p, {status:404, headers:{'Content-Type':'text/plain'}});
+              }
+              const type = guessType(p);
+              return new Response(content, {status:200, headers:{'Content-Type': type}});
+            })());
+          }
+        });
+        function guessType(p){
+          const ext = p.split('.').pop().toLowerCase();
+          switch(ext){
+            case 'html': return 'text/html; charset=utf-8';
+            case 'css': return 'text/css; charset=utf-8';
+            case 'js': return 'application/javascript; charset=utf-8';
+            case 'json': return 'application/json; charset=utf-8';
+            case 'svg': return 'image/svg+xml; charset=utf-8';
+            case 'txt': return 'text/plain; charset=utf-8';
+            default: return 'text/plain; charset=utf-8';
+          }
+        }
+      `;
+      const blob = new Blob([swCode], {type:'application/javascript'});
+      const url = URL.createObjectURL(blob);
+      const reg = await navigator.serviceWorker.register(url);
+      await navigator.serviceWorker.ready;
+      swReady = true;
+      refreshServiceWorkerCache();
+    }
+
+    function refreshServiceWorkerCache(){
+      if(!swReady || !navigator.serviceWorker.controller){
+        // Post message after a short delay to give control time
+        setTimeout(()=>{
+          if(navigator.serviceWorker.controller){
+            navigator.serviceWorker.controller.postMessage({type:'vfs-update', payload: {files: vfs.files}});
+          }
+        }, 300);
+        return;
+      }
+      navigator.serviceWorker.controller.postMessage({type:'vfs-update', payload: {files: vfs.files}});
+    }
+
+    // --- Preview and blob link ---
+    function refreshPreview(){
+      const iframe = $('#previewFrame');
+      iframe.src = '/vfs/index.html';
+    }
+    $('#refreshPreviewBtn').addEventListener('click', refreshPreview);
+    $('#runBtn').addEventListener('click', ()=>{
+      vfs.files[activePath] = $('#editor').value;
+      saveVfs();
+      refreshPreview();
+      showToast('Running latest code');
+    });
+
+    $('#blobLinkBtn').addEventListener('click', ()=>{
+      // Open the VFS entry as a new tab using the SW endpoint
+      const href = '/vfs/index.html';
+      window.open(href, '_blank', 'noopener,noreferrer');
+      showToast('Opened blob-like link (SW-backed)');
+    });
+
+    // --- TAR download (no external libs) ---
+    // Minimal POSIX ustar implementation sufficient for text files
+    function pad(buf, size){ // pad with zeros to size boundary
+      const padLen = size - (buf.length % size || size);
+      return new Uint8Array([...buf, ...new Array(padLen).fill(0)]);
+    }
+    function strToArr(str){
+      const enc = new TextEncoder();
+      return enc.encode(str);
+    }
+    function numToOct(n, len){
+      const s = n.toString(8);
+      return s.padStart(len-1, '0') + '\0';
+    }
+    function makeHeader(name, size, typeflag='0'){
+      const header = new Uint8Array(512).fill(0);
+      const writeStr = (offset, len, str)=>{
+        const arr = strToArr(str);
+        for(let i=0;i<Math.min(len, arr.length);i++) header[offset+i] = arr[i];
+      };
+      writeStr(0, 100, name);                         // name
+      writeStr(100, 8,  numToOct(0,8));               // mode
+      writeStr(108, 8,  numToOct(0,8));               // uid
+      writeStr(116, 8,  numToOct(0,8));               // gid
+      writeStr(124, 12, numToOct(size,12));           // size
+      writeStr(136, 12, numToOct(Math.floor(Date.now()/1000),12)); // mtime
+      writeStr(156, 1,  typeflag);                    // typeflag
+      writeStr(257, 6,  'ustar');                     // magic
+      writeStr(263, 2,  '00');                        // version
+      // compute checksum (sum of header with checksum field as spaces)
+      for(let i=148;i<156;i++) header[i] = 32; // spaces
+      let sum = 0;
+      for(let i=0;i<512;i++) sum += header[i];
+      const chk = numToOct(sum, 8);
+      writeStr(148, 8, chk);                           // chksum
+      return header;
+    }
+    function createTar(files){
+      const parts = [];
+      // Ensure folder entries for subpaths (optional)
+      const folderSet = new Set();
+      Object.keys(files).forEach(p=>{
+        const partsPath = p.split('/'); partsPath.pop();
+        let acc = '';
+        partsPath.forEach(seg=>{
+          acc = acc ? (acc + '/' + seg) : seg;
+          folderSet.add(acc);
+        });
+      });
+      folderSet.forEach(folder=>{
+        const hdr = makeHeader(folder + '/', 0, '5'); // directory
+        parts.push(hdr);
+      });
+      // Files
+      Object.entries(files).forEach(([path, content])=>{
+        // Skip .keep as files if they are empty? Still include.
+        const data = strToArr(content ?? '');
+        const hdr = makeHeader(path, data.length, '0');
+        parts.push(hdr);
+        parts.push(data);
+        parts.push(new Uint8Array(new Array((512 - (data.length % 512 || 512))).fill(0)));
+      });
+      // two 512 blocks of zeros at end
+      parts.push(new Uint8Array(512));
+      parts.push(new Uint8Array(512));
+      const totalLen = parts.reduce((a,b)=> a + b.length, 0);
+      const out = new Uint8Array(totalLen);
+      let offset = 0;
+      parts.forEach(part=>{
+        out.set(part, offset); offset += part.length;
+      });
+      return new Blob([out], {type:'application/x-tar'});
+    }
+
+    $('#downloadBtn').addEventListener('click', ()=>{
+      const tar = createTar(vfs.files);
+      const url = URL.createObjectURL(tar);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'project.tar';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=> URL.revokeObjectURL(url), 1000);
+      showToast('Downloaded project.tar');
+    });
+
+    // --- Reset ---
+    $('#resetBtn').addEventListener('click', ()=>{
+      const body = document.createElement('div');
+      body.innerHTML = '<p>Reset project to defaults? This clears files and history.</p>';
+      showModal('Reset project', body, [
+        {label:'Cancel', className:'btn', onClick: closeModal},
+        {label:'Reset', className:'btn danger', onClick: ()=>{
+          vfs = { files: {...defaultFiles} };
+          history = [];
+          saveVfs(); saveHistory(history);
+          renderTree(); renderHistory(); openFile('index.html'); refreshPreview();
+          closeModal();
+          showToast('Project reset');
+        }}
+      ]);
+    });
+
+    // --- History buttons ---
+    $('#saveSnapshotBtn').addEventListener('click', ()=>{
+      const body = document.createElement('div');
+      body.className='kv';
+      const key1 = document.createElement('div'); key1.className='key'; key1.textContent='Note';
+      const val1 = document.createElement('input'); val1.className='input'; val1.placeholder='e.g., Added about page';
+      body.appendChild(key1); body.appendChild(val1);
+      showModal('Save snapshot', body, [
+        {label:'Cancel', className:'btn', onClick: closeModal},
+        {label:'Save', className:'btn good', onClick: ()=>{
+          addSnapshot(val1.value.trim() || 'snapshot');
+          closeModal();
+        }}
+      ]);
+    });
+
+    $('#clearHistoryBtn').addEventListener('click', ()=>{
+      const body = document.createElement('div');
+      body.innerHTML = '<p>Clear all snapshots?</p>';
+      showModal('Clear history', body, [
+        {label:'Cancel', className:'btn', onClick: closeModal},
+        {label:'Clear', className:'btn danger', onClick: ()=>{
+          history = [];
+          saveHistory(history);
+          renderHistory();
+          closeModal();
+          showToast('History cleared');
+        }}
+      ]);
     });
 
     // --- Init ---
-    function init(){
-      loadVFS();
-      refreshFileTree();
-      selectFile(Object.keys(VFS).includes(currentPath) ? currentPath : "/index.html");
-      document.getElementById("editor").style.tabSize = tabSize;
-      document.getElementById("editor").style.whiteSpace = (wrapMode==="off"?"pre":"pre-wrap");
-      buildPreview();
-    }
-    init();
+    (async function init(){
+      renderTree();
+      renderHistory();
+      openFile(activePath);
+      await registerVfsServiceWorker();
+      refreshPreview();
+    })();
   </script>
 </body>
 </html>
