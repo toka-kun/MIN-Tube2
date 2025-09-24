@@ -1,9 +1,116 @@
-<!doctype html> <html lang="ja"> <head> <meta charset="utf-8"> <title>HTML コンパイラ（大きな入力フィールド用）</title> <meta name="viewport" content="width=device-width, initial-scale=1"> <style> :root { --gap: 12px; --panel: 48px; } html, body { height: 100%; margin: 0; font-family: sans-serif; } .container { display: grid; grid-template-columns: 1fr 1fr; grid-gap: var(--gap); height: 100%; padding: 12px; box-sizing: border-box; } .panel { display: flex; flex-direction: column; border: 1px solid #ccc; border-radius: 6px; padding: 8px; } .panel h2 { margin: 0 0 8px 0; font-size: 14px; color: #333; } textarea#src { width: 100%; height: calc(100% - 40px); resize: none; padding: 8px; box-sizing: border-box; font-family: monospace; font-size: 14px; border: 1px solid #ddd; border-radius: 4px; overflow: auto; min-height: 240px; } textarea#out { width: 100%; height: 220px; resize: vertical; padding: 8px; box-sizing: border-box; font-family: monospace; font-size: 13px; border: 1px solid #ddd; border-radius: 4px; overflow: auto; min-height: 120px; } #controls { display: flex; gap: 8px; align-items: center; padding: 4px 0 0 0; } button { padding: 8px 12px; font-size: 14px; border: 1px solid #888; border-radius: 4px; background: #f5f5f5; cursor: pointer; } button:hover { background: #eee; } .preview { border: 1px solid #ddd; border-radius: 4px; height: 100%; min-height: 240px; width: 100%; } @media (max-width: 980px) { .container { grid-template-columns: 1fr; height: auto; } textarea#src { height: 200px; } iframe, .preview { height: 200px; } } </style> </head> <body> <div class="container"> <section class="panel" aria-label="入力エリア"> <h2>入力 HTML（src）</h2> <textarea id="src" placeholder="ここに大量の HTML を貼り付けてください..."></textarea> <div id="controls" aria-label="操作"> <button id="compileBtn" type="button">Compile</button> <span id="status" aria-live="polite" style="color:#555; font-size:12px;"></span> </div> </section>
- 
-<section class="panel" aria-label="出力とプレビュー">
-  <h2>出力（compiled）</h2>
-  <textarea id="out" placeholder="コンパイル結果がここに表示されます。" readonly></textarea>
-  <h2 style="margin-top:8px;">プレビュー</h2>
-  <iframe id="preview" class="preview" sandbox="allow-scripts allow-same-origin" title="HTML プレビュー"></iframe>
-</section>
-</div> <script> // 簡易ミニファイ関数（コメント削除・連続空白削減・タグ間の空白削除など） function minifyHTML(html) { // 1) コメントを削除 let s = html.replace(/<!--[\s\S]*?-->/g, ''); // 2) 行頭/行末の空白を削除 s = s.replace(/^[ \t]+|[ \t]+$/gm, ''); // 3) 複数の空白文字を1つに s = s.replace(/\s+/g, ' '); // 4) > < の間の空白を削る (タグ間の不要な空白) s = s.replace(/>\s+</g, '><'); // 5) script/style 内の文字列はそのまま (簡易対応) -> ここでは特別には扱わない return s.trim(); } // 簡易検証: HTML が有効かを軽く試す function validateHTML(html) { try { // DOMParserを使って検証 const parser = new DOMParser(); const doc = parser.parseFromString(html, 'text/html'); // 404などは出力されないので、エラーがあればパース結果にparsererrorが含まれる if (doc.querySelector('parsererror')) { return { ok: false, message: 'HTML のパースに失敗しました。' }; } return { ok: true }; } catch (e) { return { ok: false, message: e.message }; } } // コンパイル処理 function compile() { const srcEl = document.getElementById('src'); const outEl = document.getElementById('out'); const statusEl = document.getElementById('status'); const raw = srcEl.value; statusEl.textContent = 'コンパイル中...'; // 簡易検証 const v = validateHTML(raw); if (!v.ok) { statusEl.textContent = 'エラー: ' + v.message; return; } // ミニファイ（簡易） const minified = minifyHTML(raw); // 出力欄へ反映 outEl.value = minified; // プレビューへ反映 const blob = new Blob([minified], { type: 'text/html' }); const url = URL.createObjectURL(blob); const iframe = document.getElementById('preview'); iframe.src = url; statusEl.textContent = 'コンパイル完了'; // URL解放は適宜行う。ここでは簡易のため省略。 } document.getElementById('compileBtn').addEventListener('click', compile); // 初期デモ用サンプルを入れておくと試しやすい window.addEventListener('load', () => { const demo = `<!doctype html> <html> <head><meta charset="utf-8"><title>デモ</title></head> <body> <h1>ようこそ</h1> <p>これはデモHTMLです。大きな入力フィールドでのコンパイルを試すためのサンプルです。</p> <!-- コメントは削除されます --> <div class="box" style="color:#333; background:#fafafa; padding:10px;"> これはボックスです。 </div> </body> </html>`; document.getElementById('src').value = demo; }); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML Runner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: "Segoe UI", sans-serif; }
+    body { display: flex; flex-direction: column; background: #f5f7fa; }
+
+    header {
+      padding: 1rem 2rem;
+      background: #3f51b5;
+      color: #fff;
+      font-size: 1.25rem;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .editor-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem 2rem;
+    }
+
+    textarea {
+      flex: 1;
+      width: 100%;
+      padding: 1rem;
+      font-family: "Courier New", monospace;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      resize: vertical;
+    }
+
+    .button-group {
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    button {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button.run {
+      background: #4caf50;
+      color: #fff;
+    }
+    button.run:hover {
+      background: #45a047;
+    }
+
+    button.clear {
+      background: #f44336;
+      color: #fff;
+    }
+    button.clear:hover {
+      background: #e53935;
+    }
+
+    footer {
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #666;
+      background: #eef1f5;
+    }
+  </style>
+</head>
+<body>
+  <header>HTML Runner</header>
+
+  <div class="editor-container">
+    <textarea id="htmlInput" placeholder="ここにHTMLを入力してください...">
+
+    </textarea>
+
+    <div class="button-group">
+      <button class="run" id="runBtn">動作</button>
+      <button class="clear" id="clearBtn">クリア</button>
+    </div>
+  </div>
+
+  <footer>© 2025 mino</footer>
+
+  <script>
+    const runBtn = document.getElementById("runBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const htmlInput = document.getElementById("htmlInput");
+
+    runBtn.addEventListener("click", () => {
+      const code = htmlInput.value;
+      const previewWindow = window.open("about:blank", "_blank");
+      previewWindow.document.open();
+      previewWindow.document.write(code);
+      previewWindow.document.close();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      htmlInput.value = "";
+      htmlInput.focus();
+    });
+  </script>
+</body>
+</html>
