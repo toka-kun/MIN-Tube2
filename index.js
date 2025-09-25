@@ -789,6 +789,10 @@ app.get("/labo5", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app/labo5.html"));
 });
 
+app.get("/html-tube", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app/html-tube.html"));
+});
+
 app.get("/hd", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "oasobi/HD/mp4quality.html"));
 });
