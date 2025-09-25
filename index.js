@@ -785,6 +785,10 @@ app.get("/compiler", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app/compiler.html"));
 });
 
+app.get("/labo5", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app/labo5.html"));
+});
+
 app.get("/hd", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "oasobi/HD/mp4quality.html"));
 });
