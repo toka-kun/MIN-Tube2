@@ -777,6 +777,10 @@ app.get("/apps", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "tools/apps.html"));
 });
 
+app.get("/img", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app/img.html"));
+});
+
 app.get("/bbs", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat/chat.html"));
 });
