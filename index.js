@@ -797,6 +797,11 @@ app.get("/html-tube", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "app/html-tube.html"));
 });
 
+
+app.get("/3d-img", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "app/3d-img.html"));
+});
+
 app.get("/hd", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "oasobi/HD/mp4quality.html"));
 });
